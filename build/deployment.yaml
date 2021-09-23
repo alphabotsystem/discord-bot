@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: discord-bot
+  namespace: alpha-bot
+  labels:
+    app: discord-bot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: discord-bot
+  template:
+    metadata:
+      labels:
+        app: discord-bot
+    spec:
+      containers:
+      - name: discord-bot
+        image: gcr.io/nlc-bot-36685/alpha-discord-bot
+        imagePullPolicy: Always
+        env:
+          - name: PRODUCTION_MODE
+            value: "1"
+        volumeMounts:
+          - name: alpha-service-keys
+            mountPath: /run/secrets/alpha-service
+            readOnly: true
+          - name: google-cloud-auth
+            mountPath: /run/secrets/google-cloud-auth
+            readOnly: true
+        resources:
+          requests:
+            memory: "1500Mi"
+            cpu: "500m"
+            ephemeral-storage: "5000Ki"
+        ports:
+          - containerPort: 6910
+      volumes:
+        - name: alpha-service-keys
+          secret:
+            secretName: alpha-service-keys
+            items:
+              - key: credentials
+                path: key
+        - name: google-cloud-auth
+          secret:
+            secretName: google-cloud-auth
+            items:
+              - key: gcloud_credentials.json
+                path: key

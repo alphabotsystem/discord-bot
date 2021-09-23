@@ -1,0 +1,9 @@
+discord.py>=1.5.1
+google-cloud-error-reporting>=0.33.0
+google-cloud-firestore>=1.9.0
+google-assistant-sdk[samples]
+pycoingecko>=0.3.0
+pytz>=2019.2
+dblpy>=0.4.0
+pyzmq>=18.1.1
+orjson>=3.6.0
