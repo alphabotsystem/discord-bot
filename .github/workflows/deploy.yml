@@ -50,5 +50,5 @@ jobs:
     # Deploy the Docker image to the GKE cluster
     - name: Deploy
       run: |-
-        kubectl delete deployments/manager --namespace=alpha-bot || :
+        kubectl delete deployments/discord-bot --namespace=alpha-bot || :
         kubectl apply -f build/deployment.yaml
