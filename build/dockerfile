@@ -4,28 +4,23 @@ FROM python:latest
 WORKDIR /usr/src/discord-bot
 
 # Install dependencies
-COPY ./bots/discord/build/requirements.txt ./bots/discord/entrypoint.sh ./
+COPY ./build/requirements.txt ./
 RUN pip install -r ./requirements.txt
 
-RUN mkdir ./dependencies
-COPY ./libraries/messages ./dependencies/messages
+RUN git clone https://github.com/alphabotsystem/dependencies.git && cd ./dependencies && git checkout v1.0
 RUN pip install ./dependencies/messages
-COPY ./libraries/database ./dependencies/database
 RUN pip install ./dependencies/database
-COPY ./libraries/processor ./dependencies/processor
 RUN pip install ./dependencies/processor
-COPY ./libraries/parser ./dependencies/parser
 RUN pip install ./dependencies/parser
-COPY ./libraries/requests ./dependencies/requests
 RUN pip install ./dependencies/requests
-COPY ./libraries/ichibotrelay ./dependencies/ichibotrelay
 RUN pip install ./dependencies/ichibotrelay
+RUN rm -r ./dependencies
 
 # Copy source code
-COPY ./bots/discord/app ./app
+COPY ./app ./app
 
 # Pass required credentials
 ENV GOOGLE_APPLICATION_CREDENTIALS="/run/secrets/google-cloud-auth/key"
 
 # Run
-ENTRYPOINT ["bash", "./entrypoint.sh"]
+ENTRYPOINT ["python", "app/discord_bot.py"]

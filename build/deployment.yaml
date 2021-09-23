@@ -17,15 +17,9 @@ spec:
     spec:
       containers:
       - name: discord-bot
-        image: gcr.io/nlc-bot-36685/alpha-discord-bot
+        image: europe-west4-docker.pkg.dev/nlc-bot-36685/alpha-bot/discord-bot
         imagePullPolicy: Always
-        env:
-          - name: PRODUCTION_MODE
-            value: "1"
         volumeMounts:
-          - name: alpha-service-keys
-            mountPath: /run/secrets/alpha-service
-            readOnly: true
           - name: google-cloud-auth
             mountPath: /run/secrets/google-cloud-auth
             readOnly: true
@@ -34,15 +28,37 @@ spec:
             memory: "1500Mi"
             cpu: "500m"
             ephemeral-storage: "5000Ki"
+        env:
+          - name: PRODUCTION_MODE
+            value: "1"
+          - name: TOPGG_KEY
+            valueFrom:
+              secretKeyRef:
+                name: alpha-credentials
+                key: TOPGG_KEY
+          - name: DISCORD_PRODUCTION_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: alpha-credentials
+                key: DISCORD_PRODUCTION_TOKEN
+          - name: DISCORD_DEVELOPMENT_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: alpha-credentials
+                key: DISCORD_DEVELOPMENT_TOKEN
+          - name: GOOGLE_ASSISTANT_OAUTH
+            valueFrom:
+              secretKeyRef:
+                name: alpha-credentials
+                key: GOOGLE_ASSISTANT_OAUTH
+          - name: IEXC_KEY
+            valueFrom:
+              secretKeyRef:
+                name: alpha-credentials
+                key: IEXC_KEY
         ports:
           - containerPort: 6910
       volumes:
-        - name: alpha-service-keys
-          secret:
-            secretName: alpha-service-keys
-            items:
-              - key: credentials
-                path: key
         - name: google-cloud-auth
           secret:
             secretName: google-cloud-auth

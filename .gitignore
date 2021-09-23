@@ -1,10 +1,4 @@
 *.pyc
 __pycache__
-
-deploy.sh
-*/build/
-*/libraries/
 node_modules/
-
 .vscode/
-keys/

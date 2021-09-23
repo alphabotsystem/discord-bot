@@ -1,0 +1,54 @@
+name: Build and Deploy to GKE
+
+on:
+  release:
+    types: [created]
+
+env:
+  PROJECT_ID: nlc-bot-36685
+  GKE_CLUSTER: alpha-service
+  GKE_ZONE: europe-west4-a
+
+jobs:
+  setup-build-publish-deploy:
+    name: Setup, Build, Publish, and Deploy
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    # Setup gcloud CLI
+    - uses: google-github-actions/setup-gcloud@v0.2.0
+      with:
+        service_account_key: ${{ secrets.GKE_SA_KEY }}
+        project_id: ${{ env.PROJECT_ID }}
+
+    # Configure Docker to use the gcloud command-line tool as a credential
+    # helper for authentication
+    - run: |-
+        gcloud --quiet auth configure-docker europe-west4-docker.pkg.dev
+
+    # Get the GKE credentials so we can deploy to the cluster
+    - uses: google-github-actions/get-gke-credentials@v0.2.1
+      with:
+        cluster_name: ${{ env.GKE_CLUSTER }}
+        location: ${{ env.GKE_ZONE }}
+        credentials: ${{ secrets.GKE_SA_KEY }}
+
+    # Build the Docker image
+    - name: Build
+      run: |-
+        docker image build -t europe-west4-docker.pkg.dev/$PROJECT_ID/alpha-bot/discord-bot -f ./build/dockerfile ./
+        docker image build -t europe-west4-docker.pkg.dev/$PROJECT_ID/alpha-bot/discord-bot -f ./build/dockerfile ./
+
+    # Push the Docker image to Google Container Registry
+    - name: Publish
+      run: |-
+        docker push europe-west4-docker.pkg.dev/$PROJECT_ID/alpha-bot/discord-bot
+    # Deploy the Docker image to the GKE cluster
+    - name: Deploy
+      run: |-
+        kubectl delete deployments/manager --namespace=alpha-bot || :
+        kubectl apply -f build/deployment.yaml
