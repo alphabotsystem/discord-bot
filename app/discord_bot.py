@@ -1250,6 +1250,10 @@ class Alpha(discord.AutoShardedClient):
 	async def flow(self, message, messageRequest, requestSlice):
 		sentMessages = []
 		try:
+			embed = discord.Embed(title="Flow command is being updated, and is currently unavailable.", description="All Alpha Pro subscribers using Alpha Flow will receive reimbursment in form of credit, or a refund if requested.", color=constants.colors["gray"])
+			sentMessages.append(await message.channel.send(embed=embed))
+			return (sentMessages, len(sentMessages))
+
 			arguments = requestSlice.split(" ")
 
 			if messageRequest.flow_available():
