@@ -997,6 +997,7 @@ class Alpha(discord.AutoShardedClient):
 							matchedId, orderId = footerText.lstrip("Id: ").split("/")
 							if accountId in [accountId, str(user.id)]:
 								order = await database.document("details/openPaperOrders/{}/{}".format(accountId, orderId)).get()
+								if order is None: return
 								order = order.to_dict()
 
 								currentPlatform = order["request"].get("currentPlatform")
