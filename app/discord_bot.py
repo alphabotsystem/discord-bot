@@ -2326,6 +2326,7 @@ class Alpha(discord.AutoShardedClient):
 
 	async def fetch_paper_leaderboard(self, message, messageRequest, requestSlice):
 		sentMessages = []
+		return (sentMessages, len(sentMessages))
 		try:
 			async with message.channel.typing():
 				paperTraders = await database.collection("accounts").where("paperTrader.balance", "!=", "").get()
