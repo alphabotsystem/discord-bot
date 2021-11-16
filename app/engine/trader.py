@@ -3,7 +3,7 @@ from time import time
 from orjson import dumps
 import aiohttp
 
-from TickerParserPy import TickerParser
+from TickerParser import TickerParser
 from helpers.utils import Utils
 
 

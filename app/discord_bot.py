@@ -23,7 +23,7 @@ from assets import static_storage
 from helpers.utils import Utils
 from helpers import constants
 
-from TickerParserPy import TickerParser
+from TickerParser import TickerParser
 from IchibotRelay import IchibotRelay
 from Processor import Processor
 from DatabaseConnector import DatabaseConnector
@@ -89,6 +89,8 @@ class Alpha(discord.AutoShardedClient):
 		print("[Startup]: Alpha Bot is online")
 
 		try:
+			await self.create_invite()
+
 			while not await self.accountProperties.check_status() or not await self.guildProperties.check_status():
 				await sleep(15)
 			self.botStatus[0] = True
@@ -150,6 +152,7 @@ class Alpha(discord.AutoShardedClient):
 					await self.database_sanity_check()
 					await self.update_guild_count()
 				if "1H" in timeframes:
+					await self.create_invite()
 					await self.security_check()
 
 			except CancelledError: return
@@ -362,6 +365,12 @@ class Alpha(discord.AutoShardedClient):
 			if properties is None: properties = {}
 
 		return properties
+
+	async def create_invite(self):
+		try:
+			channel = await client.fetch_channel(595515236878909441)
+			self.invite = await channel.create_invite(max_age=86400)
+		except: pass
 
 
 	# -------------------------
