@@ -2622,7 +2622,7 @@ async def reset_paper_balance(message, messageRequest, requestSlice):
 
 
 # -------------------------
-# Slash command groups
+# Slash command prelight
 # -------------------------
 
 async def create_request(ctx):
@@ -2633,6 +2633,8 @@ async def create_request(ctx):
 
 	# Ignore if user if locked in a prompt, or banned
 	if _authorId in lockedUsers or _authorId in constants.blockedUsers or _guildId in constants.blockedGuilds: return
+
+	await ctx.defer()
 
 	_accountProperties = {}
 	_guildProperties = await guildProperties.get(_guildId, {})
@@ -2681,6 +2683,7 @@ async def create_request(ctx):
 			forcedFetch = MessageRequest.create_guild_settings(forceFetch.to_dict())
 			if forcedFetch["settings"]["setup"]["completed"]:
 				request.guildProperties = forcedFetch
+				return request
 			elif not ctx.bot and ctx.interaction.channel.permissions_for(ctx.author).administrator:
 				embed = discord.Embed(title="Hello world!", description="Thanks for adding Alpha Bot to your Discord community, we're thrilled to have you onboard. We think you're going to love everything Alpha Bot can do. Before you start using it, you must complete a short setup process. Sign into your [Alpha Account](https://www.alphabotsystem.com/communities) and visit your [Communities Dashboard](https://www.alphabotsystem.com/communities) to begin.", color=constants.colors["pink"])
 				await ctx.respond(embed=embed)
@@ -2703,6 +2706,15 @@ prices = bot.create_group("volume", "Fetch stock and crypto 24-hour volume.")
 # -------------------------
 # Slash commands
 # -------------------------
+
+@bot.slash_command(name="status", description="Check system status.")
+async def status(ctx):
+	try:
+		response = await ctx.respond(content="Responsive")
+	except CancelledError: pass
+	except Exception:
+		print(format_exc())
+		if environ["PRODUCTION_MODE"]: logging.report_exception(user=f"{request.authorId}: /alpha {question}")
 
 @bot.slash_command(name="alpha", description="Look up definitions, wikipedia articles, and get answers to many other questions.")
 async def assistant(
@@ -2728,13 +2740,39 @@ async def assistant(
 		print(format_exc())
 		if environ["PRODUCTION_MODE"]: logging.report_exception(user=f"{request.authorId}: /alpha {question}")
 
+async def price(ctx, request, price):
+	currentRequest = task.get(task.get("currentPlatform"))
+	autodeleteOverride = {"id": "autoDeleteOverride", "value": "autodelete"} in currentRequest.get("preferences")
+	request.autodelete = request.autodelete or autodeleteOverride
+
+	payload, quoteText = await Processor.process_task("quote", request.authorId, task)
+
+	if payload is None or "quotePrice" not in payload:
+		errorMessage = "Requested price for `{}` is not available.".format(currentRequest.get("ticker").get("name")) if quoteText is None else quoteText
+		embed = discord.Embed(title=errorMessage, color=constants.colors["gray"])
+		embed.set_author(name="Data not available", icon_url=static_storage.icon_bw)
+		quoteMessage = await ctx.respond(embed=embed)
+		try: await quoteMessage.add_reaction("☑")
+		except: pass
+	else:
+		currentRequest = task.get(payload.get("platform"))
+		if payload.get("platform") in ["Alternative.me"]:
+			embed = discord.Embed(title="{} *({})*".format(payload["quotePrice"], payload["change"]), description=payload.get("quoteConvertedPrice", discord.embeds.EmptyEmbed), color=constants.colors[payload["messageColor"]])
+			embed.set_author(name=payload["title"], icon_url=payload.get("thumbnailUrl"))
+			embed.set_footer(text=payload["sourceText"])
+			await ctx.respond(embed=embed)
+		else:
+			embed = discord.Embed(title="{}{}".format(payload["quotePrice"], " *({})*".format(payload["change"]) if "change" in payload else ""), description=payload.get("quoteConvertedPrice", discord.embeds.EmptyEmbed), color=constants.colors[payload["messageColor"]])
+			embed.set_author(name=payload["title"], icon_url=payload.get("thumbnailUrl"))
+			embed.set_footer(text=payload["sourceText"])
+			await ctx.respond(embed=embed)
+
 @bot.slash_command(name="p", description="Fetch stock, crypto and forex quotes. Command for power users.")
-async def price(
+async def p(
 	ctx,
 	arguments: Option(str, "Request arguments starting with ticker id.", name="arguments")
 ):
 	try:
-		await ctx.defer()
 		request = await create_request(ctx)
 		if request is None: return
 
@@ -2747,31 +2785,7 @@ async def price(
 			await ctx.respond(embed=embed)
 			return
 
-		currentRequest = task.get(task.get("currentPlatform"))
-		autodeleteOverride = {"id": "autoDeleteOverride", "value": "autodelete"} in currentRequest.get("preferences")
-		request.autodelete = request.autodelete or autodeleteOverride
-
-		payload, quoteText = await Processor.process_task("quote", request.authorId, task)
-
-		if payload is None or "quotePrice" not in payload:
-			errorMessage = "Requested price for `{}` is not available.".format(currentRequest.get("ticker").get("name")) if quoteText is None else quoteText
-			embed = discord.Embed(title=errorMessage, color=constants.colors["gray"])
-			embed.set_author(name="Data not available", icon_url=static_storage.icon_bw)
-			quoteMessage = await ctx.respond(embed=embed)
-			try: await quoteMessage.add_reaction("☑")
-			except: pass
-		else:
-			currentRequest = task.get(payload.get("platform"))
-			if payload.get("platform") in ["Alternative.me"]:
-				embed = discord.Embed(title="{} *({})*".format(payload["quotePrice"], payload["change"]), description=payload.get("quoteConvertedPrice", discord.embeds.EmptyEmbed), color=constants.colors[payload["messageColor"]])
-				embed.set_author(name=payload["title"], icon_url=payload.get("thumbnailUrl"))
-				embed.set_footer(text=payload["sourceText"])
-				await ctx.respond(embed=embed)
-			else:
-				embed = discord.Embed(title="{}{}".format(payload["quotePrice"], " *({})*".format(payload["change"]) if "change" in payload else ""), description=payload.get("quoteConvertedPrice", discord.embeds.EmptyEmbed), color=constants.colors[payload["messageColor"]])
-				embed.set_author(name=payload["title"], icon_url=payload.get("thumbnailUrl"))
-				embed.set_footer(text=payload["sourceText"])
-				await ctx.respond(embed=embed)
+		await price(ctx, request, task)
 
 	except CancelledError: pass
 	except Exception:
@@ -2779,20 +2793,59 @@ async def price(
 		if environ["PRODUCTION_MODE"]: logging.report_exception(user=f"{request.authorId}: /p {arguments}")
 
 # @prices.command(name="crypto", description="Fetch crypto prices.")
-# async def price(
-# 	ctx,
-# 	ticker: Option(str, "Ticker id of an asset.", name="ticker"),
-# 	exchange: Option(str, "Exchange name to pull the quote from.", name="exchange") = None
-# ):
-# 	pass
+async def price_crypto(
+	ctx,
+	ticker: Option(str, "Ticker id of a crypto asset.", name="ticker"),
+	source: Option(str, "Source name to pull the quote from.", name="source", choices=["CoinGecko", "Exchange"], required=False, default=""),
+	exchange: Option(str, "Exchange name to pull the quote from.", name="exchange", required=False, default="")
+):
+	try:
+		request = await create_request(ctx)
+		if request is None: return
+
+		arguments = arguments.lower().split()
+		outputMessage, task = await Processor.process_quote_arguments(request, arguments[1:], tickerId=arguments[0].upper())
+
+		if outputMessage is not None:
+			embed = discord.Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/prices).", color=constants.colors["gray"])
+			embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
+			await ctx.respond(embed=embed)
+			return
+
+		await price(ctx, request, task)
+
+	except CancelledError: pass
+	except Exception:
+		print(format_exc())
+		if environ["PRODUCTION_MODE"]: logging.report_exception(user=f"{request.authorId}: /v {arguments}")
+
+async def volume(ctx, request, task):
+	currentRequest = task.get(task.get("currentPlatform"))
+	autodeleteOverride = {"id": "autoDeleteOverride", "value": "autodelete"} in currentRequest.get("preferences")
+	request.autodelete = request.autodelete or autodeleteOverride
+
+	payload, quoteText = await Processor.process_task("quote", request.authorId, task)
+
+	if payload is None or "quoteVolume" not in payload:
+		errorMessage = "Requested volume for `{}` is not available.".format(currentRequest.get("ticker").get("name")) if quoteText is None else quoteText
+		embed = discord.Embed(title=errorMessage, color=constants.colors["gray"])
+		embed.set_author(name="Data not available", icon_url=static_storage.icon_bw)
+		quoteMessage = await ctx.respond(embed=embed)
+		try: await quoteMessage.add_reaction("☑")
+		except: pass
+	else:
+		currentRequest = task.get(payload.get("platform"))
+		embed = discord.Embed(title=payload["quoteVolume"], description=payload.get("quoteConvertedVolume", discord.embeds.EmptyEmbed), color=constants.colors["orange"])
+		embed.set_author(name=payload["title"], icon_url=payload.get("thumbnailUrl"))
+		embed.set_footer(text=payload["sourceText"])
+		await ctx.respond(embed=embed)
 
 @bot.slash_command(name="v", description="Fetch stock and crypto 24-hour volume. Command for power users.")
-async def volume(
+async def v(
 	ctx,
 	arguments: Option(str, "Request arguments starting with ticker id.", name="arguments")
 ):
 	try:
-		await ctx.defer()
 		request = await create_request(ctx)
 		if request is None: return
 
@@ -2805,25 +2858,7 @@ async def volume(
 			await ctx.respond(embed=embed)
 			return
 
-		currentRequest = task.get(task.get("currentPlatform"))
-		autodeleteOverride = {"id": "autoDeleteOverride", "value": "autodelete"} in currentRequest.get("preferences")
-		request.autodelete = request.autodelete or autodeleteOverride
-
-		payload, quoteText = await Processor.process_task("quote", request.authorId, task)
-
-		if payload is None or "quoteVolume" not in payload:
-			errorMessage = "Requested volume for `{}` is not available.".format(currentRequest.get("ticker").get("name")) if quoteText is None else quoteText
-			embed = discord.Embed(title=errorMessage, color=constants.colors["gray"])
-			embed.set_author(name="Data not available", icon_url=static_storage.icon_bw)
-			quoteMessage = await ctx.respond(embed=embed)
-			try: await quoteMessage.add_reaction("☑")
-			except: pass
-		else:
-			currentRequest = task.get(payload.get("platform"))
-			embed = discord.Embed(title=payload["quoteVolume"], description=payload.get("quoteConvertedVolume", discord.embeds.EmptyEmbed), color=constants.colors["orange"])
-			embed.set_author(name=payload["title"], icon_url=payload.get("thumbnailUrl"))
-			embed.set_footer(text=payload["sourceText"])
-			await ctx.respond(embed=embed)
+		await volume(ctx, request, task)
 
 	except CancelledError: pass
 	except Exception:
@@ -2838,7 +2873,6 @@ async def volume_crypto(
 	exchange: Option(str, "Exchange name to pull the quote from.", name="exchange", required=False, default="")
 ):
 	try:
-		await ctx.defer()
 		request = await create_request(ctx)
 		if request is None: return
 
@@ -2851,30 +2885,38 @@ async def volume_crypto(
 			await ctx.respond(embed=embed)
 			return
 
-		currentRequest = task.get(task.get("currentPlatform"))
-		autodeleteOverride = {"id": "autoDeleteOverride", "value": "autodelete"} in currentRequest.get("preferences")
-		request.autodelete = request.autodelete or autodeleteOverride
-
-		payload, quoteText = await Processor.process_task("quote", request.authorId, task)
-
-		if payload is None or "quoteVolume" not in payload:
-			errorMessage = "Requested volume for `{}` is not available.".format(currentRequest.get("ticker").get("name")) if quoteText is None else quoteText
-			embed = discord.Embed(title=errorMessage, color=constants.colors["gray"])
-			embed.set_author(name="Data not available", icon_url=static_storage.icon_bw)
-			quoteMessage = await ctx.respond(embed=embed)
-			try: await quoteMessage.add_reaction("☑")
-			except: pass
-		else:
-			currentRequest = task.get(payload.get("platform"))
-			embed = discord.Embed(title=payload["quoteVolume"], description=payload.get("quoteConvertedVolume", discord.embeds.EmptyEmbed), color=constants.colors["orange"])
-			embed.set_author(name=payload["title"], icon_url=payload.get("thumbnailUrl"))
-			embed.set_footer(text=payload["sourceText"])
-			await ctx.respond(embed=embed)
+		await volume(ctx, request, task)
 
 	except CancelledError: pass
 	except Exception:
 		print(format_exc())
-		if environ["PRODUCTION_MODE"]: logging.report_exception(user=f"{request.authorId}: /v {ticker} {arguments}")
+		if environ["PRODUCTION_MODE"]: logging.report_exception(user=f"{request.authorId}: /volume crypto {ticker} {arguments}")
+
+@prices.command(name="stocks", description="Fetch 24-hour volume of stocks.")
+async def volume_stocks(
+	ctx,
+	ticker: Option(str, "Ticker id of a stock.", name="ticker"),
+	exchange: Option(str, "Exchange name to pull the quote from.", name="exchange", required=False, default="")
+):
+	try:
+		request = await create_request(ctx)
+		if request is None: return
+
+		arguments = " ".join([ticker, exchange]).lower().split()
+		outputMessage, task = await Processor.process_quote_arguments(request, arguments[1:], tickerId=arguments[0].upper(), platformQueue=["CoinGecko", "CCXT"])
+
+		if outputMessage is not None:
+			embed = discord.Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/volume).", color=constants.colors["gray"])
+			embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
+			await ctx.respond(embed=embed)
+			return
+
+		await volume(ctx, request, task)
+
+	except CancelledError: pass
+	except Exception:
+		print(format_exc())
+		if environ["PRODUCTION_MODE"]: logging.report_exception(user=f"{request.authorId}: /volume stocks {ticker} {arguments}")
 
 @bot.slash_command(name="convert", description="Convert between currencies, rates and assets.")
 async def convert(
@@ -2884,7 +2926,6 @@ async def convert(
 	amount: Option(float, "Amount to convert.", name="amount")
 ):
 	try:
-		await ctx.defer()
 		request = await create_request(ctx)
 		if request is None: return
 
