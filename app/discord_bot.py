@@ -14,7 +14,7 @@ from zmq import NOBLOCK
 from traceback import format_exc
 
 import discord
-from discord.commands import Option
+from discord.commands import Option, permissions
 from google.cloud.firestore import AsyncClient as FirestoreAsnycClient
 from google.cloud.firestore import Client as FirestoreClient
 from google.cloud.firestore import Increment, DELETE_FIELD
@@ -28,11 +28,15 @@ from TickerParser import TickerParser
 from IchibotRelay import IchibotRelay
 from Processor import Processor
 from DatabaseConnector import DatabaseConnector
-from engine.assistant import Assistant
 from engine.presets import Presets
 from engine.trader import PaperTrader
 
 from MessageRequest import MessageRequest
+
+from commands.assistant import AlphaCommand
+from commands.price import PriceCommand
+from commands.volume import VolumeCommand
+from commands.convert import ConvertCommand
 
 
 database = FirestoreAsnycClient()
@@ -472,44 +476,7 @@ async def on_message(message):
 						await message.channel.send(embed=embed)
 					return
 
-		if messageRequest.content.startswith("a "):
-			if message.author.bot: return
-
-			command = messageRequest.content.split(" ", 1)[1]
-			if message.author.id == 361916376069439490:
-				if command == "user":
-					await message.delete()
-					settings = deepcopy(messageRequest.accountProperties)
-					settings.pop("commandPresets", None)
-					if "oauth" in settings: settings["oauth"]["discord"].pop("accessToken", None)
-					settings.pop("paperTrader", None)
-					await message.author.send(content="```json\n{}\n```".format(dumps(settings, option=OPT_INDENT_2).decode()))
-				elif command == "guild":
-					await message.delete()
-					settings = deepcopy(messageRequest.guildProperties)
-					settings["addons"]["satellites"].pop("added", None)
-					await message.author.send(content="```json\n{}\n```".format(dumps(settings, option=OPT_INDENT_2).decode()))
-				elif command == "cache":
-					cacheMessage = "From {:%m/%d/%y %H:%M:%S:%f} to {:%m/%d/%y %H:%M:%S:%f}".format(bot.cached_messages[0].created_at, bot.cached_messages[-1].created_at)
-					await message.channel.send(content=cacheMessage)
-				elif command == "ping":
-					try: outputMessage, _ = await Processor.process_quote_arguments(messageRequest, [], tickerId="BTCUSDT")
-					except: outputMessage = "timeout"
-					checkpoint4 = time() * 1000
-					status4 = "ok" if outputMessage is None else "err"
-					created = message.created_at.timestamp() * 1000
-					checkpointMessage = "Message received: {}ms\nGuild fetched: {}ms\nUser fetched: {}ms\nParser: {}ms ({})".format(_checkpoint1 - created, _checkpoint2 - created, _checkpoint3 - created, checkpoint4 - created, status4)
-					await message.channel.send(content=checkpointMessage)
-				elif command.startswith("del"):
-					if message.guild.me.guild_permissions.manage_messages:
-						parameters = messageRequest.content.split("del ", 1)
-						if len(parameters) == 2:
-							await message.channel.purge(limit=int(parameters[1]) + 1, bulk=True)
-				elif command.startswith("say"):
-					say = message.content.split("say ", 1)
-					await message.channel.send(content=say[1])
-
-		elif isCommand:
+		if isCommand:
 			if messageRequest.content.startswith(("alpha ", "alpha, ", "@alpha ", "@alpha, ")):
 				await deprecation_message(message, "alpha")
 
@@ -845,14 +812,6 @@ async def on_message(message):
 				await database.document("discord/statistics").set({_snapshot: {"vote": Increment(1)}}, merge=True)
 				await finish_request(message, messageRequest, 1, sentMessages)
 
-		elif not message.author.bot:
-			if messageRequest.guildProperties["settings"]["assistant"]["enabled"]:
-				response = assistant.funnyReplies(messageRequest.content)
-				if response is not None:
-					try: await message.channel.send(content=response)
-					except: pass
-					await database.document("discord/statistics").set({_snapshot: {"alpha": Increment(1)}}, merge=True)
-
 	except CancelledError: pass
 	except Exception:
 		print(format_exc())
@@ -1006,24 +965,6 @@ async def finish_request(message, messageRequest, weight, sentMessages, force=Fa
 			if messageRequest.autodelete: await message.delete()
 			else: await message.remove_reaction("☑", message.channel.guild.me)
 		except: pass
-
-
-# -------------------------
-# Help functionality
-# -------------------------
-
-async def help(message, messageRequest):
-	embed = discord.Embed(title=":wave: Introduction", description="Alpha Bot is the world's most popular Discord bot for requesting charts, set price alerts, and more. Using Alpha Bot is as simple as typing a short command into any Discord channel the bot has access to.", color=constants.colors["light blue"])
-	embed.add_field(name=":chart_with_upwards_trend: Charts", value="Easy access to on-demand TradingView, TradingLite, GoCharting, Finviz, and Bookmap charts. Learn more about [charting capabilities](https://www.alphabotsystem.com/guide/charting) on our website.", inline=False)
-	embed.add_field(name=":dart: Ichibot integration", value="Trade cryptocurrencies with Ichibot, a best-in-class order execution client. Learn more about [Ichibot](https://www.alphabotsystem.com/guide/ichibot) on our website.", inline=False)
-	embed.add_field(name=":bell: Price Alerts", value="Price alerts, right in your community. Learn more about [price alerts](https://www.alphabotsystem.com/pro/price-alerts) on our website.", inline=False)
-	embed.add_field(name=":joystick: Paper Trader", value="Execute paper trades through Alpha Bot. Learn more about [paper trader](https://www.alphabotsystem.com/guide/paper-trader) on our website.", inline=False)
-	embed.add_field(name=":ocean: Alpha Flow", value="Inform your stock options trading with aggregated BlackBox Stocks data. Learn more about [Alpha Flow](https://www.alphabotsystem.com/pro/flow) on our website.", inline=False)
-	embed.add_field(name=":money_with_wings: Prices & Asset Details", value="Prices and details for tens of thousands of tickers. Learn more about [prices](https://www.alphabotsystem.com/guide/prices) and [asset details](https://www.alphabotsystem.com/guide/asset-details) on our website.", inline=False)
-	embed.add_field(name=":fire: There's more!", value="A [full guide](https://www.alphabotsystem.com/guide) is available on our website.", inline=False)
-	embed.add_field(name=":tada: Official Alpha channels", value="[Join our Discord community](https://discord.gg/GQeDE85) or [Follow us on Twitter @AlphaBotSystem](https://twitter.com/AlphaBotSystem).", inline=False)
-	embed.set_footer(text="Use \"alpha help\" to pull up this list again.")
-	await message.channel.send(embed=embed)
 
 
 # -------------------------
@@ -2653,7 +2594,7 @@ async def create_request(ctx):
 		guildProperties=_guildProperties
 	)
 
-	hasPermissions = True if request.guildId == -1 else (ctx.interaction.permissions.send_messages and ctx.interaction.permissions.embed_links and ctx.interaction.permissions.attach_files and ctx.interaction.permissions.add_reactions and ctx.interaction.permissions.use_external_emojis and ctx.interaction.permissions.manage_messages)
+	hasPermissions = True if request.guildId == -1 else (ctx.interaction.permissions.embed_links and ctx.interaction.permissions.attach_files and ctx.interaction.permissions.add_reactions and ctx.interaction.permissions.use_external_emojis and ctx.interaction.permissions.manage_messages)
 
 	if request.guildId != -1:
 		if not hasPermissions:
@@ -2663,7 +2604,7 @@ async def create_request(ctx):
 			p4 = ctx.interaction.permissions.use_external_emojis
 			p5 = ctx.interaction.permissions.manage_messages
 			errorText = "Alpha Bot is missing one or more critical permissions."
-			permissionsText = "Send messages: {}\nEmbed links: {}\nAttach files: {}\nAdd reactions: {}\nUse external emojis: {}\nManage Messages: {}".format(":white_check_mark:" if p1 else ":x:", ":white_check_mark:" if p2 else ":x:", ":white_check_mark:" if p3 else ":x:", ":white_check_mark:" if p4 else ":x:", ":white_check_mark:" if p5 else ":x:")
+			permissionsText = "Embed links: {}\nAttach files: {}\nAdd reactions: {}\nUse external emojis: {}\nManage Messages: {}".format(":white_check_mark:" if p1 else ":x:", ":white_check_mark:" if p2 else ":x:", ":white_check_mark:" if p3 else ":x:", ":white_check_mark:" if p4 else ":x:", ":white_check_mark:" if p5 else ":x:")
 			embed = discord.Embed(title=errorText, description=permissionsText, color=0x000000)
 			embed.add_field(name="Frequently asked questions", value="[alphabotsystem.com/faq](https://www.alphabotsystem.com/faq)", inline=False)
 			embed.add_field(name="Alpha Discord guild", value="[Join now](https://discord.gg/GQeDE85)", inline=False)
@@ -2696,258 +2637,57 @@ async def create_request(ctx):
 
 
 # -------------------------
-# Slash command groups
-# -------------------------
-
-# prices = bot.create_group("price", "Fetch stock and crypto prices, forex rates, and other instrument data.")
-prices = bot.create_group("volume", "Fetch stock and crypto 24-hour volume.")
-
-
-# -------------------------
 # Slash commands
 # -------------------------
 
-@bot.slash_command(name="status", description="Check system status.")
-async def status(ctx):
-	try:
-		response = await ctx.respond(content="Responsive")
-	except CancelledError: pass
-	except Exception:
-		print(format_exc())
-		if environ["PRODUCTION_MODE"]: logging.report_exception(user=f"{request.authorId}: /alpha {question}")
+bot.add_cog(AlphaCommand(bot, create_request, database))
+bot.add_cog(PriceCommand(bot, create_request, database))
+bot.add_cog(VolumeCommand(bot, create_request, database))
+bot.add_cog(ConvertCommand(bot, create_request, database))
 
-@bot.slash_command(name="alpha", description="Look up definitions, wikipedia articles, and get answers to many other questions.")
-async def assistant(
-	ctx,
-	question: Option(str, "Question you want to ask.", name="question")
-):
-	try:
-		request = await create_request(ctx)
-		if request is None: return
+# @bot.slash_command(name="sudo", default_permission=False)
+# @permissions.permission(user_id=361916376069439490, permission=True)
+# async def sudo(ctx, command):
+# 	try:
+# 		request = await create_request(ctx)
+# 		if request is None: return
 
-		if len(question) > 500: return
-		response = await bot.loop.run_in_executor(None, assistant.process_reply, question, request.guildProperties["settings"]["assistant"]["enabled"])
+# 		if command == "user":
+# 			await message.delete()
+# 			settings = deepcopy(messageRequest.accountProperties)
+# 			settings.pop("commandPresets", None)
+# 			if "oauth" in settings: settings["oauth"]["discord"].pop("accessToken", None)
+# 			settings.pop("paperTrader", None)
+# 			await message.author.send(content="```json\n{}\n```".format(dumps(settings, option=OPT_INDENT_2).decode()))
+# 		elif command == "guild":
+# 			await message.delete()
+# 			settings = deepcopy(messageRequest.guildProperties)
+# 			settings["addons"]["satellites"].pop("added", None)
+# 			await message.author.send(content="```json\n{}\n```".format(dumps(settings, option=OPT_INDENT_2).decode()))
+# 		elif command == "cache":
+# 			cacheMessage = "From {:%m/%d/%y %H:%M:%S:%f} to {:%m/%d/%y %H:%M:%S:%f}".format(bot.cached_messages[0].created_at, bot.cached_messages[-1].created_at)
+# 			await message.channel.send(content=cacheMessage)
+# 		elif command == "ping":
+# 			try: outputMessage, _ = await Processor.process_quote_arguments(messageRequest, [], tickerId="BTCUSDT")
+# 			except: outputMessage = "timeout"
+# 			checkpoint4 = time() * 1000
+# 			status4 = "ok" if outputMessage is None else "err"
+# 			created = message.created_at.timestamp() * 1000
+# 			checkpointMessage = "Message received: {}ms\nGuild fetched: {}ms\nUser fetched: {}ms\nParser: {}ms ({})".format(_checkpoint1 - created, _checkpoint2 - created, _checkpoint3 - created, checkpoint4 - created, status4)
+# 			await message.channel.send(content=checkpointMessage)
+# 		elif command.startswith("del"):
+# 			if message.guild.me.guild_permissions.manage_messages:
+# 				parameters = messageRequest.content.split("del ", 1)
+# 				if len(parameters) == 2:
+# 					await message.channel.purge(limit=int(parameters[1]) + 1, bulk=True)
+# 		elif command.startswith("say"):
+# 			say = message.content.split("say ", 1)
+# 			await message.channel.send(content=say[1])
 
-		if response is not None:
-			await ctx.interaction.edit_original_message(content=response)
-		else:
-			await ctx.interaction.edit_original_message(content="Sorry, I can't help you with that.")
-
-		await database.document("discord/statistics").set({request.snapshot: {"alpha": Increment(1)}}, merge=True)
-
-	except CancelledError: pass
-	except Exception:
-		print(format_exc())
-		if environ["PRODUCTION_MODE"]: logging.report_exception(user=f"{request.authorId}: /alpha {question}")
-
-async def price(ctx, request, task):
-	currentRequest = task.get(task.get("currentPlatform"))
-	autodeleteOverride = {"id": "autoDeleteOverride", "value": "autodelete"} in currentRequest.get("preferences")
-	request.autodelete = request.autodelete or autodeleteOverride
-
-	payload, quoteText = await Processor.process_task("quote", request.authorId, task)
-
-	if payload is None or "quotePrice" not in payload:
-		errorMessage = "Requested price for `{}` is not available.".format(currentRequest.get("ticker").get("name")) if quoteText is None else quoteText
-		embed = discord.Embed(title=errorMessage, color=constants.colors["gray"])
-		embed.set_author(name="Data not available", icon_url=static_storage.icon_bw)
-		quoteMessage = await ctx.interaction.edit_original_message(embed=embed)
-		try: await quoteMessage.add_reaction("☑")
-		except: pass
-	else:
-		currentRequest = task.get(payload.get("platform"))
-		if payload.get("platform") in ["Alternative.me"]:
-			embed = discord.Embed(title="{} *({})*".format(payload["quotePrice"], payload["change"]), description=payload.get("quoteConvertedPrice", discord.embeds.EmptyEmbed), color=constants.colors[payload["messageColor"]])
-			embed.set_author(name=payload["title"], icon_url=payload.get("thumbnailUrl"))
-			embed.set_footer(text=payload["sourceText"])
-			await ctx.interaction.edit_original_message(embed=embed)
-		else:
-			embed = discord.Embed(title="{}{}".format(payload["quotePrice"], " *({})*".format(payload["change"]) if "change" in payload else ""), description=payload.get("quoteConvertedPrice", discord.embeds.EmptyEmbed), color=constants.colors[payload["messageColor"]])
-			embed.set_author(name=payload["title"], icon_url=payload.get("thumbnailUrl"))
-			embed.set_footer(text=payload["sourceText"])
-			await ctx.interaction.edit_original_message(embed=embed)
-
-@bot.slash_command(name="p", description="Fetch stock, crypto and forex quotes. Command for power users.")
-async def p(
-	ctx,
-	arguments: Option(str, "Request arguments starting with ticker id.", name="arguments")
-):
-	try:
-		request = await create_request(ctx)
-		if request is None: return
-
-		arguments = arguments.lower().split()
-		outputMessage, task = await Processor.process_quote_arguments(request, arguments[1:], tickerId=arguments[0].upper())
-
-		if outputMessage is not None:
-			embed = discord.Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/prices).", color=constants.colors["gray"])
-			embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
-			await ctx.interaction.edit_original_message(embed=embed)
-			return
-
-		await price(ctx, request, task)
-
-	except CancelledError: pass
-	except Exception:
-		print(format_exc())
-		if environ["PRODUCTION_MODE"]: logging.report_exception(user=f"{request.authorId}: /p {arguments}")
-
-# @prices.command(name="crypto", description="Fetch crypto prices.")
-async def price_crypto(
-	ctx,
-	ticker: Option(str, "Ticker id of a crypto asset.", name="ticker"),
-	source: Option(str, "Source name to pull the quote from.", name="source", choices=["CoinGecko", "Exchange"], required=False, default=""),
-	exchange: Option(str, "Exchange name to pull the quote from.", name="exchange", required=False, default="")
-):
-	try:
-		request = await create_request(ctx)
-		if request is None: return
-
-		arguments = arguments.lower().split()
-		outputMessage, task = await Processor.process_quote_arguments(request, arguments[1:], tickerId=arguments[0].upper())
-
-		if outputMessage is not None:
-			embed = discord.Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/prices).", color=constants.colors["gray"])
-			embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
-			await ctx.interaction.edit_original_message(embed=embed)
-			return
-
-		await price(ctx, request, task)
-
-	except CancelledError: pass
-	except Exception:
-		print(format_exc())
-		if environ["PRODUCTION_MODE"]: logging.report_exception(user=f"{request.authorId}: /v {arguments}")
-
-async def volume(ctx, request, task):
-	currentRequest = task.get(task.get("currentPlatform"))
-	autodeleteOverride = {"id": "autoDeleteOverride", "value": "autodelete"} in currentRequest.get("preferences")
-	request.autodelete = request.autodelete or autodeleteOverride
-
-	payload, quoteText = await Processor.process_task("quote", request.authorId, task)
-
-	if payload is None or "quoteVolume" not in payload:
-		errorMessage = "Requested volume for `{}` is not available.".format(currentRequest.get("ticker").get("name")) if quoteText is None else quoteText
-		embed = discord.Embed(title=errorMessage, color=constants.colors["gray"])
-		embed.set_author(name="Data not available", icon_url=static_storage.icon_bw)
-		quoteMessage = await ctx.interaction.edit_original_message(embed=embed)
-		try: await quoteMessage.add_reaction("☑")
-		except: pass
-	else:
-		currentRequest = task.get(payload.get("platform"))
-		embed = discord.Embed(title=payload["quoteVolume"], description=payload.get("quoteConvertedVolume", discord.embeds.EmptyEmbed), color=constants.colors["orange"])
-		embed.set_author(name=payload["title"], icon_url=payload.get("thumbnailUrl"))
-		embed.set_footer(text=payload["sourceText"])
-		await ctx.interaction.edit_original_message(embed=embed)
-
-@bot.slash_command(name="v", description="Fetch stock and crypto 24-hour volume. Command for power users.")
-async def v(
-	ctx,
-	arguments: Option(str, "Request arguments starting with ticker id.", name="arguments")
-):
-	try:
-		request = await create_request(ctx)
-		if request is None: return
-
-		arguments = arguments.lower().split()
-		outputMessage, task = await Processor.process_quote_arguments(request, arguments[1:], tickerId=arguments[0].upper())
-
-		if outputMessage is not None:
-			embed = discord.Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/volume).", color=constants.colors["gray"])
-			embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
-			await ctx.interaction.edit_original_message(embed=embed)
-			return
-
-		await volume(ctx, request, task)
-
-	except CancelledError: pass
-	except Exception:
-		print(format_exc())
-		if environ["PRODUCTION_MODE"]: logging.report_exception(user=f"{request.authorId}: /v {arguments}")
-
-@prices.command(name="crypto", description="Fetch 24-hour volume of crypto assets.")
-async def volume_crypto(
-	ctx,
-	ticker: Option(str, "Ticker id of a crypto asset.", name="ticker"),
-	source: Option(str, "Source name to pull the quote from.", name="source", choices=["CoinGecko", "Exchange"], required=False, default=""),
-	exchange: Option(str, "Exchange name to pull the quote from.", name="exchange", required=False, default="")
-):
-	try:
-		request = await create_request(ctx)
-		if request is None: return
-
-		arguments = " ".join([ticker, source, exchange]).lower().split()
-		outputMessage, task = await Processor.process_quote_arguments(request, arguments[1:], tickerId=arguments[0].upper(), platformQueue=["CoinGecko", "CCXT"])
-
-		if outputMessage is not None:
-			embed = discord.Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/volume).", color=constants.colors["gray"])
-			embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
-			await ctx.interaction.edit_original_message(embed=embed)
-			return
-
-		await volume(ctx, request, task)
-
-	except CancelledError: pass
-	except Exception:
-		print(format_exc())
-		if environ["PRODUCTION_MODE"]: logging.report_exception(user=f"{request.authorId}: /volume crypto {ticker} {arguments}")
-
-@prices.command(name="stocks", description="Fetch 24-hour volume of stocks.")
-async def volume_stocks(
-	ctx,
-	ticker: Option(str, "Ticker id of a stock.", name="ticker"),
-	exchange: Option(str, "Exchange name to pull the quote from.", name="exchange", required=False, default="")
-):
-	try:
-		request = await create_request(ctx)
-		if request is None: return
-
-		arguments = " ".join([ticker, exchange]).lower().split()
-		outputMessage, task = await Processor.process_quote_arguments(request, arguments[1:], tickerId=arguments[0].upper(), platformQueue=["IEXC"])
-
-		if outputMessage is not None:
-			embed = discord.Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/volume).", color=constants.colors["gray"])
-			embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
-			await ctx.interaction.edit_original_message(embed=embed)
-			return
-
-		await volume(ctx, request, task)
-
-	except CancelledError: pass
-	except Exception:
-		print(format_exc())
-		if environ["PRODUCTION_MODE"]: logging.report_exception(user=f"{request.authorId}: /volume stocks {ticker} {arguments}")
-
-@bot.slash_command(name="convert", description="Convert between currencies, rates and assets.")
-async def convert(
-	ctx,
-	fromTicker: Option(str, "Ticker to convert from.", name="from"),
-	toTicker: Option(str, "Ticker to convert to.", name="to"),
-	amount: Option(float, "Amount to convert.", name="amount")
-):
-	try:
-		request = await create_request(ctx)
-		if request is None: return
-
-		payload, quoteText = await Processor.process_conversion(request, fromTicker.upper(), toTicker.upper(), amount)
-
-		if payload is None:
-			errorMessage = "Requested conversion is not available." if quoteText is None else quoteText
-			embed = discord.Embed(title=errorMessage, color=constants.colors["gray"])
-			embed.set_author(name="Conversion not available", icon_url=static_storage.icon_bw)
-			quoteMessage = await ctx.interaction.edit_original_message(embed=embed)
-			try: await quoteMessage.add_reaction("☑")
-			except: pass
-		else:
-			embed = discord.Embed(title="{} ≈ {}".format(payload["quotePrice"], payload["quoteConvertedPrice"]), color=constants.colors[payload["messageColor"]])
-			embed.set_author(name="Conversion", icon_url=static_storage.icon)
-			await ctx.interaction.edit_original_message(embed=embed)
-
-	except CancelledError: pass
-	except Exception:
-		print(format_exc())
-		if environ["PRODUCTION_MODE"]: logging.report_exception(user=f"{request.authorId}: /convert {fromTicker} {toTicker} {amount}")
-
+# 	except CancelledError: pass
+# 	except Exception:
+# 		print(format_exc())
+# 		if environ["PRODUCTION_MODE"]: logging.report_exception(user=f"{ctx.author.id}: /sudo {arguments}")
 
 # -------------------------
 # Error handling
@@ -3001,7 +2741,6 @@ async def job_queue():
 
 botStatus = [False, False]
 
-assistant = Assistant()
 paperTrader = PaperTrader()
 ichibotRelay = IchibotRelay()
 

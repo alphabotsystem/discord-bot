@@ -1,6 +1,14 @@
 from os import environ
 from json import loads, load
 from random import choice
+from asyncio import CancelledError
+from traceback import format_exc
+
+import discord
+from discord.commands import slash_command, Option
+from discord.ext import commands
+
+from google.cloud.firestore import Increment
 
 from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
@@ -8,14 +16,45 @@ from google.auth.transport.grpc import secure_authorized_channel
 from google.assistant.embedded.v1alpha2 import embedded_assistant_pb2, embedded_assistant_pb2_grpc
 
 from helpers import constants
+from assets import static_storage
+from Processor import Processor
 
 
-class Assistant(object):
-	def __init__(self):
+class AlphaCommand(commands.Cog):
+	def __init__(self, bot, create_request, database):
+		self.bot = bot
+		self.create_request = create_request
+		self.database = database
+
 		assistantCredentials = Credentials(token=None, **loads(environ["GOOGLE_ASSISTANT_OAUTH"]))
 		http_request = Request()
 		assistantCredentials.refresh(http_request)
 		self.grpc_channel = secure_authorized_channel(assistantCredentials, http_request, "embeddedassistant.googleapis.com")
+
+	@slash_command(name="alpha", description="Look up definitions, wikipedia articles, and get answers to many other questions.")
+	async def assistant(
+		self,
+		ctx,
+		question: Option(str, "Question you want to ask.", name="question")
+	):
+		try:
+			request = await self.create_request(ctx)
+			if request is None: return
+
+			if len(question) > 500: return
+			response = await bot.loop.run_in_executor(None, assistant.process_reply, question, request.guildProperties["settings"]["assistant"]["enabled"])
+
+			if response is not None:
+				await ctx.interaction.edit_original_message(content=response)
+			else:
+				await ctx.interaction.edit_original_message(content="Sorry, I can't help you with that.")
+
+			await self.database.document("discord/statistics").set({request.snapshot: {"alpha": Increment(1)}}, merge=True)
+
+		except CancelledError: pass
+		except Exception:
+			print(format_exc())
+			if environ["PRODUCTION_MODE"]: logging.report_exception(user=f"{ctx.author.id}: /alpha {question}")
 
 	def process_reply(self, question, hasPermissions):
 		response = self.funnyReplies(question.lower())
@@ -44,6 +83,7 @@ class Assistant(object):
 			for trigger in constants.funnyReplies[response]:
 				if raw == trigger: return response
 		return None
+
 
 class GoogleAssistant(object):
 	"""Sample Assistant that supports text based conversations.
