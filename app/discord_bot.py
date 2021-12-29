@@ -2657,13 +2657,13 @@ async def create_request(ctx):
 
 	if request.guildId != -1:
 		if not hasPermissions:
-			p2 = ctx.interaction.permissions.embed_links
-			p3 = ctx.interaction.permissions.attach_files
-			p4 = ctx.interaction.permissions.add_reactions
-			p5 = ctx.interaction.permissions.use_external_emojis
-			p6 = ctx.interaction.permissions.manage_messages
+			p1 = ctx.interaction.permissions.embed_links
+			p2 = ctx.interaction.permissions.attach_files
+			p3 = ctx.interaction.permissions.add_reactions
+			p4 = ctx.interaction.permissions.use_external_emojis
+			p5 = ctx.interaction.permissions.manage_messages
 			errorText = "Alpha Bot is missing one or more critical permissions."
-			permissionsText = "Send messages: {}\nEmbed links: {}\nAttach files: {}\nAdd reactions: {}\nUse external emojis: {}\nManage Messages: {}".format(":white_check_mark:" if p1 else ":x:", ":white_check_mark:" if p2 else ":x:", ":white_check_mark:" if p3 else ":x:", ":white_check_mark:" if p4 else ":x:", ":white_check_mark:" if p5 else ":x:", ":white_check_mark:" if p6 else ":x:")
+			permissionsText = "Send messages: {}\nEmbed links: {}\nAttach files: {}\nAdd reactions: {}\nUse external emojis: {}\nManage Messages: {}".format(":white_check_mark:" if p1 else ":x:", ":white_check_mark:" if p2 else ":x:", ":white_check_mark:" if p3 else ":x:", ":white_check_mark:" if p4 else ":x:", ":white_check_mark:" if p5 else ":x:")
 			embed = discord.Embed(title=errorText, description=permissionsText, color=0x000000)
 			embed.add_field(name="Frequently asked questions", value="[alphabotsystem.com/faq](https://www.alphabotsystem.com/faq)", inline=False)
 			embed.add_field(name="Alpha Discord guild", value="[Join now](https://discord.gg/GQeDE85)", inline=False)
