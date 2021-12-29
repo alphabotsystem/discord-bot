@@ -38,9 +38,7 @@ class VolumeCommand(commands.Cog):
 			errorMessage = "Requested volume for `{}` is not available.".format(currentRequest.get("ticker").get("name")) if quoteText is None else quoteText
 			embed = discord.Embed(title=errorMessage, color=constants.colors["gray"])
 			embed.set_author(name="Data not available", icon_url=static_storage.icon_bw)
-			quoteMessage = await ctx.interaction.edit_original_message(embed=embed)
-			try: await quoteMessage.add_reaction("☑")
-			except: pass
+			await ctx.interaction.edit_original_message(embed=embed)
 		else:
 			currentRequest = task.get(payload.get("platform"))
 			embed = discord.Embed(title=payload["quoteVolume"], description=payload.get("quoteConvertedVolume", discord.embeds.EmptyEmbed), color=constants.colors["orange"])

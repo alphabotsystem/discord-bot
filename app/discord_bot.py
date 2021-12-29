@@ -37,6 +37,7 @@ from commands.assistant import AlphaCommand
 from commands.price import PriceCommand
 from commands.volume import VolumeCommand
 from commands.convert import ConvertCommand
+from commands.details import DetailsCommand
 
 
 database = FirestoreAsnycClient()
@@ -96,7 +97,7 @@ async def on_guild_remove(guild):
 		if environ["PRODUCTION_MODE"]: logging.report_exception(user=str(guild.id))
 
 async def update_guild_count():
-	if environ["PRODUCTION_MODE"] and len(bot.guilds) > 12000:
+	if environ["PRODUCTION_MODE"] and len(bot.guilds) > 20000:
 		t = datetime.now().astimezone(utc)
 		await database.document("discord/statistics").set({"{}-{:02d}".format(t.year, t.month): {"servers": len(bot.guilds)}}, merge=True)
 		post("https://top.gg/api/bots/{}/stats".format(bot.user.id), data={"server_count": len(bot.guilds)}, headers={"Authorization": environ["TOPGG_KEY"]})
@@ -1460,6 +1461,8 @@ async def alert(message, messageRequest, requestSlice):
 async def price_old(message, messageRequest, requestSlice):
 	sentMessages = []
 	try:
+		await deprecation_message(message, "p")
+
 		arguments = requestSlice.split(" ")
 
 		async with message.channel.typing():
@@ -1598,6 +1601,8 @@ async def convert_old(message, messageRequest, requestSlice):
 async def details(message, messageRequest, requestSlice):
 	sentMessages = []
 	try:
+		await deprecation_message(message, "info")
+
 		arguments = requestSlice.split(" ")
 
 		async with message.channel.typing():
@@ -2626,6 +2631,7 @@ bot.add_cog(AlphaCommand(bot, create_request, database, logging))
 bot.add_cog(PriceCommand(bot, create_request, database, logging))
 bot.add_cog(VolumeCommand(bot, create_request, database, logging))
 bot.add_cog(ConvertCommand(bot, create_request, database, logging))
+bot.add_cog(DetailsCommand(bot, create_request, database, logging))
 
 # @bot.slash_command(name="sudo", default_permission=False)
 # @permissions.permission(user_id=361916376069439490, permission=True)

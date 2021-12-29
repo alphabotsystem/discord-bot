@@ -38,9 +38,7 @@ class PriceCommand(commands.Cog):
 			errorMessage = "Requested price for `{}` is not available.".format(currentRequest.get("ticker").get("name")) if quoteText is None else quoteText
 			embed = discord.Embed(title=errorMessage, color=constants.colors["gray"])
 			embed.set_author(name="Data not available", icon_url=static_storage.icon_bw)
-			quoteMessage = await ctx.interaction.edit_original_message(embed=embed)
-			try: await quoteMessage.add_reaction("☑")
-			except: pass
+			await ctx.interaction.edit_original_message(embed=embed)
 		else:
 			currentRequest = task.get(payload.get("platform"))
 			if payload.get("platform") in ["Alternative.me"]:

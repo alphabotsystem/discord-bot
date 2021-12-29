@@ -38,9 +38,7 @@ class ConvertCommand(commands.Cog):
 				errorMessage = "Requested conversion is not available." if quoteText is None else quoteText
 				embed = discord.Embed(title=errorMessage, color=constants.colors["gray"])
 				embed.set_author(name="Conversion not available", icon_url=static_storage.icon_bw)
-				quoteMessage = await ctx.interaction.edit_original_message(embed=embed)
-				try: await quoteMessage.add_reaction("☑")
-				except: pass
+				await ctx.interaction.edit_original_message(embed=embed)
 			else:
 				embed = discord.Embed(title="{} ≈ {}".format(payload["quotePrice"], payload["quoteConvertedPrice"]), color=constants.colors[payload["messageColor"]])
 				embed.set_author(name="Conversion", icon_url=static_storage.icon)
