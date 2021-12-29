@@ -1627,7 +1627,7 @@ async def convert_old(message, messageRequest, requestSlice):
 			arguments1 = requestSlices[0].split(" ")
 			arguments2 = requestSlices[1].split(" ")
 
-			payload, quoteText = await Processor.process_conversion(messageRequest, arguments1[1].upper(), arguments2[0].upper(), arguments1[0])
+			payload, quoteText = await Processor.process_conversion(messageRequest, arguments1[1].upper(), arguments2[0].upper(), float(arguments1[0]))
 
 			if payload is None:
 				errorMessage = "Requested conversion is not available." if quoteText is None else quoteText
@@ -2668,16 +2668,16 @@ async def create_request(ctx):
 			embed.add_field(name="Frequently asked questions", value="[alphabotsystem.com/faq](https://www.alphabotsystem.com/faq)", inline=False)
 			embed.add_field(name="Alpha Discord guild", value="[Join now](https://discord.gg/GQeDE85)", inline=False)
 			try:
-				await ctx.respond(embed=embed)
+				await ctx.interaction.edit_original_message(embed=embed)
 			except:
-				try: await ctx.respond(content="{}\n{}".format(errorText, permissionsText))
+				try: await ctx.interaction.edit_original_message(content="{}\n{}".format(errorText, permissionsText))
 				except: pass
 			return None
 		elif len(alphaSettings["tosWatchlist"]["nicknames"]["blacklist"]) != 0 and ctx.interaction.guild.name in alphaSettings["tosWatchlist"]["nicknames"]["blacklist"]:
 			embed = discord.Embed(title="This Discord community guild was flagged for rebranding Alpha and is therefore violating the Terms of Service. Inability to comply will result in termination of all Alpha branded services.", color=0x000000)
 			embed.add_field(name="Terms of service", value="[Read now](https://www.alphabotsystem.com/terms-of-service)", inline=True)
 			embed.add_field(name="Alpha Discord guild", value="[Join now](https://discord.gg/GQeDE85)", inline=True)
-			await ctx.respond(embed=embed)
+			await ctx.interaction.edit_original_message(embed=embed)
 		elif not request.guildProperties["settings"]["setup"]["completed"]:
 			forceFetch = await database.document("discord/properties/guilds/{}".format(request.guildId)).get()
 			forcedFetch = MessageRequest.create_guild_settings(forceFetch.to_dict())
@@ -2686,10 +2686,10 @@ async def create_request(ctx):
 				return request
 			elif not ctx.bot and ctx.interaction.channel.permissions_for(ctx.author).administrator:
 				embed = discord.Embed(title="Hello world!", description="Thanks for adding Alpha Bot to your Discord community, we're thrilled to have you onboard. We think you're going to love everything Alpha Bot can do. Before you start using it, you must complete a short setup process. Sign into your [Alpha Account](https://www.alphabotsystem.com/communities) and visit your [Communities Dashboard](https://www.alphabotsystem.com/communities) to begin.", color=constants.colors["pink"])
-				await ctx.respond(embed=embed)
+				await ctx.interaction.edit_original_message(embed=embed)
 			else:
 				embed = discord.Embed(title="Hello world!", description="This is Alpha Bot, the most advanced financial bot on Discord. A short setup process hasn't been completed in this Discord community yet. Ask administrators to complete it by signing into their [Alpha Account](https://www.alphabotsystem.com/communities) and visiting their [Communities Dashboard](https://www.alphabotsystem.com/communities).", color=constants.colors["pink"])
-				await ctx.respond(embed=embed)
+				await ctx.interaction.edit_original_message(embed=embed)
 			return None
 
 	return request
@@ -2729,9 +2729,9 @@ async def assistant(
 		response = await bot.loop.run_in_executor(None, assistant.process_reply, question, request.guildProperties["settings"]["assistant"]["enabled"])
 
 		if response is not None:
-			await ctx.respond(content=response)
+			await ctx.interaction.edit_original_message(content=response)
 		else:
-			await ctx.respond(content="Sorry, I can't help you with that.")
+			await ctx.interaction.edit_original_message(content="Sorry, I can't help you with that.")
 
 		await database.document("discord/statistics").set({request.snapshot: {"alpha": Increment(1)}}, merge=True)
 
@@ -2740,7 +2740,7 @@ async def assistant(
 		print(format_exc())
 		if environ["PRODUCTION_MODE"]: logging.report_exception(user=f"{request.authorId}: /alpha {question}")
 
-async def price(ctx, request, price):
+async def price(ctx, request, task):
 	currentRequest = task.get(task.get("currentPlatform"))
 	autodeleteOverride = {"id": "autoDeleteOverride", "value": "autodelete"} in currentRequest.get("preferences")
 	request.autodelete = request.autodelete or autodeleteOverride
@@ -2751,7 +2751,7 @@ async def price(ctx, request, price):
 		errorMessage = "Requested price for `{}` is not available.".format(currentRequest.get("ticker").get("name")) if quoteText is None else quoteText
 		embed = discord.Embed(title=errorMessage, color=constants.colors["gray"])
 		embed.set_author(name="Data not available", icon_url=static_storage.icon_bw)
-		quoteMessage = await ctx.respond(embed=embed)
+		quoteMessage = await ctx.interaction.edit_original_message(embed=embed)
 		try: await quoteMessage.add_reaction("☑")
 		except: pass
 	else:
@@ -2760,12 +2760,12 @@ async def price(ctx, request, price):
 			embed = discord.Embed(title="{} *({})*".format(payload["quotePrice"], payload["change"]), description=payload.get("quoteConvertedPrice", discord.embeds.EmptyEmbed), color=constants.colors[payload["messageColor"]])
 			embed.set_author(name=payload["title"], icon_url=payload.get("thumbnailUrl"))
 			embed.set_footer(text=payload["sourceText"])
-			await ctx.respond(embed=embed)
+			await ctx.interaction.edit_original_message(embed=embed)
 		else:
 			embed = discord.Embed(title="{}{}".format(payload["quotePrice"], " *({})*".format(payload["change"]) if "change" in payload else ""), description=payload.get("quoteConvertedPrice", discord.embeds.EmptyEmbed), color=constants.colors[payload["messageColor"]])
 			embed.set_author(name=payload["title"], icon_url=payload.get("thumbnailUrl"))
 			embed.set_footer(text=payload["sourceText"])
-			await ctx.respond(embed=embed)
+			await ctx.interaction.edit_original_message(embed=embed)
 
 @bot.slash_command(name="p", description="Fetch stock, crypto and forex quotes. Command for power users.")
 async def p(
@@ -2782,7 +2782,7 @@ async def p(
 		if outputMessage is not None:
 			embed = discord.Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/prices).", color=constants.colors["gray"])
 			embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
-			await ctx.respond(embed=embed)
+			await ctx.interaction.edit_original_message(embed=embed)
 			return
 
 		await price(ctx, request, task)
@@ -2809,7 +2809,7 @@ async def price_crypto(
 		if outputMessage is not None:
 			embed = discord.Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/prices).", color=constants.colors["gray"])
 			embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
-			await ctx.respond(embed=embed)
+			await ctx.interaction.edit_original_message(embed=embed)
 			return
 
 		await price(ctx, request, task)
@@ -2830,7 +2830,7 @@ async def volume(ctx, request, task):
 		errorMessage = "Requested volume for `{}` is not available.".format(currentRequest.get("ticker").get("name")) if quoteText is None else quoteText
 		embed = discord.Embed(title=errorMessage, color=constants.colors["gray"])
 		embed.set_author(name="Data not available", icon_url=static_storage.icon_bw)
-		quoteMessage = await ctx.respond(embed=embed)
+		quoteMessage = await ctx.interaction.edit_original_message(embed=embed)
 		try: await quoteMessage.add_reaction("☑")
 		except: pass
 	else:
@@ -2838,7 +2838,7 @@ async def volume(ctx, request, task):
 		embed = discord.Embed(title=payload["quoteVolume"], description=payload.get("quoteConvertedVolume", discord.embeds.EmptyEmbed), color=constants.colors["orange"])
 		embed.set_author(name=payload["title"], icon_url=payload.get("thumbnailUrl"))
 		embed.set_footer(text=payload["sourceText"])
-		await ctx.respond(embed=embed)
+		await ctx.interaction.edit_original_message(embed=embed)
 
 @bot.slash_command(name="v", description="Fetch stock and crypto 24-hour volume. Command for power users.")
 async def v(
@@ -2855,7 +2855,7 @@ async def v(
 		if outputMessage is not None:
 			embed = discord.Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/volume).", color=constants.colors["gray"])
 			embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
-			await ctx.respond(embed=embed)
+			await ctx.interaction.edit_original_message(embed=embed)
 			return
 
 		await volume(ctx, request, task)
@@ -2882,7 +2882,7 @@ async def volume_crypto(
 		if outputMessage is not None:
 			embed = discord.Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/volume).", color=constants.colors["gray"])
 			embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
-			await ctx.respond(embed=embed)
+			await ctx.interaction.edit_original_message(embed=embed)
 			return
 
 		await volume(ctx, request, task)
@@ -2903,12 +2903,12 @@ async def volume_stocks(
 		if request is None: return
 
 		arguments = " ".join([ticker, exchange]).lower().split()
-		outputMessage, task = await Processor.process_quote_arguments(request, arguments[1:], tickerId=arguments[0].upper(), platformQueue=["CoinGecko", "CCXT"])
+		outputMessage, task = await Processor.process_quote_arguments(request, arguments[1:], tickerId=arguments[0].upper(), platformQueue=["IEXC"])
 
 		if outputMessage is not None:
 			embed = discord.Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/volume).", color=constants.colors["gray"])
 			embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
-			await ctx.respond(embed=embed)
+			await ctx.interaction.edit_original_message(embed=embed)
 			return
 
 		await volume(ctx, request, task)
@@ -2935,18 +2935,18 @@ async def convert(
 			errorMessage = "Requested conversion is not available." if quoteText is None else quoteText
 			embed = discord.Embed(title=errorMessage, color=constants.colors["gray"])
 			embed.set_author(name="Conversion not available", icon_url=static_storage.icon_bw)
-			quoteMessage = await ctx.respond(embed=embed)
+			quoteMessage = await ctx.interaction.edit_original_message(embed=embed)
 			try: await quoteMessage.add_reaction("☑")
 			except: pass
 		else:
 			embed = discord.Embed(title="{} ≈ {}".format(payload["quotePrice"], payload["quoteConvertedPrice"]), color=constants.colors[payload["messageColor"]])
 			embed.set_author(name="Conversion", icon_url=static_storage.icon)
-			await ctx.respond(embed=embed)
+			await ctx.interaction.edit_original_message(embed=embed)
 
 	except CancelledError: pass
 	except Exception:
 		print(format_exc())
-		if environ["PRODUCTION_MODE"]: logging.report_exception(user=f"{request.authorId}: /convert {From} {to} {amount}")
+		if environ["PRODUCTION_MODE"]: logging.report_exception(user=f"{request.authorId}: /convert {fromTicker} {toTicker} {amount}")
 
 
 # -------------------------
