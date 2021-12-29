@@ -2595,27 +2595,8 @@ async def create_request(ctx):
 		guildProperties=_guildProperties
 	)
 
-	hasPermissions = True if request.guildId == -1 else (ctx.interaction.permissions.embed_links and ctx.interaction.permissions.attach_files and ctx.interaction.permissions.add_reactions and ctx.interaction.permissions.use_external_emojis and ctx.interaction.permissions.manage_messages)
-
 	if request.guildId != -1:
-		if not hasPermissions:
-			p1 = ctx.interaction.permissions.embed_links
-			p2 = ctx.interaction.permissions.attach_files
-			p3 = ctx.interaction.permissions.add_reactions
-			p4 = ctx.interaction.permissions.use_external_emojis
-			p5 = ctx.interaction.permissions.manage_messages
-			errorText = "Alpha Bot is missing one or more critical permissions."
-			permissionsText = "Embed links: {}\nAttach files: {}\nAdd reactions: {}\nUse external emojis: {}\nManage Messages: {}".format(":white_check_mark:" if p1 else ":x:", ":white_check_mark:" if p2 else ":x:", ":white_check_mark:" if p3 else ":x:", ":white_check_mark:" if p4 else ":x:", ":white_check_mark:" if p5 else ":x:")
-			embed = discord.Embed(title=errorText, description=permissionsText, color=0x000000)
-			embed.add_field(name="Frequently asked questions", value="[alphabotsystem.com/faq](https://www.alphabotsystem.com/faq)", inline=False)
-			embed.add_field(name="Alpha Discord guild", value="[Join now](https://discord.gg/GQeDE85)", inline=False)
-			try:
-				await ctx.interaction.edit_original_message(embed=embed)
-			except:
-				try: await ctx.interaction.edit_original_message(content="{}\n{}".format(errorText, permissionsText))
-				except: pass
-			return None
-		elif len(alphaSettings["tosWatchlist"]["nicknames"]["blacklist"]) != 0 and ctx.interaction.guild.name in alphaSettings["tosWatchlist"]["nicknames"]["blacklist"]:
+		if len(alphaSettings["tosWatchlist"]["nicknames"]["blacklist"]) != 0 and ctx.interaction.guild.name in alphaSettings["tosWatchlist"]["nicknames"]["blacklist"]:
 			embed = discord.Embed(title="This Discord community guild was flagged for rebranding Alpha and is therefore violating the Terms of Service. Inability to comply will result in termination of all Alpha branded services.", color=0x000000)
 			embed.add_field(name="Terms of service", value="[Read now](https://www.alphabotsystem.com/terms-of-service)", inline=True)
 			embed.add_field(name="Alpha Discord guild", value="[Join now](https://discord.gg/GQeDE85)", inline=True)
