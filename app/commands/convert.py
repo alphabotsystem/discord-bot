@@ -14,7 +14,7 @@ from Processor import Processor
 
 
 class ConvertCommand(commands.Cog):
-	def __init__(self, bot, create_request, database):
+	def __init__(self, bot, create_request, database, logging):
 		self.bot = bot
 		self.create_request = create_request
 		self.database = database
