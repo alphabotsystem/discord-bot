@@ -18,6 +18,7 @@ class PriceCommand(commands.Cog):
 		self.bot = bot
 		self.create_request = create_request
 		self.database = database
+		self.logging = logging
 
 	priceGroup = SlashCommandGroup("price", "Fetch stock and crypto prices, forex rates, and other instrument data.")
 
@@ -79,7 +80,7 @@ class PriceCommand(commands.Cog):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: logging.report_exception(user=f"{ctx.author.id}: /p {arguments}")
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /p {arguments}")
 
 	@priceGroup.command(name="crypto", description="Fetch crypto prices.")
 	async def price_crypto(
@@ -107,7 +108,7 @@ class PriceCommand(commands.Cog):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: logging.report_exception(user=f"{ctx.author.id}: /v {arguments}")
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /v {arguments}")
 
 	@priceGroup.command(name="stocks", description="Fetch stock prices.")
 	async def price_stocks(
@@ -134,4 +135,4 @@ class PriceCommand(commands.Cog):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: logging.report_exception(user=f"{ctx.author.id}: /price stocks {ticker} {arguments}")
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /price stocks {ticker} {arguments}")

@@ -18,6 +18,7 @@ class VolumeCommand(commands.Cog):
 		self.bot = bot
 		self.create_request = create_request
 		self.database = database
+		self.logging = logging
 
 	volumeGroup = SlashCommandGroup("volume", "Fetch stock and crypto 24-hour volume.")
 
@@ -73,7 +74,7 @@ class VolumeCommand(commands.Cog):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: logging.report_exception(user=f"{ctx.author.id}: /v {arguments}")
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /v {arguments}")
 
 	@volumeGroup.command(name="crypto", description="Fetch 24-hour volume of crypto assets.")
 	async def volume_crypto(
@@ -101,7 +102,7 @@ class VolumeCommand(commands.Cog):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: logging.report_exception(user=f"{ctx.author.id}: /volume crypto {ticker} {arguments}")
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /volume crypto {ticker} {arguments}")
 
 	@volumeGroup.command(name="stocks", description="Fetch 24-hour volume of stocks.")
 	async def volume_stocks(
@@ -128,4 +129,4 @@ class VolumeCommand(commands.Cog):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: logging.report_exception(user=f"{ctx.author.id}: /volume stocks {ticker} {arguments}")
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /volume stocks {ticker} {arguments}")

@@ -18,6 +18,7 @@ class ConvertCommand(commands.Cog):
 		self.bot = bot
 		self.create_request = create_request
 		self.database = database
+		self.logging = logging
 
 	@slash_command(name="convert", description="Convert between currencies, rates and assets.")
 	async def convert(
@@ -50,4 +51,4 @@ class ConvertCommand(commands.Cog):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: logging.report_exception(user=f"{ctx.author.id}: /convert {fromTicker} {toTicker} {amount}")
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /convert {fromTicker} {toTicker} {amount}")

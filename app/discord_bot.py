@@ -40,6 +40,7 @@ from commands.convert import ConvertCommand
 
 
 database = FirestoreAsnycClient()
+logging = ErrorReportingClient(service="discord")
 snapshots = FirestoreClient()
 
 BETA_SERVERS = [
@@ -2640,10 +2641,10 @@ async def create_request(ctx):
 # Slash commands
 # -------------------------
 
-bot.add_cog(AlphaCommand(bot, create_request, database))
-bot.add_cog(PriceCommand(bot, create_request, database))
-bot.add_cog(VolumeCommand(bot, create_request, database))
-bot.add_cog(ConvertCommand(bot, create_request, database))
+bot.add_cog(AlphaCommand(bot, create_request, database, logging))
+bot.add_cog(PriceCommand(bot, create_request, database, logging))
+bot.add_cog(VolumeCommand(bot, create_request, database, logging))
+bot.add_cog(ConvertCommand(bot, create_request, database, logging))
 
 # @bot.slash_command(name="sudo", default_permission=False)
 # @permissions.permission(user_id=361916376069439490, permission=True)
@@ -2748,8 +2749,6 @@ alphaSettings = {}
 accountProperties = DatabaseConnector(mode="account")
 guildProperties = DatabaseConnector(mode="guild")
 Processor.clientId = b"discord_alpha"
-
-logging = ErrorReportingClient(service="discord")
 
 rateLimited = {}
 lockedUsers = set()

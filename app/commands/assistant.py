@@ -21,10 +21,11 @@ from Processor import Processor
 
 
 class AlphaCommand(commands.Cog):
-	def __init__(self, bot, create_request, database):
+	def __init__(self, bot, create_request, database, logging):
 		self.bot = bot
 		self.create_request = create_request
 		self.database = database
+		self.logging = logging
 
 		assistantCredentials = Credentials(token=None, **loads(environ["GOOGLE_ASSISTANT_OAUTH"]))
 		http_request = Request()
@@ -42,7 +43,7 @@ class AlphaCommand(commands.Cog):
 			if request is None: return
 
 			if len(question) > 500: return
-			response = await bot.loop.run_in_executor(None, assistant.process_reply, question, request.guildProperties["settings"]["assistant"]["enabled"])
+			response = await self.bot.loop.run_in_executor(None, assistant.process_reply, question, request.guildProperties["settings"]["assistant"]["enabled"])
 
 			if response is not None:
 				await ctx.interaction.edit_original_message(content=response)
@@ -54,7 +55,7 @@ class AlphaCommand(commands.Cog):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: logging.report_exception(user=f"{ctx.author.id}: /alpha {question}")
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /alpha {question}")
 
 	def process_reply(self, question, hasPermissions):
 		response = self.funnyReplies(question.lower())
