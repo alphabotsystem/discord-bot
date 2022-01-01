@@ -17,7 +17,7 @@ from commands.base import BaseCommand
 
 
 class DetailsCommand(BaseCommand):
-	infoGroup = SlashCommandGroup("price", "Pull up asset information of stocks and cryptocurrencies.")
+	infoGroup = SlashCommandGroup("info", "Pull up asset information of stocks and cryptocurrencies.")
 
 	async def info(
 		self,
