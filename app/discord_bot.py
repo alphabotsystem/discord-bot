@@ -2633,50 +2633,6 @@ bot.add_cog(VolumeCommand(bot, create_request, database, logging))
 bot.add_cog(ConvertCommand(bot, create_request, database, logging))
 bot.add_cog(DetailsCommand(bot, create_request, database, logging))
 
-# @bot.slash_command(name="sudo", default_permission=False)
-# @permissions.permission(user_id=361916376069439490, permission=True)
-# async def sudo(ctx, command):
-# 	try:
-# 		request = await create_request(ctx)
-# 		if request is None: return
-
-# 		if command == "user":
-# 			await message.delete()
-# 			settings = deepcopy(messageRequest.accountProperties)
-# 			settings.pop("commandPresets", None)
-# 			if "oauth" in settings: settings["oauth"]["discord"].pop("accessToken", None)
-# 			settings.pop("paperTrader", None)
-# 			await message.author.send(content="```json\n{}\n```".format(dumps(settings, option=OPT_INDENT_2).decode()))
-# 		elif command == "guild":
-# 			await message.delete()
-# 			settings = deepcopy(messageRequest.guildProperties)
-# 			settings["addons"]["satellites"].pop("added", None)
-# 			await message.author.send(content="```json\n{}\n```".format(dumps(settings, option=OPT_INDENT_2).decode()))
-# 		elif command == "cache":
-# 			cacheMessage = "From {:%m/%d/%y %H:%M:%S:%f} to {:%m/%d/%y %H:%M:%S:%f}".format(bot.cached_messages[0].created_at, bot.cached_messages[-1].created_at)
-# 			await message.channel.send(content=cacheMessage)
-# 		elif command == "ping":
-# 			try: outputMessage, _ = await Processor.process_quote_arguments(messageRequest, [], tickerId="BTCUSDT")
-# 			except: outputMessage = "timeout"
-# 			checkpoint4 = time() * 1000
-# 			status4 = "ok" if outputMessage is None else "err"
-# 			created = message.created_at.timestamp() * 1000
-# 			checkpointMessage = "Message received: {}ms\nGuild fetched: {}ms\nUser fetched: {}ms\nParser: {}ms ({})".format(_checkpoint1 - created, _checkpoint2 - created, _checkpoint3 - created, checkpoint4 - created, status4)
-# 			await message.channel.send(content=checkpointMessage)
-# 		elif command.startswith("del"):
-# 			if message.guild.me.guild_permissions.manage_messages:
-# 				parameters = messageRequest.content.split("del ", 1)
-# 				if len(parameters) == 2:
-# 					await message.channel.purge(limit=int(parameters[1]) + 1, bulk=True)
-# 		elif command.startswith("say"):
-# 			say = message.content.split("say ", 1)
-# 			await message.channel.send(content=say[1])
-
-# 	except CancelledError: pass
-# 	except Exception:
-# 		print(format_exc())
-# 		if environ["PRODUCTION_MODE"]: logging.report_exception(user=f"{ctx.author.id}: /sudo {arguments}")
-
 # -------------------------
 # Error handling
 # -------------------------
@@ -2688,7 +2644,7 @@ async def unknown_error(ctx, authorId):
 	except: return
 
 async def deprecation_message(ctx, command):
-	embed = discord.Embed(title=f"Alpha will soon transition to using slash commands as is required by upcoming Discord changes. Changes are going into effect permanently <t:1651276800:R>, after which you'll have to use /{command} instead.", color=constants.colors["red"])
+	embed = discord.Embed(title=f"Alpha is transitioning to slash commands as is required by upcoming Discord changes. Use /{command} to silence this warning. Old syntax will no longer work after depreciation <t:1651276800:R>.", color=constants.colors["red"])
 	try: await ctx.channel.send(embed=embed)
 	except: return
 

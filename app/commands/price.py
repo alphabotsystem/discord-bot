@@ -2,9 +2,9 @@ from os import environ
 from asyncio import CancelledError
 from traceback import format_exc
 
-import discord
+from discord import Embed
+from discord.embeds import EmptyEmbed
 from discord.commands import slash_command, SlashCommandGroup, Option
-from discord.ext import commands
 
 from google.cloud.firestore import Increment
 
@@ -12,8 +12,10 @@ from helpers import constants
 from assets import static_storage
 from Processor import Processor
 
+from commands.base import BaseCommand
 
-class PriceCommand(commands.Cog):
+
+class PriceCommand(BaseCommand):
 	def __init__(self, bot, create_request, database, logging):
 		self.bot = bot
 		self.create_request = create_request
@@ -36,22 +38,22 @@ class PriceCommand(commands.Cog):
 
 		if payload is None or "quotePrice" not in payload:
 			errorMessage = "Requested price for `{}` is not available.".format(currentRequest.get("ticker").get("name")) if quoteText is None else quoteText
-			embed = discord.Embed(title=errorMessage, color=constants.colors["gray"])
+			embed = Embed(title=errorMessage, color=constants.colors["gray"])
 			embed.set_author(name="Data not available", icon_url=static_storage.icon_bw)
 			await ctx.interaction.edit_original_message(embed=embed)
 		else:
 			currentRequest = task.get(payload.get("platform"))
 			if payload.get("platform") in ["Alternative.me"]:
-				embed = discord.Embed(title="{} *({})*".format(payload["quotePrice"], payload["change"]), description=payload.get("quoteConvertedPrice", discord.embeds.EmptyEmbed), color=constants.colors[payload["messageColor"]])
+				embed = Embed(title="{} *({})*".format(payload["quotePrice"], payload["change"]), description=payload.get("quoteConvertedPrice", EmptyEmbed), color=constants.colors[payload["messageColor"]])
 				embed.set_author(name=payload["title"], icon_url=payload.get("thumbnailUrl"))
 				embed.set_footer(text=payload["sourceText"])
 				await ctx.interaction.edit_original_message(embed=embed)
 			else:
-				embed = discord.Embed(title="{}{}".format(payload["quotePrice"], " *({})*".format(payload["change"]) if "change" in payload else ""), description=payload.get("quoteConvertedPrice", discord.embeds.EmptyEmbed), color=constants.colors[payload["messageColor"]])
+				embed = Embed(title="{}{}".format(payload["quotePrice"], " *({})*".format(payload["change"]) if "change" in payload else ""), description=payload.get("quoteConvertedPrice", EmptyEmbed), color=constants.colors[payload["messageColor"]])
 				embed.set_author(name=payload["title"], icon_url=payload.get("thumbnailUrl"))
 				embed.set_footer(text=payload["sourceText"])
 				await ctx.interaction.edit_original_message(embed=embed)
-		
+
 		await self.database.document("discord/statistics").set({request.snapshot: {"p": Increment(1)}}, merge=True)
 
 	@slash_command(name="p", description="Fetch stock, crypto and forex quotes. Command for power users.")
@@ -68,7 +70,7 @@ class PriceCommand(commands.Cog):
 			outputMessage, task = await Processor.process_quote_arguments(request, arguments[1:], tickerId=arguments[0].upper())
 
 			if outputMessage is not None:
-				embed = discord.Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/prices).", color=constants.colors["gray"])
+				embed = Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/prices).", color=constants.colors["gray"])
 				embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
 				await ctx.interaction.edit_original_message(embed=embed)
 				return
@@ -93,10 +95,10 @@ class PriceCommand(commands.Cog):
 			if request is None: return
 
 			arguments = " ".join([ticker, source, exchange]).lower().split()
-			outputMessage, task = await Processor.process_quote_arguments(request, arguments[1:], tickerId=arguments[0].upper())
+			outputMessage, task = await Processor.process_quote_arguments(request, arguments[1:], tickerId=arguments[0].upper(), platformQueue=["CoinGecko", "CCXT"])
 
 			if outputMessage is not None:
-				embed = discord.Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/prices).", color=constants.colors["gray"])
+				embed = Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/prices).", color=constants.colors["gray"])
 				embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
 				await ctx.interaction.edit_original_message(embed=embed)
 				return
@@ -123,7 +125,7 @@ class PriceCommand(commands.Cog):
 			outputMessage, task = await Processor.process_quote_arguments(request, arguments[1:], tickerId=arguments[0].upper(), platformQueue=["IEXC"])
 
 			if outputMessage is not None:
-				embed = discord.Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/volume).", color=constants.colors["gray"])
+				embed = Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/volume).", color=constants.colors["gray"])
 				embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
 				await ctx.interaction.edit_original_message(embed=embed)
 				return

@@ -2,9 +2,9 @@ from os import environ
 from asyncio import CancelledError
 from traceback import format_exc
 
-import discord
+from discord import Embed
+from discord.embeds import EmptyEmbed
 from discord.commands import slash_command, SlashCommandGroup, Option
-from discord.ext import commands
 
 from google.cloud.firestore import Increment
 
@@ -13,15 +13,11 @@ from assets import static_storage
 from helpers.utils import Utils
 from Processor import Processor
 
+from commands.base import BaseCommand
 
-class DetailsCommand(commands.Cog):
-	def __init__(self, bot, create_request, database, logging):
-		self.bot = bot
-		self.create_request = create_request
-		self.database = database
-		self.logging = logging
 
-	infoGroup = SlashCommandGroup("info", "Pull up asset information of cryptocurrencies and stocks.")
+class DetailsCommand(BaseCommand):
+	infoGroup = SlashCommandGroup("price", "Pull up asset information of stocks and cryptocurrencies.")
 
 	async def info(
 		self,
@@ -38,14 +34,14 @@ class DetailsCommand(commands.Cog):
 
 		if payload is None:
 			errorMessage = "Requested details for `{}` are not available.".format(currentRequest.get("ticker").get("name")) if detailText is None else detailText
-			embed = discord.Embed(title=errorMessage, color=constants.colors["gray"])
+			embed = Embed(title=errorMessage, color=constants.colors["gray"])
 			embed.set_author(name="Data not available", icon_url=static_storage.icon_bw)
 			await ctx.interaction.edit_original_message(embed=embed)
 		else:
 			currentRequest = task.get(payload.get("platform"))
 			ticker = currentRequest.get("ticker")
 
-			embed = discord.Embed(title=payload["name"], description=payload.get("description", discord.embeds.EmptyEmbed), url=payload.get("url", discord.embeds.EmptyEmbed), color=constants.colors["lime"])
+			embed = Embed(title=payload["name"], description=payload.get("description", EmptyEmbed), url=payload.get("url", EmptyEmbed), color=constants.colors["lime"])
 			if payload.get("image") is not None:
 				embed.set_thumbnail(url=payload["image"])
 
@@ -114,21 +110,23 @@ class DetailsCommand(commands.Cog):
 		
 		await self.database.document("discord/statistics").set({request.snapshot: {"info": Increment(1)}}, merge=True)
 
-	@slash_command(name="i", description="Pull up asset information of cryptocurrencies and stocks. Command for power users.")
-	async def i(
+	@infoGroup.command(name="crypto", description="Pull up asset information of cryptocurrencies.")
+	async def price_crypto(
 		self,
 		ctx,
-		arguments: Option(str, "Request arguments starting with ticker id.", name="arguments")
+		ticker: Option(str, "Ticker id of a crypto asset.", name="ticker"),
+		source: Option(str, "Source name to pull the quote from.", name="source", choices=["CoinGecko", "Exchange"], required=False, default=""),
+		exchange: Option(str, "Exchange name to pull the quote from.", name="exchange", required=False, default="")
 	):
 		try:
 			request = await self.create_request(ctx)
 			if request is None: return
 
-			arguments = arguments.lower().split()
-			outputMessage, task = await Processor.process_detail_arguments(request, arguments[1:], tickerId=arguments[0].upper())
+			arguments = " ".join([ticker, source, exchange]).lower().split()
+			outputMessage, task = await Processor.process_quote_arguments(request, arguments[1:], tickerId=arguments[0].upper(), platformQueue=["CoinGecko", "CCXT"])
 
 			if outputMessage is not None:
-				embed = discord.Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/asset-details).", color=constants.colors["gray"])
+				embed = Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/asset-details).", color=constants.colors["gray"])
 				embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
 				await ctx.interaction.edit_original_message(embed=embed)
 				return
@@ -140,34 +138,8 @@ class DetailsCommand(commands.Cog):
 			print(format_exc())
 			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /v {arguments}")
 
-	@infoGroup.command(name="crypto", description="Pull up asset information of cryptocurrencies.")
-	async def info_crypto(
-		self,
-		ctx,
-		ticker: Option(str, "Ticker id of a crypto asset.", name="ticker")
-	):
-		try:
-			request = await self.create_request(ctx)
-			if request is None: return
-
-			arguments = " ".join([ticker]).lower().split()
-			outputMessage, task = await Processor.process_detail_arguments(request, arguments[1:], tickerId=arguments[0].upper(), platformQueue=["CoinGecko"])
-
-			if outputMessage is not None:
-				embed = discord.Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/asset-details).", color=constants.colors["gray"])
-				embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
-				await ctx.interaction.edit_original_message(embed=embed)
-				return
-
-			await self.info(ctx, request, task)
-
-		except CancelledError: pass
-		except Exception:
-			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /volume crypto {ticker} {arguments}")
-
 	@infoGroup.command(name="stocks", description="Pull up asset information of stocks.")
-	async def info_stocks(
+	async def price_stocks(
 		self,
 		ctx,
 		ticker: Option(str, "Ticker id of a stock.", name="ticker"),
@@ -178,10 +150,10 @@ class DetailsCommand(commands.Cog):
 			if request is None: return
 
 			arguments = " ".join([ticker, exchange]).lower().split()
-			outputMessage, task = await Processor.process_detail_arguments(request, arguments[1:], tickerId=arguments[0].upper(), platformQueue=["IEXC"])
+			outputMessage, task = await Processor.process_quote_arguments(request, arguments[1:], tickerId=arguments[0].upper(), platformQueue=["IEXC"])
 
 			if outputMessage is not None:
-				embed = discord.Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/asset-details).", color=constants.colors["gray"])
+				embed = Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/asset-details).", color=constants.colors["gray"])
 				embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
 				await ctx.interaction.edit_original_message(embed=embed)
 				return
@@ -191,4 +163,4 @@ class DetailsCommand(commands.Cog):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /volume stocks {ticker} {arguments}")
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /price stocks {ticker} {arguments}")

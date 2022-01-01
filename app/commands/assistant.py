@@ -4,9 +4,7 @@ from random import choice
 from asyncio import CancelledError
 from traceback import format_exc
 
-import discord
 from discord.commands import slash_command, Option
-from discord.ext import commands
 
 from google.cloud.firestore import Increment
 
@@ -19,8 +17,10 @@ from helpers import constants
 from assets import static_storage
 from Processor import Processor
 
+from commands.base import BaseCommand
 
-class AlphaCommand(commands.Cog):
+
+class AlphaCommand(BaseCommand):
 	def __init__(self, bot, create_request, database, logging):
 		self.bot = bot
 		self.create_request = create_request
