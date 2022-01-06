@@ -58,7 +58,7 @@ class VolumeCommand(BaseCommand):
 				await ctx.interaction.edit_original_message(embed=embed)
 				return
 
-			await self.volume(ctx, request, task)
+			await self.respond(ctx, request, task)
 
 		except CancelledError: pass
 		except Exception:

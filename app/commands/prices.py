@@ -64,7 +64,7 @@ class PriceCommand(BaseCommand):
 				await ctx.interaction.edit_original_message(embed=embed)
 				return
 
-			await self.price(ctx, request, task)
+			await self.respond(ctx, request, task)
 
 		except CancelledError: pass
 		except Exception:

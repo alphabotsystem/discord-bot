@@ -63,7 +63,7 @@ class ChartCommand(BaseCommand):
 				await ctx.interaction.edit_original_message(embed=embed)
 				return
 
-			await self.chart(ctx, request, task)
+			await self.respond(ctx, request, task)
 
 		except CancelledError: pass
 		except Exception:
