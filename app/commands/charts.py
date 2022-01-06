@@ -58,7 +58,7 @@ class ChartCommand(BaseCommand):
 				embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
 				await ctx.interaction.edit_original_message(embed=embed)
 				return
-			elif autodelete < 1 or autodelete > 10:
+			elif autodelete is not None and (autodelete < 1 or autodelete > 10):
 				embed = Embed(title="Response autodelete duration must be between one and ten minutes.", color=constants.colors["gray"])
 				await ctx.interaction.edit_original_message(embed=embed)
 				return
