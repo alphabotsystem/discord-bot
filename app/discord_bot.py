@@ -34,10 +34,13 @@ from engine.trader import PaperTrader
 from MessageRequest import MessageRequest
 
 from commands.assistant import AlphaCommand
-from commands.price import PriceCommand
+from commands.alerts import AlertCommand
+from commands.charts import ChartCommand
+from commands.prices import PriceCommand
 from commands.volume import VolumeCommand
 from commands.convert import ConvertCommand
 from commands.details import DetailsCommand
+from commands.paper import PaperCommand
 
 
 database = FirestoreAsnycClient()
@@ -255,7 +258,7 @@ async def security_check():
 					for i in range(0, len(guild.me.nick.replace(" ", "")) - 2):
 						nameSlice = guild.me.nick.lower().replace(" ", "")[i:i+3]
 						if nameSlice in guild.name.lower() and nameSlice not in ["the"]:
-							botNicknames.append("```{}: {}```".format(guild.name, guild.me.nick))
+							botNicknames.append("```{} ({}): {}```".format(guild.name, guild.id, guild.me.nick))
 							break
 				else:
 					if isBlacklisted: alphaSettings["tosWatchlist"]["nicknames"]["blacklist"].pop(guild.name)
@@ -307,13 +310,6 @@ async def guild_secure_fetch(guildId):
 		if properties is None: properties = {}
 
 	return properties
-
-async def create_invite():
-	try:
-		channel = await bot.fetch_channel(595515236878909441)
-		invite = await channel.create_invite(max_age=86400)
-	except: pass
-
 
 # -------------------------
 # Message handling
@@ -480,7 +476,7 @@ async def on_message(message):
 
 		if isCommand:
 			if messageRequest.content.startswith(("alpha ", "alpha, ", "@alpha ", "@alpha, ")):
-				await deprecation_message(message, "alpha")
+				await deprecation_message(message, "alpha", isGone=True)
 
 			elif messageRequest.content.startswith("preset "):
 				if message.author.bot: return
@@ -597,30 +593,7 @@ async def on_message(message):
 				await finish_request(message, messageRequest, totalWeight, sentMessages)
 
 			elif messageRequest.content.startswith(("alert ", "alerts ")):
-				if message.author.bot: return
-
-				requestSlices = split(", alert | alert |, alerts | alerts |, ", messageRequest.content.split(" ", 1)[1])
-				totalWeight = len(requestSlices)
-				if totalWeight > messageRequest.get_limit() / 2:
-					await hold_up(message, messageRequest)
-					return
-				for requestSlice in requestSlices:
-					rateLimited[messageRequest.authorId] = rateLimited.get(messageRequest.authorId, 0) + 2
-
-					if rateLimited[messageRequest.authorId] >= messageRequest.get_limit():
-						await message.channel.send(content="<@!{}>".format(messageRequest.authorId), embed=discord.Embed(title="You reached your limit of requests per minute. You can try again in a bit.", color=constants.colors["gray"]))
-						rateLimited[messageRequest.authorId] = messageRequest.get_limit()
-						totalWeight = messageRequest.get_limit()
-						break
-					else:
-						quoteMessages, weight = await alert(message, messageRequest, requestSlice)
-						sentMessages += quoteMessages
-						totalWeight += weight - 1
-
-						rateLimited[messageRequest.authorId] = rateLimited.get(messageRequest.authorId, 0) + weight - 2
-
-				await database.document("discord/statistics").set({_snapshot: {"alerts": Increment(totalWeight)}}, merge=True)
-				await finish_request(message, messageRequest, totalWeight, sentMessages)
+				await deprecation_message(message, "alert", isGone=True)
 
 			elif messageRequest.content.startswith("p "):
 				requestSlices = split(", p | p |, ", messageRequest.content.split(" ", 1)[1])
@@ -647,52 +620,10 @@ async def on_message(message):
 				await finish_request(message, messageRequest, totalWeight, sentMessages)
 
 			elif messageRequest.content.startswith("v "):
-				requestSlices = split(", v | v |, ", messageRequest.content.split(" ", 1)[1])
-				totalWeight = len(requestSlices)
-				if totalWeight > messageRequest.get_limit() / 2:
-					await hold_up(message, messageRequest)
-					return
-				for requestSlice in requestSlices:
-					rateLimited[messageRequest.authorId] = rateLimited.get(messageRequest.authorId, 0) + 2
-
-					if rateLimited[messageRequest.authorId] >= messageRequest.get_limit():
-						await message.channel.send(content="<@!{}>".format(messageRequest.authorId), embed=discord.Embed(title="You reached your limit of requests per minute. You can try again in a bit.", color=constants.colors["gray"]))
-						rateLimited[messageRequest.authorId] = messageRequest.get_limit()
-						totalWeight = messageRequest.get_limit()
-						break
-					else:
-						volumeMessages, weight = await volume_old(message, messageRequest, requestSlice)
-						sentMessages += volumeMessages
-						totalWeight += weight - 1
-
-						rateLimited[messageRequest.authorId] = rateLimited.get(messageRequest.authorId, 0) + weight - 2
-
-				await database.document("discord/statistics").set({_snapshot: {"v": Increment(totalWeight)}}, merge=True)
-				await finish_request(message, messageRequest, totalWeight, sentMessages)
+				await deprecation_message(message, "v", isGone=True)
 
 			elif messageRequest.content.startswith("convert "):
-				requestSlices = split(", convert | convert |, ", messageRequest.content.split(" ", 1)[1])
-				totalWeight = len(requestSlices)
-				if totalWeight > messageRequest.get_limit() / 2:
-					await hold_up(message, messageRequest)
-					return
-				for requestSlice in requestSlices:
-					rateLimited[messageRequest.authorId] = rateLimited.get(messageRequest.authorId, 0) + 2
-
-					if rateLimited[messageRequest.authorId] >= messageRequest.get_limit():
-						await message.channel.send(content="<@!{}>".format(messageRequest.authorId), embed=discord.Embed(title="You reached your limit of requests per minute. You can try again in a bit.", color=constants.colors["gray"]))
-						rateLimited[messageRequest.authorId] = messageRequest.get_limit()
-						totalWeight = messageRequest.get_limit()
-						break
-					else:
-						convertMessages, weight = await convert_old(message, messageRequest, requestSlice)
-						sentMessages += convertMessages
-						totalWeight += weight - 1
-
-						rateLimited[messageRequest.authorId] = rateLimited.get(messageRequest.authorId, 0) + weight - 2
-
-				await database.document("discord/statistics").set({_snapshot: {"convert": Increment(totalWeight)}}, merge=True)
-				await finish_request(message, messageRequest, totalWeight, sentMessages)
+				await deprecation_message(message, "convert", isGone=True)
 
 			elif messageRequest.content.startswith(("m ", "info")):
 				requestSlices = split(", m | m |, info | info |, ", messageRequest.content.split(" ", 1)[1])
@@ -783,17 +714,17 @@ async def on_message(message):
 				totalWeight = len(requestSlices)
 				for requestSlice in requestSlices:
 					if messageRequest.content == "paper balance":
-						await fetch_paper_balance(message, messageRequest, requestSlice)
+						await deprecation_message(message, "paper balance", isGone=True)
 					elif messageRequest.content == "paper leaderboard":
-						await fetch_paper_leaderboard(message, messageRequest, requestSlice)
+						await deprecation_message(message, "paper leaderboard", isGone=True)
 					elif messageRequest.content == "paper history":
-						await fetch_paper_orders(message, messageRequest, requestSlice, "history")
+						await deprecation_message(message, "paper history", isGone=True)
 					elif messageRequest.content == "paper orders":
-						await fetch_paper_orders(message, messageRequest, requestSlice, "openOrders")
+						await deprecation_message(message, "paper orders", isGone=True)
 					elif messageRequest.content == "paper reset":
-						await reset_paper_balance(message, messageRequest, requestSlice)
+						await deprecation_message(message, "paper reset", isGone=True)
 					else:
-						await process_paper_trade(message, messageRequest, requestSlice)
+						await deprecation_message(message, "paper", isGone=True)
 
 				await database.document("discord/statistics").set({_snapshot: {"paper": Increment(totalWeight)}}, merge=True)
 			
@@ -857,75 +788,7 @@ async def on_reaction_add(reaction, user):
 					titleText = reaction.message.embeds[0].title
 					footerText = reaction.message.embeds[0].footer.text
 
-					if footerText.startswith("Id: ") and titleText.startswith("Price alert"):
-						accountId = await accountProperties.match(user.id)
-						properties = await accountProperties.get(accountId)
-
-						matchedId, alertId = footerText.lstrip("Id: ").split("/")
-						if matchedId in [accountId, str(user.id)]:
-							if matchedId == accountId:
-								await database.document("details/marketAlerts/{}/{}".format(accountId, alertId)).delete()
-							else:
-								await database.document("details/marketAlerts/{}/{}".format(user.id, alertId)).delete()
-
-							embed = discord.Embed(title="Alert deleted", color=constants.colors["gray"])
-							embed.set_footer()
-							try:
-								await reaction.message.edit(embed=embed)
-								await reaction.message.clear_reactions()
-							except:
-								pass
-						else:
-							try: await reaction.remove(user)
-							except: pass
-
-					elif footerText.startswith("Id: ") and titleText.startswith("Paper"):
-						accountId = await accountProperties.match(user.id)
-						properties = await accountProperties.get(accountId)
-
-						matchedId, orderId = footerText.lstrip("Id: ").split("/")
-						if accountId in [accountId, str(user.id)]:
-							order = await database.document("details/openPaperOrders/{}/{}".format(accountId, orderId)).get()
-							if order is None: return
-							order = order.to_dict()
-
-							currentPlatform = order["request"].get("currentPlatform")
-							request = order["request"].get(currentPlatform)
-							ticker = request.get("ticker")
-
-							base = ticker.get("base")
-							quote = ticker.get("quote")
-							if base in ["USD", "USDT", "USDC", "DAI", "HUSD", "TUSD", "PAX", "USDK", "USDN", "BUSD", "GUSD", "USDS"]:
-								baseBalance = properties["paperTrader"]["balance"]
-								base = "USD"
-							else:
-								baseBalance = properties["paperTrader"]["balance"][currentPlatform]
-							if quote in ["USD", "USDT", "USDC", "DAI", "HUSD", "TUSD", "PAX", "USDK", "USDN", "BUSD", "GUSD", "USDS"]:
-								quoteBalance = properties["paperTrader"]["balance"]
-								quote = "USD"
-							else:
-								quoteBalance = properties["paperTrader"]["balance"][currentPlatform]
-
-							if order["orderType"] == "buy":
-								quoteBalance[quote] += order["amount"] * order["price"]
-							elif order["orderType"] == "sell":
-								baseBalance[base] += order["amount"]
-
-							await database.document("details/openPaperOrders/{}/{}".format(accountId, orderId)).delete()
-							await database.document("accounts/{}".format(accountId)).set({"paperTrader": properties["paperTrader"]}, merge=True)
-							
-							embed = discord.Embed(title="Paper order has been canceled.", color=constants.colors["gray"])
-							embed.set_footer()
-							try:
-								await reaction.message.edit(embed=embed)
-								await reaction.message.clear_reactions()
-							except:
-								pass
-						else:
-							try: await reaction.remove(user)
-							except: pass
-
-					elif " → `" in titleText and titleText.endswith("`"):
+					if " → `" in titleText and titleText.endswith("`"):
 						accountId = await accountProperties.match(user.id, user.id)
 						properties = await accountProperties.get(accountId)
 
@@ -1082,10 +945,6 @@ async def chart(message, messageRequest, requestSlice):
 
 			currentRequest = request.get(request.get("currentPlatform"))
 			ichibotRelaySubmitions = []
-			autodeleteOverride = {"id": "autoDeleteOverride", "value": "autodelete"} in currentRequest.get("preferences")
-			messageRequest.autodelete = messageRequest.autodelete or autodeleteOverride
-			if {"id": "hideRequest", "value": "hide"} in currentRequest.get("preferences"): await message.delete()
-
 			timeframes = request.pop("timeframes")
 			for i in range(request.get("requestCount")):
 				for p, t in timeframes.items(): request[p]["currentTimeframe"] = t[i]
@@ -1140,10 +999,6 @@ async def flow(message, messageRequest, requestSlice):
 					return (sentMessages, len(sentMessages))
 
 				currentRequest = request.get(request.get("currentPlatform"))
-				autodeleteOverride = {"id": "autoDeleteOverride", "value": "autodelete"} in currentRequest.get("preferences")
-				messageRequest.autodelete = messageRequest.autodelete or autodeleteOverride
-				if {"id": "hideRequest", "value": "hide"} in currentRequest.get("preferences"): await message.delete()
-
 				timeframes = request.pop("timeframes")
 				for i in range(request.get("requestCount")):
 					for p, t in timeframes.items(): request[p]["currentTimeframe"] = t[i]
@@ -1200,10 +1055,6 @@ async def heatmap(message, messageRequest, requestSlice):
 				return (sentMessages, len(sentMessages))
 
 			currentRequest = request.get(request.get("currentPlatform"))
-			autodeleteOverride = {"id": "autoDeleteOverride", "value": "autodelete"} in currentRequest.get("preferences")
-			messageRequest.autodelete = messageRequest.autodelete or autodeleteOverride
-			if {"id": "hideRequest", "value": "hide"} in currentRequest.get("preferences"): await message.delete()
-
 			timeframes = request.pop("timeframes")
 			for i in range(request.get("requestCount")):
 				for p, t in timeframes.items(): request[p]["currentTimeframe"] = t[i]
@@ -1245,10 +1096,6 @@ async def depth(message, messageRequest, requestSlice):
 				return (sentMessages, len(sentMessages))
 
 			currentRequest = request.get(request.get("currentPlatform"))
-			autodeleteOverride = {"id": "autoDeleteOverride", "value": "autodelete"} in currentRequest.get("preferences")
-			messageRequest.autodelete = messageRequest.autodelete or autodeleteOverride
-			if {"id": "hideRequest", "value": "hide"} in currentRequest.get("preferences"): await message.delete()
-
 			payload, chartText = await Processor.process_task("depth", messageRequest.authorId, request)
 
 			if payload is None:
@@ -1275,189 +1122,6 @@ async def depth(message, messageRequest, requestSlice):
 # Quotes
 # -------------------------
 
-async def alert(message, messageRequest, requestSlice):
-	sentMessages = []
-	try:
-		arguments = requestSlice.split(" ")
-		method = arguments[0]
-
-		if method in ["set", "create", "add"] and len(arguments) >= 2:
-			if messageRequest.price_alerts_available():
-				async with message.channel.typing():
-					outputMessage, request = await Processor.process_quote_arguments(messageRequest, arguments[2:], tickerId=arguments[1].upper(), isMarketAlert=True, excluded=["CoinGecko", "LLD"])
-
-					if outputMessage is not None:
-						if not messageRequest.is_muted() and messageRequest.is_registered() and outputMessage != "":
-							embed = discord.Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/pro/price-alerts).", color=constants.colors["gray"])
-							embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
-							sentMessages.append(await message.channel.send(embed=embed))
-						return (sentMessages, len(sentMessages))
-
-					currentPlatform = request.get("currentPlatform")
-					currentRequest = request.get(currentPlatform)
-
-					response1, response2 = [], []
-					if messageRequest.is_registered():
-						response1 = await database.collection("details/marketAlerts/{}".format(messageRequest.accountId)).get()
-					response2 = await database.collection("details/marketAlerts/{}".format(messageRequest.authorId)).get()
-					marketAlerts = [e.to_dict() for e in response1] + [e.to_dict() for e in response2]
-
-					if len(marketAlerts) >= 50:
-						embed = discord.Embed(title="You can only create up to 50 price alerts.", color=constants.colors["gray"])
-						embed.set_author(name="Maximum number of price alerts reached", icon_url=static_storage.icon_bw)
-						sentMessages.append(await message.channel.send(embed=embed))
-						return (sentMessages, len(sentMessages))
-
-					payload, quoteText = await Processor.process_task("candle", messageRequest.authorId, request)
-
-				if payload is None or len(payload.get("candles", [])) == 0:
-					errorMessage = "Requested price alert for `{}` is not available.".format(currentRequest.get("ticker").get("name")) if quoteText is None else quoteText
-					embed = discord.Embed(title=errorMessage, color=constants.colors["gray"])
-					embed.set_author(name="Data not available", icon_url=static_storage.icon_bw)
-					quoteMessage = await message.channel.send(embed=embed)
-					sentMessages.append(quoteMessage)
-					try: await quoteMessage.add_reaction("☑")
-					except: pass
-				else:
-					currentPlatform = payload.get("platform")
-					currentRequest = request.get(currentPlatform)
-					ticker = currentRequest.get("ticker")
-					exchange = ticker.get("exchange")
-
-					level = currentRequest.get("numericalParameters")[0]
-					levelText = "{:,.10f}".format(level).rstrip('0').rstrip('.')
-
-					for platform in request.get("platforms"): request[platform]["ticker"].pop("tree")
-					newAlert = {
-						"timestamp": time(),
-						"channel": str(message.channel.id),
-						"service": "Discord",
-						"request": request,
-						"level": level,
-						"levelText": levelText,
-						"version": 4
-					}
-					alertId = str(uuid4())
-					hashName = hash(dumps(ticker, option=OPT_SORT_KEYS))
-
-					for alert in marketAlerts:
-						currentAlertPlatform = alert["request"].get("currentPlatform")
-						currentAlertRequest = alert["request"].get(currentAlertPlatform)
-						alertTicker = currentAlertRequest.get("ticker")
-
-						if currentAlertPlatform == currentPlatform and hash(dumps(alertTicker, option=OPT_SORT_KEYS)) == hashName:
-							if alert["level"] == newAlert["level"]:
-								embed = discord.Embed(title="Price alert for {}{} at {}{} already exists.".format(ticker.get("name"), "" if not bool(exchange) else " ({})".format(exchange.get("name")), levelText, "" if ticker.get("quote") is None else " " + ticker.get("quote")), color=constants.colors["gray"])
-								embed.set_author(name="Alert already exists", icon_url=static_storage.icon_bw)
-								sentMessages.append(await message.channel.send(embed=embed))
-								return (sentMessages, len(sentMessages))
-							elif alert["level"] * 0.999 < newAlert["level"] < alert["level"] * 1.001:
-								embed = discord.Embed(title="Price alert within 0.1% already exists.", color=constants.colors["gray"])
-								embed.set_author(name="Alert already exists", icon_url=static_storage.icon_bw)
-								sentMessages.append(await message.channel.send(embed=embed))
-								return (sentMessages, len(sentMessages))
-
-					async with message.channel.typing():
-						currentLevel = payload["candles"][-1][4]
-						currentLevelText = "{:,.10f}".format(currentLevel).rstrip('0').rstrip('.')
-						if currentLevel * 0.5 > newAlert["level"] or currentLevel * 2 < newAlert["level"]:
-							embed = discord.Embed(title="Your desired alert trigger level at {} {} is too far from the current price of {} {}.".format(levelText, ticker.get("quote"), currentLevelText, ticker.get("quote")), color=constants.colors["gray"])
-							embed.set_author(name="Price Alerts", icon_url=static_storage.icon_bw)
-							embed.set_footer(text=payload.get("sourceText"))
-							sentMessages.append(await message.channel.send(embed=embed))
-							return (sentMessages, len(sentMessages))
-
-						newAlert["placement"] = "above" if newAlert["level"] > currentLevel else "below"
-
-						addTriggerMessageOption = {"id": "message", "value": "message"} in currentRequest.get("preferences")
-						if addTriggerMessageOption:
-							embed = discord.Embed(title="Reply with a trigger message for the price alert.", color=constants.colors["light blue"])
-							addTriggerMessage = await message.channel.send(embed=embed)
-							lockedUsers.add(messageRequest.authorId)
-
-							def confirm_order(m):
-								if m.author.id == messageRequest.authorId:
-									return True
-
-							try:
-								triggerMessage = await bot.wait_for('message', timeout=60.0, check=confirm_order)
-							except:
-								lockedUsers.discard(messageRequest.authorId)
-								embed = discord.Embed(title="Prompt has been canceled.", description="~~Reply with a trigger message for the price alert.~~", color=constants.colors["gray"])
-								try: await addTriggerMessage.edit(embed=embed)
-								except: pass
-								return (sentMessages, len(sentMessages))
-							else:
-								lockedUsers.discard(messageRequest.authorId)
-								newAlert["triggerMessage"] = triggerMessage.content
-
-						embed = discord.Embed(title="Price alert set for {}{} at {}{}.".format(ticker.get("name"), "" if not bool(exchange) else " ({})".format(exchange.get("name")), levelText, "" if ticker.get("quote") is None else " " + ticker.get("quote")), color=constants.colors["deep purple"])
-						if currentPlatform in ["IEXC"]: embed.description = "The alert might trigger with up to 15-minute delay due to data licencing requirements on different exchanges."
-						embed.set_author(name="Alert successfully set", icon_url=static_storage.icon)
-						sentMessages.append(await message.channel.send(embed=embed))
-
-						if not messageRequest.is_registered():
-							await database.document("details/marketAlerts/{}/{}".format(messageRequest.authorId, alertId)).set(newAlert)
-						elif messageRequest.serverwide_price_alerts_available():
-							await database.document("details/marketAlerts/{}/{}".format(messageRequest.accountId, alertId)).set(newAlert)
-						elif messageRequest.personal_price_alerts_available():
-							await database.document("details/marketAlerts/{}/{}".format(messageRequest.accountId, alertId)).set(newAlert)
-							await database.document("accounts/{}".format(messageRequest.accountId)).set({"customer": {"addons": {"marketAlerts": 1}}}, merge=True)
-
-			elif messageRequest.is_pro():
-				if not message.author.bot and message.channel.permissions_for(message.author).administrator:
-					embed = discord.Embed(title=":bell: Price Alerts are disabled.", description="You can enable Price Alerts feature for your account in [Discord Preferences](https://www.alphabotsystem.com/account/discord) or for the entire community in your [Communities Dashboard](https://www.alphabotsystem.com/communities/manage?id={}).".format(messageRequest.guildId), color=constants.colors["gray"])
-					embed.set_author(name="Price Alerts", icon_url=static_storage.icon_bw)
-					await message.channel.send(embed=embed)
-				else:
-					embed = discord.Embed(title=":bell: Price Alerts are disabled.", description="You can enable Price Alerts feature for your account in [Discord Preferences](https://www.alphabotsystem.com/account/discord).", color=constants.colors["gray"])
-					embed.set_author(name="Price Alerts", icon_url=static_storage.icon_bw)
-					await message.channel.send(embed=embed)
-
-			else:
-				embed = discord.Embed(title=":gem: Price Alerts are available to Alpha Pro users or communities for only $2.00 per month.", description="If you'd like to start your 14-day free trial, visit your [subscription page](https://www.alphabotsystem.com/account/subscription).", color=constants.colors["deep purple"])
-				embed.set_image(url="https://www.alphabotsystem.com/files/uploads/pro-hero.jpg")
-				await message.channel.send(embed=embed)
-
-		elif method in ["list", "all"] and len(arguments) == 1:
-			await message.channel.trigger_typing()
-
-			response1, response2 = [], []
-			if messageRequest.is_registered():
-				response1 = await database.collection("details/marketAlerts/{}".format(messageRequest.accountId)).get()
-			response2 = await database.collection("details/marketAlerts/{}".format(messageRequest.authorId)).get()
-			marketAlerts = [(e.id, e.to_dict(), messageRequest.accountId) for e in response1] + [(e.id, e.to_dict(), messageRequest.authorId) for e in response2]
-			totalAlertCount = len(marketAlerts)
-
-			for key, alert, matchedId in marketAlerts:
-				currentPlatform = alert["request"].get("currentPlatform")
-				currentRequest = alert["request"].get(currentPlatform)
-				ticker = currentRequest.get("ticker")
-
-				embed = discord.Embed(title="Price alert set for {}{} at {}{}.".format(ticker.get("name"), "" if bool(ticker.get("exchange")) else " ({})".format(ticker.get("exchange").get("name")), alert.get("levelText", alert["level"]), "" if ticker.get("quote") is None else " " + ticker.get("quote")), color=constants.colors["deep purple"])
-				embed.set_footer(text="Id: {}/{}".format(matchedId, key))
-				alertMessage = await message.channel.send(embed=embed)
-				sentMessages.append(alertMessage)
-				try: await alertMessage.add_reaction('❌')
-				except: pass
-
-			if totalAlertCount == 0:
-				embed = discord.Embed(title="You haven't set any alerts yet.", color=constants.colors["gray"])
-				embed.set_author(name="Price Alerts", icon_url=static_storage.icon_bw)
-				sentMessages.append(await message.channel.send(embed=embed))
-
-		else:
-			embed = discord.Embed(title="Invalid command usage.", description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/pro/price-alerts).", color=constants.colors["gray"])
-			embed.set_author(name="Invalid usage", icon_url=static_storage.icon_bw)
-			sentMessages.append(await message.channel.send(embed=embed))
-
-	except CancelledError: pass
-	except Exception:
-		print(format_exc())
-		if environ["PRODUCTION_MODE"]: logging.report_exception(user=f"{message.author.id}: {message.clean_content}")
-		await unknown_error(message, messageRequest.authorId)
-	return (sentMessages, len(sentMessages))
-
 async def price_old(message, messageRequest, requestSlice):
 	sentMessages = []
 	try:
@@ -1476,10 +1140,6 @@ async def price_old(message, messageRequest, requestSlice):
 				return (sentMessages, len(sentMessages))
 
 			currentRequest = request.get(request.get("currentPlatform"))
-			autodeleteOverride = {"id": "autoDeleteOverride", "value": "autodelete"} in currentRequest.get("preferences")
-			messageRequest.autodelete = messageRequest.autodelete or autodeleteOverride
-			if {"id": "hideRequest", "value": "hide"} in currentRequest.get("preferences"): await message.delete()
-
 			payload, quoteText = await Processor.process_task("quote", messageRequest.authorId, request)
 
 			if payload is None or "quotePrice" not in payload:
@@ -1510,90 +1170,6 @@ async def price_old(message, messageRequest, requestSlice):
 		await unknown_error(message, messageRequest.authorId)
 	return (sentMessages, len(sentMessages))
 
-async def volume_old(message, messageRequest, requestSlice):
-	sentMessages = []
-	try:
-		await deprecation_message(message, "v")
-
-		arguments = requestSlice.split(" ")
-
-		async with message.channel.typing():
-			outputMessage, request = await Processor.process_quote_arguments(messageRequest, arguments[1:], tickerId=arguments[0].upper())
-
-			if outputMessage is not None:
-				if not messageRequest.is_muted() and outputMessage != "":
-					embed = discord.Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/volume).", color=constants.colors["gray"])
-					embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
-					sentMessages.append(await message.channel.send(embed=embed))
-				return (sentMessages, len(sentMessages))
-
-			currentRequest = request.get(request.get("currentPlatform"))
-			autodeleteOverride = {"id": "autoDeleteOverride", "value": "autodelete"} in currentRequest.get("preferences")
-			messageRequest.autodelete = messageRequest.autodelete or autodeleteOverride
-			if {"id": "hideRequest", "value": "hide"} in currentRequest.get("preferences"): await message.delete()
-
-			payload, quoteText = await Processor.process_task("quote", messageRequest.authorId, request)
-
-			if payload is None or "quoteVolume" not in payload:
-				errorMessage = "Requested volume for `{}` is not available.".format(currentRequest.get("ticker").get("name")) if quoteText is None else quoteText
-				embed = discord.Embed(title=errorMessage, color=constants.colors["gray"])
-				embed.set_author(name="Data not available", icon_url=static_storage.icon_bw)
-				quoteMessage = await message.channel.send(embed=embed)
-				sentMessages.append(quoteMessage)
-				try: await quoteMessage.add_reaction("☑")
-				except: pass
-			else:
-				currentRequest = request.get(payload.get("platform"))
-				embed = discord.Embed(title=payload["quoteVolume"], description=payload.get("quoteConvertedVolume", discord.embeds.EmptyEmbed), color=constants.colors["orange"])
-				embed.set_author(name=payload["title"], icon_url=payload.get("thumbnailUrl"))
-				embed.set_footer(text=payload["sourceText"])
-				sentMessages.append(await message.channel.send(embed=embed))
-
-	except CancelledError: pass
-	except Exception:
-		print(format_exc())
-		if environ["PRODUCTION_MODE"]: logging.report_exception(user=f"{message.author.id}: {message.clean_content}")
-		await unknown_error(message, messageRequest.authorId)
-	return (sentMessages, len(sentMessages))
-
-async def convert_old(message, messageRequest, requestSlice):
-	sentMessages = []
-	try:
-		await deprecation_message(message, "convert")
-
-		async with message.channel.typing():
-			requestSlices = split(" into | in to | in | to ", requestSlice)
-			if len(requestSlices) != 2 or len(requestSlices[0].split(" ")) != 2 or len(requestSlices[1].split(" ")) != 1:
-				if not messageRequest.is_muted():
-					embed = discord.Embed(title="Incorrect currency conversion usage.", description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/conversions).", color=constants.colors["gray"])
-					embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
-					sentMessages.append(await message.channel.send(embed=embed))
-				return (sentMessages, len(sentMessages))
-			arguments1 = requestSlices[0].split(" ")
-			arguments2 = requestSlices[1].split(" ")
-
-			payload, quoteText = await Processor.process_conversion(messageRequest, arguments1[1].upper(), arguments2[0].upper(), float(arguments1[0]))
-
-			if payload is None:
-				errorMessage = "Requested conversion is not available." if quoteText is None else quoteText
-				embed = discord.Embed(title=errorMessage, color=constants.colors["gray"])
-				embed.set_author(name="Conversion not available", icon_url=static_storage.icon_bw)
-				quoteMessage = await message.channel.send(embed=embed)
-				sentMessages.append(quoteMessage)
-				try: await quoteMessage.add_reaction("☑")
-				except: pass
-			else:
-				embed = discord.Embed(title="{} ≈ {}".format(payload["quotePrice"], payload["quoteConvertedPrice"]), color=constants.colors[payload["messageColor"]])
-				embed.set_author(name="Conversion", icon_url=static_storage.icon)
-				sentMessages.append(await message.channel.send(embed=embed))
-
-	except CancelledError: pass
-	except Exception:
-		print(format_exc())
-		if environ["PRODUCTION_MODE"]: logging.report_exception(user=f"{message.author.id}: {message.clean_content}")
-		await unknown_error(message, messageRequest.authorId)
-	return (sentMessages, len(sentMessages))
-
 # -------------------------
 # Details
 # -------------------------
@@ -1616,10 +1192,6 @@ async def details(message, messageRequest, requestSlice):
 				return (sentMessages, len(sentMessages))
 
 			currentRequest = request.get(request.get("currentPlatform"))
-			autodeleteOverride = {"id": "autoDeleteOverride", "value": "autodelete"} in currentRequest.get("preferences")
-			messageRequest.autodelete = messageRequest.autodelete or autodeleteOverride
-			if {"id": "hideRequest", "value": "hide"} in currentRequest.get("preferences"): await message.delete()
-
 			payload, detailText = await Processor.process_task("detail", messageRequest.authorId, request)
 
 			if payload is None:
@@ -1795,10 +1367,6 @@ async def markets(message, messageRequest, requestSlice):
 				return (sentMessages, len(sentMessages))
 
 			currentRequest = request.get(request.get("currentPlatform"))
-			autodeleteOverride = {"id": "autoDeleteOverride", "value": "autodelete"} in currentRequest.get("preferences")
-			messageRequest.autodelete = messageRequest.autodelete or autodeleteOverride
-			if {"id": "hideRequest", "value": "hide"} in currentRequest.get("preferences"): await message.delete()
-
 			ticker = currentRequest.get("ticker")
 			listings, total = await TickerParser.get_listings(ticker.get("base"), ticker.get("quote"))
 			if total != 0:
@@ -2199,380 +1767,10 @@ async def process_ichibot_command(message, messageRequest, requestSlice):
 
 
 # -------------------------
-# Paper Trading
-# -------------------------
-
-async def fetch_paper_leaderboard(message, messageRequest, requestSlice):
-	sentMessages = []
-	return (sentMessages, len(sentMessages))
-	try:
-		async with message.channel.typing():
-			paperTraders = await database.collection("accounts").where("paperTrader.balance", "!=", "").get()
-			topBalances = []
-
-			for account in paperTraders:
-				properties = account.to_dict()
-				balance = properties["paperTrader"]["balance"]
-				totalValue = balance.get("USD", 10000)
-
-				for platform, balances in balance.items():
-					if platform == "USD": continue
-					for asset, holding in balances.items():
-						if holding == 0: continue
-						payload, quoteText = await Processor.process_conversion(messageRequest, asset, "USD", holding)
-						totalValue += payload["raw"]["quotePrice"][0] if quoteText is None else 0
-
-				paperOrders = await database.collection("details/openPaperOrders/{}".format(account.id)).get()
-				for element in paperOrders:
-					order = element.to_dict()
-					if order["orderType"] in ["buy", "sell"]:
-						currentPlatform = order["request"].get("currentPlatform")
-						paperRequest = order["request"].get(currentPlatform)
-						ticker = paperRequest.get("ticker")
-						payload, quoteText = await Processor.process_conversion(messageRequest, ticker.get("quote") if order["orderType"] == "buy" else ticker.get("base"), "USD", order["amount"] * (order["price"] if order["orderType"] == "buy" else 1))
-						totalValue += payload["raw"]["quotePrice"][0] if quoteText is None else 0
-
-				topBalances.append((totalValue, properties["paperTrader"]["globalLastReset"], properties["oauth"]["discord"]["userId"]))
-
-			topBalances.sort(reverse=True)
-
-			embed = discord.Embed(title="Paper trading leaderboard:", color=constants.colors["deep purple"])
-			embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon)
-
-			for index, (balance, lastReset, authorId) in enumerate(topBalances[:10]):
-				embed.add_field(name="#{}: <@!{}> with {} USD".format(index + 1, authorId, balance), value="Since {}".format(Utils.timestamp_to_date(lastReset)), inline=False)
-
-			sentMessages.append(await message.channel.send(embed=embed))
-
-	except CancelledError: pass
-	except Exception:
-		print(format_exc())
-		if environ["PRODUCTION_MODE"]: logging.report_exception(user=f"{message.author.id}: {message.clean_content}")
-		await unknown_error(message, messageRequest.authorId)
-	return (sentMessages, len(sentMessages))
-
-async def fetch_paper_balance(message, messageRequest, requestSlice):
-	sentMessages = []
-	try:
-		if not messageRequest.is_registered():
-			embed = discord.Embed(title=":joystick: You must have an Alpha Account connected to your Discord to use Alpha Paper Trader.", description="[Sign up for a free account on our website](https://www.alphabotsystem.com/sign-up). If you already signed up, [sign in](https://www.alphabotsystem.com/sign-in), and connect your account with your Discord profile.", color=constants.colors["deep purple"])
-			embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon)
-			await message.channel.send(embed=embed)
-			return (sentMessages, len(sentMessages))
-
-		async with message.channel.typing():
-			paperOrders = await database.collection("details/openPaperOrders/{}".format(messageRequest.accountId)).get()
-			paperBalances = messageRequest.accountProperties["paperTrader"].get("balance", {})
-
-			embed = discord.Embed(title="Paper balance:", color=constants.colors["deep purple"])
-			embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon)
-
-			holdingAssets = set()
-			totalValue = 0
-
-			for platform, balances in paperBalances.items():
-				if platform == "USD": continue
-				for asset, holding in balances.items():
-					if holding == 0: continue
-					ticker, error = await TickerParser.match_ticker(asset, None, platform, "traditional")
-
-					balanceText = ""
-					valueText = "No conversion"
-
-					balanceText = "{:,.4f} {}".format(holding, asset)
-					payload, quoteText = await Processor.process_conversion(messageRequest, asset, "USD", holding)
-					convertedValue = payload["raw"]["quotePrice"][0] if payload is not None else 0
-					valueText = "≈ {:,.4f} {}".format(convertedValue, "USD") if payload is not None else "Unavailable"
-					totalValue += convertedValue
-
-					embed.add_field(name=balanceText, value=valueText, inline=True)
-					holdingAssets.add(platform + "_" +  asset)
-
-			usdBalance = paperBalances.get("USD", 10000)
-			balanceText = "{:,.4f} USD".format(usdBalance)
-			totalValue += usdBalance
-			embed.add_field(name=balanceText, value="Stable in fiat value", inline=True)
-			if usdBalance != 0:
-				holdingAssets.add("USD")
-
-			lastResetTimestamp = messageRequest.accountProperties["paperTrader"]["globalLastReset"]
-			resetCount = messageRequest.accountProperties["paperTrader"]["globalResetCount"]
-
-			openOrdersValue = 0
-			for element in paperOrders:
-				order = element.to_dict()
-				if order["orderType"] in ["buy", "sell"]:
-					currentPlatform = order["request"].get("currentPlatform")
-					paperRequest = order["request"].get(currentPlatform)
-					ticker = paperRequest.get("ticker")
-					payload, quoteText = await Processor.process_conversion(messageRequest, ticker.get("quote") if order["orderType"] == "buy" else ticker.get("base"), "USD", order["amount"] * (order["price"] if order["orderType"] == "buy" else 1))
-					openOrdersValue += payload["raw"]["quotePrice"][0] if quoteText is None else 0
-					holdingAssets.add(currentPlatform + "_" + ticker.get("base"))
-
-			if openOrdersValue > 0:
-				totalValue += openOrdersValue
-				valueText = "{:,.4f} USD".format(openOrdersValue)
-				embed.add_field(name="Locked up in open orders:", value=valueText, inline=True)
-
-			embed.description = "Holding {} asset{} with estimated total value of {:,.2f} USD and {:+,.2f} % ROI.{}".format(len(holdingAssets), "" if len(holdingAssets) == 1 else "s", totalValue, (totalValue / 10000 - 1) * 100, " Trading since {} with {} balance reset{}.".format(Utils.timestamp_to_date(lastResetTimestamp), resetCount, "" if resetCount == 1 else "s") if resetCount != 0 else "")
-			sentMessages.append(await message.channel.send(embed=embed))
-
-	except CancelledError: pass
-	except Exception:
-		print(format_exc())
-		if environ["PRODUCTION_MODE"]: logging.report_exception(user=f"{message.author.id}: {message.clean_content}")
-		await unknown_error(message, messageRequest.authorId)
-	return (sentMessages, len(sentMessages))
-
-async def fetch_paper_orders(message, messageRequest, requestSlice, mathod):
-	sentMessages = []
-	try:
-		if not messageRequest.is_registered():
-			embed = discord.Embed(title=":joystick: You must have an Alpha Account connected to your Discord to use Alpha Paper Trader.", description="[Sign up for a free account on our website](https://www.alphabotsystem.com/sign-up). If you already signed up, [sign in](https://www.alphabotsystem.com/sign-in), and connect your account with your Discord profile.", color=constants.colors["deep purple"])
-			embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon)
-			await message.channel.send(embed=embed)
-			return (sentMessages, len(sentMessages))
-
-		async with message.channel.typing():
-			if mathod == "history":
-				paperHistory = await database.collection("details/paperOrderHistory/{}".format(messageRequest.accountId)).limit(50).get()
-				if len(paperHistory) == 0:
-					embed = discord.Embed(title="No paper trading history.", color=constants.colors["deep purple"])
-					embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon)
-					sentMessages.append(await message.channel.send(embed=embed))
-				else:
-					embed = discord.Embed(title="Paper trading history:", color=constants.colors["deep purple"])
-					embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon)
-
-					for element in paperHistory:
-						order = element.to_dict()
-						currentPlatform = order["request"].get("currentPlatform")
-						paperRequest = order["request"].get(currentPlatform)
-						ticker = paperRequest.get("ticker")
-
-						side = ""
-						if order["orderType"] == "buy": side = "Bought"
-						elif order["orderType"] == "sell": side = "Sold"
-						elif order["orderType"].startswith("stop"): side = "Stop sold"
-						embed.add_field(name="{} {} {} at {} {}".format(side, order["amountText"], ticker.get("base"), order["priceText"], ticker.get("quote")), value="{} ● id: {}".format(Utils.timestamp_to_date(order["timestamp"] / 1000), element.id), inline=False)
-
-					sentMessages.append(await message.channel.send(embed=embed))
-
-			else:
-				paperOrders = await database.collection("details/openPaperOrders/{}".format(messageRequest.accountId)).get()
-				if len(paperOrders) == 0:
-					embed = discord.Embed(title="No open paper orders.", color=constants.colors["deep purple"])
-					embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon)
-					sentMessages.append(await message.channel.send(embed=embed))
-				else:
-					numberOfOrders = len(paperOrders)
-					destination = message.channel if numberOfOrders < 10 else message.author
-					for i, element in enumerate(paperOrders):
-						order = element.to_dict()
-						currentPlatform = order["request"].get("currentPlatform")
-						paperRequest = order["request"].get(currentPlatform)
-						ticker = paperRequest.get("ticker")
-
-						quoteText = ticker.get("quote")
-						side = order["orderType"].replace("-", " ")
-
-						embed = discord.Embed(title="Paper {} {} {} at {} {}".format(side, order["amountText"], ticker.get("base"), order["priceText"], quoteText), color=constants.colors["deep purple"])
-						embed.set_footer(text="Id: {}/{}".format(messageRequest.accountId, element.id))
-						orderMessage = await message.channel.send(embed=embed)
-						sentMessages.append(orderMessage)
-						await orderMessage.add_reaction('❌')
-
-	except CancelledError: pass
-	except Exception:
-		print(format_exc())
-		if environ["PRODUCTION_MODE"]: logging.report_exception(user=f"{message.author.id}: {message.clean_content}")
-		await unknown_error(message, messageRequest.authorId)
-	return (sentMessages, len(sentMessages))
-
-async def process_paper_trade(message, messageRequest, requestSlice):
-	sentMessages = []
-	try:
-		arguments = paperTrader.argument_cleanup(requestSlice).split(" ")
-		orderType = arguments[0]
-
-		if orderType in ["buy", "sell", "stop-sell"] and 2 <= len(arguments) <= 8:
-			if messageRequest.is_registered():
-				async with message.channel.typing():
-					outputMessage, request = await Processor.process_quote_arguments(messageRequest, arguments[2:], tickerId=arguments[1].upper(), isPaperTrade=True, excluded=["CoinGecko", "Serum", "LLD"])
-					if outputMessage is not None:
-						if not messageRequest.is_muted() and messageRequest.is_registered() and outputMessage != "":
-							embed = discord.Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/paper-trader).", color=constants.colors["gray"])
-							embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
-							sentMessages.append(await message.channel.send(embed=embed))
-						return (sentMessages, len(sentMessages))
-
-					currentRequest = request.get(request.get("currentPlatform"))
-
-					payload, quoteText = await Processor.process_task("candle", messageRequest.authorId, request)
-
-				if payload is None or len(payload.get("candles", [])) == 0:
-					errorMessage = "Requested paper {} order for `{}` could not be executed.".format(orderType.replace("-", " "), currentRequest.get("ticker").get("name")) if quoteText is None else quoteText
-					embed = discord.Embed(title=errorMessage, color=constants.colors["gray"])
-					embed.set_author(name="Data not available", icon_url=static_storage.icon_bw)
-					tradeMessage = await message.channel.send(embed=embed)
-					sentMessages.append(tradeMessage)
-					try: await tradeMessage.add_reaction("☑")
-					except: pass
-				else:
-					currentPlatform = payload.get("platform")
-					currentRequest = request.get(currentPlatform)
-					ticker = currentRequest.get("ticker")
-					exchange = ticker.get("exchange")
-
-					outputTitle, outputMessage, paper, pendingOrder = await paperTrader.process_trade(messageRequest.accountProperties["paperTrader"], orderType, currentPlatform, currentRequest, payload)
-
-					if pendingOrder is None:
-						embed = discord.Embed(title=outputMessage, color=constants.colors["gray"])
-						embed.set_author(name=outputTitle, icon_url=static_storage.icon_bw)
-						await message.channel.send(embed=embed)
-						return
-
-					confirmationText = "Do you want to place a paper {} order of {} {} at {}?".format(orderType.replace("-", " "), pendingOrder.amountText, ticker.get("base"), pendingOrder.priceText)
-					embed = discord.Embed(title=confirmationText, description=pendingOrder.conversionText, color=constants.colors["pink"])
-					embed.set_author(name="Paper order confirmation", icon_url=pendingOrder.parameters.get("thumbnailUrl"))
-					orderConfirmationMessage = await message.channel.send(embed=embed)
-					lockedUsers.add(messageRequest.authorId)
-
-					def confirm_order(m):
-						if m.author.id == messageRequest.authorId:
-							response = ' '.join(m.clean_content.lower().split())
-							if response in ["y", "yes", "sure", "confirm", "execute"]: return True
-							elif response in ["n", "no", "cancel", "discard", "reject"]: raise Exception
-
-					try:
-						await bot.wait_for('message', timeout=60.0, check=confirm_order)
-					except:
-						lockedUsers.discard(messageRequest.authorId)
-						embed = discord.Embed(title="Paper order has been canceled.", description="~~{}~~".format(confirmationText), color=constants.colors["gray"])
-						embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon_bw)
-						try: await orderConfirmationMessage.edit(embed=embed)
-						except: pass
-					else:
-						lockedUsers.discard(messageRequest.authorId)
-						async with message.channel.typing():
-							for platform in request.get("platforms"): request[platform]["ticker"].pop("tree")
-							paper = paperTrader.post_trade(paper, orderType, currentPlatform, currentRequest, payload, pendingOrder)
-
-							pendingOrder.parameters["request"] = request
-							if paper["globalLastReset"] == 0: paper["globalLastReset"] = int(time())
-							await database.document("accounts/{}".format(messageRequest.accountId)).set({"paperTrader": paper}, merge=True)
-							if pendingOrder.parameters["parameters"][1]:
-								openOrders = await database.collection("details/openPaperOrders/{}".format(messageRequest.accountId)).get()
-								if len(openOrders) >= 50:
-									embed = discord.Embed(title="You can only create up to 50 pending paper trades.", color=constants.colors["gray"])
-									embed.set_author(name="Maximum number of open paper orders reached", icon_url=static_storage.icon_bw)
-									sentMessages.append(await message.channel.send(embed=embed))
-									return (sentMessages, len(sentMessages))
-								await database.document("details/openPaperOrders/{}/{}".format(messageRequest.accountId, str(uuid4()))).set(pendingOrder.parameters)
-							else:
-								await database.document("details/paperOrderHistory/{}/{}".format(messageRequest.accountId, str(uuid4()))).set(pendingOrder.parameters)
-
-						successMessage = "Paper {} order of {} {} at {} was successfully {}.".format(orderType.replace("-", " "), pendingOrder.amountText, ticker.get("base"), pendingOrder.priceText, "executed" if pendingOrder.parameters["parameters"][0] else "placed")
-						embed = discord.Embed(title=successMessage, color=constants.colors["deep purple"])
-						embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon)
-						await message.channel.send(embed=embed)
-
-			else:
-				embed = discord.Embed(title=":joystick: You must have an Alpha Account connected to your Discord to use Alpha Paper Trader.", description="[Sign up for a free account on our website](https://www.alphabotsystem.com/sign-up). If you already signed up, [sign in](https://www.alphabotsystem.com/sign-in), and connect your account with your Discord profile.", color=constants.colors["deep purple"])
-				embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon)
-				await message.channel.send(embed=embed)
-
-		else:
-			embed = discord.Embed(title="Invalid command usage.", description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/paper-trader).", color=constants.colors["gray"])
-			embed.set_author(name="Invalid usage", icon_url=static_storage.icon_bw)
-			await message.channel.send(embed=embed)
-
-	except CancelledError: pass
-	except Exception:
-		print(format_exc())
-		if environ["PRODUCTION_MODE"]: logging.report_exception(user=f"{message.author.id}: {message.clean_content}")
-		await unknown_error(message, messageRequest.authorId)
-	return (sentMessages, len(sentMessages))
-
-async def reset_paper_balance(message, messageRequest, requestSlice):
-	sentMessages = []
-	try:
-		if not messageRequest.is_registered():
-			embed = discord.Embed(title=":joystick: You must have an Alpha Account connected to your Discord to use Alpha Paper Trader.", description="[Sign up for a free account on our website](https://www.alphabotsystem.com/sign-up). If you already signed up, [sign in](https://www.alphabotsystem.com/sign-in), and connect your account with your Discord profile.", color=constants.colors["deep purple"])
-			embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon)
-			await message.channel.send(embed=embed)
-
-		elif messageRequest.accountProperties["paperTrader"]["globalLastReset"] == 0 and messageRequest.accountProperties["paperTrader"]["globalResetCount"] == 0:
-			embed = discord.Embed(title="You have to start trading before you can reset your paper balance.", color=constants.colors["gray"])
-			embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon_bw)
-			await message.channel.send(embed=embed)
-
-		elif messageRequest.accountProperties["paperTrader"]["globalLastReset"] + 604800 < time():
-			embed = discord.Embed(title="Do you really want to reset your paper balance? This cannot be undone.", description="Paper balance can only be reset once every seven days. Your last public reset date will be publicly visible.", color=constants.colors["pink"])
-			embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon)
-			resetBalanceMessage = await message.channel.send(embed=embed)
-			lockedUsers.add(messageRequest.authorId)
-
-			def confirm_order(m):
-				if m.author.id == messageRequest.authorId:
-					response = ' '.join(m.clean_content.lower().split())
-					if response in ["y", "yes", "sure", "confirm", "execute"]: return True
-					elif response in ["n", "no", "cancel", "discard", "reject"]: raise Exception
-
-			try:
-				await bot.wait_for('message', timeout=60.0, check=confirm_order)
-			except:
-				lockedUsers.discard(messageRequest.authorId)
-				embed = discord.Embed(title="Paper balance reset canceled.", description="~~Do you really want to reset your paper balance? This cannot be undone.~~", color=constants.colors["gray"])
-				embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon_bw)
-				await resetBalanceMessage.edit(embed=embed)
-			else:
-				lockedUsers.discard(messageRequest.authorId)
-
-				async def delete_collection(collectionRef, batchSize):
-					docs = await collectionRef.limit(batchSize).get()
-					deleted = 0
-
-					for doc in docs:
-						await doc.reference.delete()
-						deleted += 1
-
-					if deleted >= batchSize:
-						return await delete_collection(collectionRef, batchSize)
-
-				async with message.channel.typing():
-					await delete_collection(database.collection("details/openPaperOrders/{}".format(messageRequest.accountId)), 300)
-					await delete_collection(database.collection("details/paperOrderHistory/{}".format(messageRequest.accountId)), 300)
-
-				paper = {
-					"globalResetCount": messageRequest.accountProperties["paperTrader"]["globalResetCount"] + 1,
-					"globalLastReset": int(time()),
-					"balance": DELETE_FIELD
-				}
-				await database.document("accounts/{}".format(messageRequest.accountId)).set({"paperTrader": paper}, merge=True)
-
-				embed = discord.Embed(title="Paper balance has been reset successfully.", color=constants.colors["deep purple"])
-				embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon)
-				sentMessages.append(await message.channel.send(embed=embed))
-
-		else:
-			embed = discord.Embed(title="Paper balance can only be reset once every seven days.", color=constants.colors["gray"])
-			embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon_bw)
-			await message.channel.send(embed=embed)
-
-	except CancelledError: pass
-	except Exception:
-		print(format_exc())
-		if environ["PRODUCTION_MODE"]: logging.report_exception(user=f"{message.author.id}: {message.clean_content}")
-		await unknown_error(message, messageRequest.authorId)
-	return (sentMessages, len(sentMessages))
-
-
-# -------------------------
 # Slash command prelight
 # -------------------------
 
-async def create_request(ctx):
+async def create_request(ctx, autodelete=None):
 	_authorId = ctx.author.id
 	_accountId = None
 	_guildId = ctx.guild.id if ctx.guild is not None else -1
@@ -2585,7 +1783,8 @@ async def create_request(ctx):
 
 	_accountProperties = {}
 	_guildProperties = await guildProperties.get(_guildId, {})
-	if not ctx.bot:
+	if not ctx.author.bot:
+		_accountId = await accountProperties.match(_authorId)
 		if _accountId is None:
 			_accountProperties = await accountProperties.get(str(_authorId), {})
 		else:
@@ -2597,7 +1796,8 @@ async def create_request(ctx):
 		channelId=_channelId,
 		guildId=_guildId,
 		accountProperties=_accountProperties,
-		guildProperties=_guildProperties
+		guildProperties=_guildProperties,
+		autodelete=autodelete
 	)
 
 	if request.guildId != -1:
@@ -2606,6 +1806,7 @@ async def create_request(ctx):
 			embed.add_field(name="Terms of service", value="[Read now](https://www.alphabotsystem.com/terms-of-service)", inline=True)
 			embed.add_field(name="Alpha Discord guild", value="[Join now](https://discord.gg/GQeDE85)", inline=True)
 			await ctx.interaction.edit_original_message(embed=embed)
+			return None
 		elif not request.guildProperties["settings"]["setup"]["completed"]:
 			forceFetch = await database.document("discord/properties/guilds/{}".format(request.guildId)).get()
 			forcedFetch = MessageRequest.create_guild_settings(forceFetch.to_dict())
@@ -2628,10 +1829,13 @@ async def create_request(ctx):
 # -------------------------
 
 bot.add_cog(AlphaCommand(bot, create_request, database, logging))
+bot.add_cog(AlertCommand(bot, create_request, database, logging))
+bot.add_cog(ChartCommand(bot, create_request, database, logging))
 bot.add_cog(PriceCommand(bot, create_request, database, logging))
 bot.add_cog(VolumeCommand(bot, create_request, database, logging))
 bot.add_cog(ConvertCommand(bot, create_request, database, logging))
 bot.add_cog(DetailsCommand(bot, create_request, database, logging))
+bot.add_cog(PaperCommand(bot, create_request, database, logging))
 
 # -------------------------
 # Error handling
@@ -2643,10 +1847,15 @@ async def unknown_error(ctx, authorId):
 	try: await ctx.channel.send(embed=embed)
 	except: return
 
-async def deprecation_message(ctx, command):
-	embed = discord.Embed(title=f"Alpha is transitioning to slash commands as is required by upcoming Discord changes. Use /{command} to silence this warning. Old syntax will no longer work after depreciation <t:1651276800:R>.", color=constants.colors["red"])
-	try: await ctx.channel.send(embed=embed)
-	except: return
+async def deprecation_message(ctx, command, isGone=False):
+	if isGone:
+		embed = discord.Embed(title=f"Alpha is transitioning to slash commands as is required by upcoming Discord changes. Use /{command} instead of the old syntax.", color=constants.colors["red"])
+		try: await ctx.channel.send(embed=embed)
+		except: return
+	else:
+		embed = discord.Embed(title=f"Alpha is transitioning to slash commands as is required by upcoming Discord changes. Use /{command} to silence this warning. Old syntax will no longer work after depreciation <t:1651276800:R>.", color=constants.colors["red"])
+		try: await ctx.channel.send(embed=embed)
+		except: return
 
 async def hold_up(task, request):
 	embed = discord.Embed(title="Only up to {:d} requests are allowed per command.".format(int(request.get_limit() / 2)), color=constants.colors["gray"])
@@ -2670,7 +1879,6 @@ async def job_queue():
 				await database_sanity_check()
 				await update_guild_count()
 			if "1H" in timeframes:
-				await create_invite()
 				await security_check()
 
 		except CancelledError: return
@@ -2708,8 +1916,6 @@ async def on_ready():
 	print("[Startup]: Alpha Bot is online")
 
 	try:
-		await create_invite()
-
 		while not await accountProperties.check_status() or not await guildProperties.check_status():
 			await sleep(15)
 		botStatus[0] = True

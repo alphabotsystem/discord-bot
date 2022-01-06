@@ -4,7 +4,7 @@ from traceback import format_exc
 
 from discord import Embed
 from discord.embeds import EmptyEmbed
-from discord.commands import slash_command, SlashCommandGroup, Option
+from discord.commands import slash_command, Option
 
 from google.cloud.firestore import Increment
 
@@ -17,29 +17,23 @@ from commands.base import BaseCommand
 
 
 class DetailsCommand(BaseCommand):
-	infoGroup = SlashCommandGroup("info", "Pull up asset information of stocks and cryptocurrencies.")
-
-	async def info(
+	async def respond(
 		self,
 		ctx,
 		request,
 		task
 	):
-		currentRequest = task.get(task.get("currentPlatform"))
-		autodeleteOverride = {"id": "autoDeleteOverride", "value": "autodelete"} in currentRequest.get("preferences")
-		request.autodelete = request.autodelete or autodeleteOverride
-		if {"id": "hideRequest", "value": "hide"} in currentRequest.get("preferences"): await message.delete()
-
+		currentTask = task.get(task.get("currentPlatform"))
 		payload, detailText = await Processor.process_task("detail", request.authorId, task)
 
 		if payload is None:
-			errorMessage = "Requested details for `{}` are not available.".format(currentRequest.get("ticker").get("name")) if detailText is None else detailText
+			errorMessage = "Requested details for `{}` are not available.".format(currentTask.get("ticker").get("name")) if detailText is None else detailText
 			embed = Embed(title=errorMessage, color=constants.colors["gray"])
 			embed.set_author(name="Data not available", icon_url=static_storage.icon_bw)
 			await ctx.interaction.edit_original_message(embed=embed)
 		else:
-			currentRequest = task.get(payload.get("platform"))
-			ticker = currentRequest.get("ticker")
+			currentTask = task.get(payload.get("platform"))
+			ticker = currentTask.get("ticker")
 
 			embed = Embed(title=payload["name"], description=payload.get("description", EmptyEmbed), url=payload.get("url", EmptyEmbed), color=constants.colors["lime"])
 			if payload.get("image") is not None:
@@ -110,20 +104,20 @@ class DetailsCommand(BaseCommand):
 		
 		await self.database.document("discord/statistics").set({request.snapshot: {"info": Increment(1)}}, merge=True)
 
-	@infoGroup.command(name="crypto", description="Pull up asset information of cryptocurrencies.")
-	async def price_crypto(
+	@slash_command(name="info", description="Pull up asset information of stocks and cryptocurrencies.")
+	async def info(
 		self,
 		ctx,
-		ticker: Option(str, "Ticker id of a crypto asset.", name="ticker"),
-		source: Option(str, "Source name to pull the quote from.", name="source", choices=["CoinGecko", "Exchange"], required=False, default=""),
-		exchange: Option(str, "Exchange name to pull the quote from.", name="exchange", required=False, default="")
+		tickerId: Option(str, "Ticker id of an asset.", name="ticker"),
+		assetType: Option(str, "Asset class of the ticker.", name="type", autocomplete=BaseCommand.get_types, required=False, default=""),
+		venue: Option(str, "Venue to pull the volume from.", name="venue", autocomplete=BaseCommand.get_venues, required=False, default="")
 	):
 		try:
-			request = await self.create_request(ctx)
+			request = await self.create_request(ctx, autodelete=-1)
 			if request is None: return
 
-			arguments = " ".join([ticker, source, exchange]).lower().split()
-			outputMessage, task = await Processor.process_quote_arguments(request, arguments[1:], tickerId=arguments[0].upper(), platformQueue=["CoinGecko", "CCXT"])
+			arguments = " ".join([venue]).lower().split()
+			outputMessage, task = await Processor.process_quote_arguments(request, arguments, tickerId=tickerId.upper(), platformQueue=["CoinGecko", "CCXT"])
 
 			if outputMessage is not None:
 				embed = Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/asset-details).", color=constants.colors["gray"])
@@ -131,36 +125,9 @@ class DetailsCommand(BaseCommand):
 				await ctx.interaction.edit_original_message(embed=embed)
 				return
 
-			await self.info(ctx, request, task)
+			await self.respond(ctx, request, task)
 
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
 			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /v {arguments}")
-
-	@infoGroup.command(name="stocks", description="Pull up asset information of stocks.")
-	async def price_stocks(
-		self,
-		ctx,
-		ticker: Option(str, "Ticker id of a stock.", name="ticker"),
-		exchange: Option(str, "Exchange name to pull the quote from.", name="exchange", required=False, default="")
-	):
-		try:
-			request = await self.create_request(ctx)
-			if request is None: return
-
-			arguments = " ".join([ticker, exchange]).lower().split()
-			outputMessage, task = await Processor.process_quote_arguments(request, arguments[1:], tickerId=arguments[0].upper(), platformQueue=["IEXC"])
-
-			if outputMessage is not None:
-				embed = Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/asset-details).", color=constants.colors["gray"])
-				embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
-				await ctx.interaction.edit_original_message(embed=embed)
-				return
-
-			await self.info(ctx, request, task)
-
-		except CancelledError: pass
-		except Exception:
-			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /price stocks {ticker} {arguments}")

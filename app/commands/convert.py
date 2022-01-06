@@ -15,12 +15,6 @@ from commands.base import BaseCommand
 
 
 class ConvertCommand(BaseCommand):
-	def __init__(self, bot, create_request, database, logging):
-		self.bot = bot
-		self.create_request = create_request
-		self.database = database
-		self.logging = logging
-
 	@slash_command(name="convert", description="Convert between currencies, rates and assets.")
 	async def convert(
 		self,
@@ -30,7 +24,7 @@ class ConvertCommand(BaseCommand):
 		amount: Option(float, "Amount to convert.", name="amount")
 	):
 		try:
-			request = await self.create_request(ctx)
+			request = await self.create_request(ctx, autodelete=-1)
 			if request is None: return
 
 			payload, quoteText = await Processor.process_conversion(request, fromTicker.upper(), toTicker.upper(), amount)

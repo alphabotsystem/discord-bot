@@ -22,10 +22,7 @@ from commands.base import BaseCommand
 
 class AlphaCommand(BaseCommand):
 	def __init__(self, bot, create_request, database, logging):
-		self.bot = bot
-		self.create_request = create_request
-		self.database = database
-		self.logging = logging
+		super().__init__(bot, create_request, database, logging)
 
 		assistantCredentials = Credentials(token=None, **loads(environ["GOOGLE_ASSISTANT_OAUTH"]))
 		http_request = Request()
@@ -39,7 +36,7 @@ class AlphaCommand(BaseCommand):
 		question: Option(str, "Question you want to ask.", name="question")
 	):
 		try:
-			request = await self.create_request(ctx)
+			request = await self.create_request(ctx, autodelete=-1)
 			if request is None: return
 
 			if len(question) > 500: return
