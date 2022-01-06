@@ -63,7 +63,7 @@ class VolumeCommand(BaseCommand):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /v {arguments}")
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /v {" ".join(arguments)}")
 
 	@slash_command(name="volume", description="Fetch stock and crypto 24-hour volume.")
 	async def volume(

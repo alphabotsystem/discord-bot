@@ -1,5 +1,6 @@
 from os import environ
 from time import time
+from random import randint
 from asyncio import CancelledError
 from traceback import format_exc
 
@@ -69,4 +70,4 @@ class ChartCommand(BaseCommand):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /p {arguments} autodelete:{autodelete}")
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /p {" ".join(arguments)} autodelete:{autodelete}")

@@ -205,6 +205,7 @@ class PaperCommand(BaseCommand):
 
 	@paperGroup.command(name="orders", description="Fetch open paper orders.")
 	async def paper_orders(
+		self,
 		ctx
 	):
 		try:
@@ -242,6 +243,7 @@ class PaperCommand(BaseCommand):
 
 	@paperGroup.command(name="history", description="Fetch open paper trading history.")
 	async def paper_history(
+		self,
 		ctx
 	):
 		try:
@@ -284,6 +286,7 @@ class PaperCommand(BaseCommand):
 
 	@paperGroup.command(name="leaderboard", description="Check Alpha's Paper Trader leaderboard.")
 	async def paper_leaderboard(
+		self,
 		ctx
 	):
 		return
