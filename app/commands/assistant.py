@@ -52,7 +52,7 @@ class AlphaCommand(BaseCommand):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /alpha {question}")
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /alpha {}".format(ctx.author.id, question))
 
 	def process_reply(self, question, hasPermissions):
 		response = self.funnyReplies(question.lower())

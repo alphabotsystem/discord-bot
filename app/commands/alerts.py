@@ -148,7 +148,7 @@ class AlertCommand(BaseCommand):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /alert set")
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /alert set".format(ctx.author.id))
 
 	@alertGroup.command(name="list", description="List all price alerts.")
 	async def alert(
@@ -186,7 +186,7 @@ class AlertCommand(BaseCommand):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /alert list")
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /alert list".format(ctx.author.id))
 
 class DeleteView(View):
 	def __init__(self, database, authorId, pathId, alertId):
@@ -208,4 +208,4 @@ class DeleteView(View):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /alert list > delete action")
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /alert list > delete action".format(ctx.author.id))

@@ -70,4 +70,4 @@ class ChartCommand(BaseCommand):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /p {" ".join(arguments)} autodelete:{autodelete}")
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /p {} autodelete:{}".format(ctx.author.id, " ".join(arguments), autodelete))

@@ -130,4 +130,4 @@ class DetailsCommand(BaseCommand):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /v {tickerId} type:{assetType} venue:{venue}")
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /v {} type:{} venue:{}".format(ctx.author.id, tickerId, assetType, venue))
