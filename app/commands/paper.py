@@ -133,9 +133,12 @@ class PaperCommand(BaseCommand):
 		ctx,
 	):
 		try:
-			if messageRequest.is_registered():
-				paperOrders = await database.collection("details/openPaperOrders/{}".format(messageRequest.accountId)).get()
-				paperBalances = messageRequest.accountProperties["paperTrader"].get("balance", {})
+			request = await self.create_request(ctx, autodelete=-1)
+			if request is None: return
+
+			if request.is_registered():
+				paperOrders = await database.collection("details/openPaperOrders/{}".format(request.accountId)).get()
+				paperBalances = request.accountProperties["paperTrader"].get("balance", {})
 
 				embed = discord.Embed(title="Paper balance:", color=constants.colors["deep purple"])
 				embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon)
@@ -153,7 +156,7 @@ class PaperCommand(BaseCommand):
 						valueText = "No conversion"
 
 						balanceText = "{:,.4f} {}".format(holding, asset)
-						payload, quoteText = await Processor.process_conversion(messageRequest, asset, "USD", holding)
+						payload, quoteText = await Processor.process_conversion(request, asset, "USD", holding)
 						convertedValue = payload["raw"]["quotePrice"][0] if payload is not None else 0
 						valueText = "≈ {:,.4f} {}".format(convertedValue, "USD") if payload is not None else "Unavailable"
 						totalValue += convertedValue
@@ -168,17 +171,17 @@ class PaperCommand(BaseCommand):
 				if usdBalance != 0:
 					holdingAssets.add("USD")
 
-				lastResetTimestamp = messageRequest.accountProperties["paperTrader"]["globalLastReset"]
-				resetCount = messageRequest.accountProperties["paperTrader"]["globalResetCount"]
+				lastResetTimestamp = request.accountProperties["paperTrader"]["globalLastReset"]
+				resetCount = request.accountProperties["paperTrader"]["globalResetCount"]
 
 				openOrdersValue = 0
 				for element in paperOrders:
 					order = element.to_dict()
 					if order["orderType"] in ["buy", "sell"]:
 						currentPlatform = order["request"].get("currentPlatform")
-						paperRequest = order["request"].get(currentPlatform)
-						ticker = paperRequest.get("ticker")
-						payload, quoteText = await Processor.process_conversion(messageRequest, ticker.get("quote") if order["orderType"] == "buy" else ticker.get("base"), "USD", order["amount"] * (order["price"] if order["orderType"] == "buy" else 1))
+						task = order["request"].get(currentPlatform)
+						ticker = task.get("ticker")
+						payload, quoteText = await Processor.process_conversion(request, ticker.get("quote") if order["orderType"] == "buy" else ticker.get("base"), "USD", order["amount"] * (order["price"] if order["orderType"] == "buy" else 1))
 						openOrdersValue += payload["raw"]["quotePrice"][0] if quoteText is None else 0
 						holdingAssets.add(currentPlatform + "_" + ticker.get("base"))
 
@@ -218,8 +221,8 @@ class PaperCommand(BaseCommand):
 					for i, element in enumerate(paperOrders):
 						order = element.to_dict()
 						currentPlatform = order["request"].get("currentPlatform")
-						paperRequest = order["request"].get(currentPlatform)
-						ticker = paperRequest.get("ticker")
+						task = order["request"].get(currentPlatform)
+						ticker = task.get("ticker")
 
 						quoteText = ticker.get("quote")
 						side = order["orderType"].replace("-", " ")
@@ -258,8 +261,8 @@ class PaperCommand(BaseCommand):
 					for element in paperHistory:
 						order = element.to_dict()
 						currentPlatform = order["request"].get("currentPlatform")
-						paperRequest = order["request"].get(currentPlatform)
-						ticker = paperRequest.get("ticker")
+						task = order["request"].get(currentPlatform)
+						ticker = task.get("ticker")
 
 						side = ""
 						if order["orderType"] == "buy": side = "Bought"
@@ -308,8 +311,8 @@ class PaperCommand(BaseCommand):
 					order = element.to_dict()
 					if order["orderType"] in ["buy", "sell"]:
 						currentPlatform = order["request"].get("currentPlatform")
-						paperRequest = order["request"].get(currentPlatform)
-						ticker = paperRequest.get("ticker")
+						task = order["request"].get(currentPlatform)
+						ticker = task.get("ticker")
 						payload, quoteText = await Processor.process_conversion(request, ticker.get("quote") if order["orderType"] == "buy" else ticker.get("base"), "USD", order["amount"] * (order["price"] if order["orderType"] == "buy" else 1))
 						totalValue += payload["raw"]["quotePrice"][0] if quoteText is None else 0
 

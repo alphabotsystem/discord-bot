@@ -2,7 +2,7 @@ from os import environ
 from asyncio import CancelledError
 from traceback import format_exc
 
-from discord import Embed
+from discord import Embed, File
 from discord.commands import slash_command, SlashCommandGroup, Option
 
 from google.cloud.firestore import Increment
