@@ -45,7 +45,7 @@ class PaperCommand(BaseCommand):
 			return
 
 		for platform in task.get("platforms"): task[platform]["ticker"].pop("tree")
-		paper = paperTrader.post_trade(paper, orderType, currentPlatform, currentTask, payload, pendingOrder)
+		paper = self.post_trade(paper, orderType, currentPlatform, currentTask, payload, pendingOrder)
 
 		pendingOrder.parameters["request"] = task
 		if paper["globalLastReset"] == 0: paper["globalLastReset"] = int(time())
