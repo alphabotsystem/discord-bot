@@ -34,7 +34,7 @@ class DepthCommand(BaseCommand):
 		else:
 			await ctx.interaction.edit_original_message(content=chartText, file=File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, request.authorId, randint(1000, 9999))))
 
-		await self.database.document("discord/statistics").set({task.snapshot: {"d": Increment(1)}}, merge=True)
+		await self.database.document("discord/statistics").set({request.snapshot: {"d": Increment(1)}}, merge=True)
 
 	@slash_command(name="d", description="Pull orderbook visualization snapshots of stocks and cryptocurrencies. Command for power users.")
 	async def d(
