@@ -1,5 +1,6 @@
 from os import environ
 from time import time
+from aiohttp import ClientSession
 from asyncio import CancelledError
 from traceback import format_exc
 
@@ -50,7 +51,7 @@ class PaperCommand(BaseCommand):
 		pendingOrder.parameters["request"] = task
 		if paper["globalLastReset"] == 0: paper["globalLastReset"] = int(time())
 		await self.database.document("accounts/{}".format(request.accountId)).set({"paperTrader": paper}, merge=True)
-		if pendingOrder.parameters["parameters"][1]:
+		if pendingOrder.parameters["isLimit"]:
 			openOrders = await self.database.collection("details/openPaperOrders/{}".format(request.accountId)).get()
 			if len(openOrders) >= 50:
 				embed = Embed(title="You can only create up to 50 pending paper trades.", color=constants.colors["gray"])
@@ -61,7 +62,7 @@ class PaperCommand(BaseCommand):
 		else:
 			await self.database.document("details/paperOrderHistory/{}/{}".format(request.accountId, str(uuid4()))).set(pendingOrder.parameters)
 
-		successMessage = "Paper {} order of {} {} at {} was successfully {}.".format(orderType.replace("-", " "), pendingOrder.amountText, ticker.get("base"), pendingOrder.priceText, "executed" if pendingOrder.parameters["parameters"][0] else "placed")
+		successMessage = "Paper {} order of {} {} at {} was successfully {}.".format(orderType.replace("-", " "), pendingOrder.amountText, ticker.get("base"), pendingOrder.priceText, "executed" if pendingOrder.parameters["isLimit"] else "placed")
 		embed = Embed(title=successMessage, color=constants.colors["deep purple"])
 		embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon)
 		await ctx.interaction.edit_original_message(embed=embed)
@@ -108,7 +109,7 @@ class PaperCommand(BaseCommand):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /paper {}".format(ctx.author.id, orderType))
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /paper {} {} {} {} {}".format(ctx.author.id, orderType, tickerId, amount, level, assetType))
 
 	@paperGroup.command(name="buy", description="Execute a paper buy trade.")
 	async def paper_buy(
@@ -446,7 +447,7 @@ class PaperCommand(BaseCommand):
 		else:
 			execPriceText = "{:,.6f}".format(execPrice)
 			execAmountText = "{:,.6f}".format(execAmount)
-			async with aiohttp.ClientSession() as session:
+			async with ClientSession() as session:
 				async with session.get("https://cloud.iexapis.com/stable/stock/{}/logo?token={}".format(ticker.get("symbol"), environ["IEXC_KEY"])) as resp:
 					response = await resp.json()
 					thumbnailUrl = response["url"]

@@ -146,7 +146,7 @@ class AlertCommand(BaseCommand):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /alert set".format(ctx.author.id))
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /alert set {} {} {} {} {} {}".format(ctx.author.id, tickerId, level, assetType, venue, message, channel))
 
 	@alertGroup.command(name="list", description="List all price alerts.")
 	async def alert_list(
