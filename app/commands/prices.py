@@ -77,13 +77,13 @@ class PriceCommand(BaseCommand):
 		ctx,
 		tickerId: Option(str, "Ticker id of an asset.", name="ticker"),
 		assetType: Option(str, "Asset class of the ticker.", name="type", autocomplete=BaseCommand.get_types, required=False, default=""),
-		venue: Option(str, "Venue to pull the volume from.", name="venue", autocomplete=BaseCommand.get_venues, required=False, default="")
+		venue: Option(str, "Venue to pull the price from.", name="venue", autocomplete=BaseCommand.get_venues, required=False, default="")
 	):
 		try:
 			request = await self.create_request(ctx, autodelete=-1)
 			if request is None: return
 
-			arguments = " ".join([venue]).lower().split()
+			arguments = [venue]
 			outputMessage, task = await Processor.process_quote_arguments(request, arguments, tickerId=tickerId.upper())
 
 			if outputMessage is not None:

@@ -10,23 +10,14 @@ class Utils(object):
 
 	@staticmethod
 	def shortcuts(raw):
-		if raw in ["!help", "?help"]: raw = "alpha help"
-		elif raw in ["!invite", "?invite"]: raw = "alpha invite"
-		elif raw in ["c internals", "c internal"]: raw = "c uvol-dvol w, tick, dvn-decn, pcc d line"
-		elif raw in ["c airdrop"]: raw = "c copeusd*2000 nv"
-		elif raw in ["c btc vol"]: raw = "c bvol"
-		elif raw in ["c mcap"]: raw = "c total nv"
-		elif raw in ["c alt mcap"]: raw = "c total2 nv"
+		if raw in ["c internals", "c internal"]: raw = "c uvol-dvol w, tick, dvn-decn, pcc d line"
 		elif raw in ["hmap"]: raw = "hmap change"
 		elif raw in ["flow"]: raw = "flow options"
 		elif raw in ["p gindex", "p gi", "p findex", "p fi", "p fgindex", "p fgi", "p gfindex", "p gfi"]: raw = "p fgi am"
 		elif raw in ["c gindex", "c gi", "c findex", "c fi", "c fgindex", "c fgi", "c gfindex", "c gfi"]: raw = "c fgi am"
-		elif raw in ["p fut", "p futs", "p futures"]: raw = "p xbtm21, xbtu21"
 		elif raw in ["x ichi b", "x ichibot b", "x login b"]: raw = "x ichibot binanceusdm"
 		elif raw in ["x ichi s", "x ichibot s", "x login s"]: raw = "x ichibot binance"
 		elif raw in ["x ichi f", "x ichibot f", "x login f"]: raw = "x ichibot ftx"
-
-		raw = raw.replace("line break", "break")
 
 		return raw
 

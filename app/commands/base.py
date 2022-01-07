@@ -7,8 +7,9 @@ from TickerParser import TickerParser
 
 class BaseCommand(Cog):
 	commandMap = {
+		"price": "p",
 		"volume": "v",
-		"price": "p"
+		"depth": "d"
 	}
 
 	sources = {
@@ -31,6 +32,10 @@ class BaseCommand(Cog):
 			"stocks": ["IEXC"],
 			"crypto": ["CoinGecko", "CCXT"]
 		},
+		"d": {
+			"stocks": ["IEXC"],
+			"crypto": ["CCXT"]
+		},
 		"info": {
 			"stocks": ["IEXC"],
 			"crypto": ["CoinGecko"]
@@ -52,7 +57,8 @@ class BaseCommand(Cog):
 			await ctx.interaction.delete_original_message(delay=request.autodelete * 60)
 
 	async def get_types(cls, ctx):
-		command = cls.commandMap.get(ctx.command.name, ctx.command.name)
+		_commandName = ctx.command.name if ctx.command.parent is None else ctx.command.parent.name
+		command = cls.commandMap.get(_commandName, _commandName)
 		assetType = " ".join(ctx.options.get("type", "").lower().split())
 		venue = " ".join(ctx.options.get("venue", "").lower().split())
 
@@ -62,7 +68,8 @@ class BaseCommand(Cog):
 		return sorted([s for s in cls.sources.get(command) if s.lower().startswith(assetType) and (venue == "" or s in venueType)])
 
 	async def get_venues(cls, ctx):
-		command = cls.commandMap.get(ctx.command.name, ctx.command.name)
+		_commandName = ctx.command.name if ctx.command.parent is None else ctx.command.parent.name
+		command = cls.commandMap.get(_commandName, _commandName)
 		tickerId = " ".join(ctx.options.get("ticker", "").lower().split())
 		assetType = " ".join(ctx.options.get("type", "").lower().split())
 		venue = " ".join(ctx.options.get("venue", "").lower().split())

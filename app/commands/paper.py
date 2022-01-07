@@ -1,4 +1,5 @@
 from os import environ
+from time import time
 from asyncio import CancelledError
 from traceback import format_exc
 
@@ -11,6 +12,7 @@ from google.cloud.firestore import DELETE_FIELD
 from helpers import constants
 from assets import static_storage
 from Processor import Processor
+from TickerParser import TickerParser
 
 from commands.base import BaseCommand
 
@@ -23,109 +25,112 @@ class PaperCommand(BaseCommand):
 		ctx,
 		request,
 		task,
+		payload,
+		amount,
+		level,
 		orderType
 	):
-		if request.is_registered():
-			outputMessage, task = await Processor.process_quote_arguments(request, arguments[2:], tickerId=arguments[1].upper(), isPaperTrade=True, excluded=["CoinGecko", "Serum", "LLD"])
-			if outputMessage is not None:
-				embed = discord.Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/paper-trader).", color=constants.colors["gray"])
-				embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
+		currentTask = task.get(task.get("currentPlatform"))
+		currentPlatform = payload.get("platform")
+		currentTask = task.get(currentPlatform)
+		ticker = currentTask.get("ticker")
+		exchange = ticker.get("exchange")
+
+		outputTitle, outputMessage, paper, pendingOrder = await self.process_trade(request.accountProperties["paperTrader"], amount, level, orderType, currentPlatform, currentTask, payload)
+
+		if pendingOrder is None:
+			embed = Embed(title=outputMessage, color=constants.colors["gray"])
+			embed.set_author(name=outputTitle, icon_url=static_storage.icon_bw)
+			await ctx.interaction.edit_original_message(embed=embed)
+			return
+
+		for platform in task.get("platforms"): task[platform]["ticker"].pop("tree")
+		paper = paperTrader.post_trade(paper, orderType, currentPlatform, currentTask, payload, pendingOrder)
+
+		pendingOrder.parameters["request"] = task
+		if paper["globalLastReset"] == 0: paper["globalLastReset"] = int(time())
+		await self.database.document("accounts/{}".format(request.accountId)).set({"paperTrader": paper}, merge=True)
+		if pendingOrder.parameters["parameters"][1]:
+			openOrders = await self.database.collection("details/openPaperOrders/{}".format(request.accountId)).get()
+			if len(openOrders) >= 50:
+				embed = Embed(title="You can only create up to 50 pending paper trades.", color=constants.colors["gray"])
+				embed.set_author(name="Maximum number of open paper orders reached", icon_url=static_storage.icon_bw)
 				await ctx.interaction.edit_original_message(embed=embed)
 				return
-
-			currentTask = task.get(task.get("currentPlatform"))
-
-			payload, quoteText = await Processor.process_task("candle", request.authorId, task)
-
-			if payload is None or len(payload.get("candles", [])) == 0:
-				errorMessage = "Requested paper {} order for `{}` could not be executed.".format(orderType.replace("-", " "), currentTask.get("ticker").get("name")) if quoteText is None else quoteText
-				embed = discord.Embed(title=errorMessage, color=constants.colors["gray"])
-				embed.set_author(name="Data not available", icon_url=static_storage.icon_bw)
-				await ctx.interaction.edit_original_message(embed=embed)
-			else:
-				currentPlatform = payload.get("platform")
-				currentTask = task.get(currentPlatform)
-				ticker = currentTask.get("ticker")
-				exchange = ticker.get("exchange")
-
-				outputTitle, outputMessage, paper, pendingOrder = await paperTrader.process_trade(request.accountProperties["paperTrader"], orderType, currentPlatform, currentTask, payload)
-
-				if pendingOrder is None:
-					embed = discord.Embed(title=outputMessage, color=constants.colors["gray"])
-					embed.set_author(name=outputTitle, icon_url=static_storage.icon_bw)
-					await ctx.interaction.edit_original_message(embed=embed)
-					return
-
-				confirmationText = "Do you want to place a paper {} order of {} {} at {}?".format(orderType.replace("-", " "), pendingOrder.amountText, ticker.get("base"), pendingOrder.priceText)
-				embed = discord.Embed(title=confirmationText, description=pendingOrder.conversionText, color=constants.colors["pink"])
-				embed.set_author(name="Paper order confirmation", icon_url=pendingOrder.parameters.get("thumbnailUrl"))
-				orderConfirmationMessage = await ctx.interaction.edit_original_message(embed=embed)
-				lockedUsers.add(request.authorId)
-
-				def confirm_order(m):
-					if m.author.id == request.authorId:
-						response = ' '.join(m.clean_content.lower().split())
-						if response in ["y", "yes", "sure", "confirm", "execute"]: return True
-						elif response in ["n", "no", "cancel", "discard", "reject"]: raise Exception
-
-				try:
-					await bot.wait_for('message', timeout=60.0, check=confirm_order)
-				except:
-					lockedUsers.discard(request.authorId)
-					embed = discord.Embed(title="Paper order has been canceled.", description="~~{}~~".format(confirmationText), color=constants.colors["gray"])
-					embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon_bw)
-					try: await orderConfirmationMessage.edit(embed=embed)
-					except: pass
-				else:
-					lockedUsers.discard(request.authorId)
-					for platform in task.get("platforms"): task[platform]["ticker"].pop("tree")
-					paper = paperTrader.post_trade(paper, orderType, currentPlatform, currentTask, payload, pendingOrder)
-
-					pendingOrder.parameters["request"] = task
-					if paper["globalLastReset"] == 0: paper["globalLastReset"] = int(time())
-					await database.document("accounts/{}".format(request.accountId)).set({"paperTrader": paper}, merge=True)
-					if pendingOrder.parameters["parameters"][1]:
-						openOrders = await database.collection("details/openPaperOrders/{}".format(request.accountId)).get()
-						if len(openOrders) >= 50:
-							embed = discord.Embed(title="You can only create up to 50 pending paper trades.", color=constants.colors["gray"])
-							embed.set_author(name="Maximum number of open paper orders reached", icon_url=static_storage.icon_bw)
-							await ctx.interaction.edit_original_message(embed=embed)
-							return
-						await database.document("details/openPaperOrders/{}/{}".format(request.accountId, str(uuid4()))).set(pendingOrder.parameters)
-					else:
-						await database.document("details/paperOrderHistory/{}/{}".format(request.accountId, str(uuid4()))).set(pendingOrder.parameters)
-
-					successMessage = "Paper {} order of {} {} at {} was successfully {}.".format(orderType.replace("-", " "), pendingOrder.amountText, ticker.get("base"), pendingOrder.priceText, "executed" if pendingOrder.parameters["parameters"][0] else "placed")
-					embed = discord.Embed(title=successMessage, color=constants.colors["deep purple"])
-					embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon)
-					await ctx.interaction.edit_original_message(embed=embed)
-
+			await self.database.document("details/openPaperOrders/{}/{}".format(request.accountId, str(uuid4()))).set(pendingOrder.parameters)
 		else:
-			embed = discord.Embed(title=":joystick: You must have an Alpha Account connected to your Discord to use Alpha Paper Trader.", description="[Sign up for a free account on our website](https://www.alphabotsystem.com/sign-up). If you already signed up, [sign in](https://www.alphabotsystem.com/sign-in), and connect your account with your Discord profile.", color=constants.colors["deep purple"])
-			embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon)
-			await ctx.interaction.edit_original_message(embed=embed)
+			await self.database.document("details/paperOrderHistory/{}/{}".format(request.accountId, str(uuid4()))).set(pendingOrder.parameters)
 
-	@paperGroup.command(name="buy", description="Fetch paper trading balance.")
-	async def paper_balance(
+		successMessage = "Paper {} order of {} {} at {} was successfully {}.".format(orderType.replace("-", " "), pendingOrder.amountText, ticker.get("base"), pendingOrder.priceText, "executed" if pendingOrder.parameters["parameters"][0] else "placed")
+		embed = Embed(title=successMessage, color=constants.colors["deep purple"])
+		embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon)
+		await ctx.interaction.edit_original_message(embed=embed)
+
+	async def paper_order_proxy(
 		self,
 		ctx,
-		tickerId: Option(str, "Ticker id of an asset.", name="ticker"),
-		level: Option(float, "Trigger price for the alert.", name="price"),
-		assetType: Option(str, "Asset class of the ticker.", name="type", autocomplete=BaseCommand.get_types, required=False, default=""),
-		venue: Option(str, "Venue to pull the volume from.", name="venue", autocomplete=BaseCommand.get_venues, required=False, default=""),
+		tickerId,
+		amount,
+		level,
+		assetType,
+		orderType
 	):
 		try:
 			request = await self.create_request(ctx, autodelete=-1)
 			if request is None: return
 
-			arguments = paperTrader.argument_cleanup(requestSlice).split(" ")
+			if request.is_registered():
+				arguments = [assetType]
+				outputMessage, task = await Processor.process_quote_arguments(request, arguments, tickerId=tickerId.upper(), isPaperTrade=True, excluded=["CoinGecko", "Serum", "LLD"])
+				if outputMessage is not None:
+					embed = Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/paper-trader).", color=constants.colors["gray"])
+					embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
+					await ctx.interaction.edit_original_message(embed=embed)
+					return
 
-			self.respond(ctx, request, task, "buy", arguments)
+				currentTask = task.get(task.get("currentPlatform"))
+				payload, quoteText = await Processor.process_task("candle", request.authorId, task)
+
+				if payload is None or len(payload.get("candles", [])) == 0:
+					errorMessage = "Requested paper {} order for `{}` could not be executed.".format(orderType, currentTask.get("ticker").get("name")) if quoteText is None else quoteText
+					embed = Embed(title=errorMessage, color=constants.colors["gray"])
+					embed.set_author(name="Data not available", icon_url=static_storage.icon_bw)
+					await ctx.interaction.edit_original_message(embed=embed)
+					return
+
+				await self.respond(ctx, request, task, payload, amount, level, orderType)
+
+			else:
+				embed = Embed(title=":joystick: You must have an Alpha Account connected to your Discord to use Alpha Paper Trader.", description="[Sign up for a free account on our website](https://www.alphabotsystem.com/sign-up). If you already signed up, [sign in](https://www.alphabotsystem.com/sign-in), and connect your account with your Discord profile.", color=constants.colors["deep purple"])
+				embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon)
+				await ctx.interaction.edit_original_message(embed=embed)
 
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /paper buy".format(ctx.author.id))
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /paper {}".format(ctx.author.id, orderType))
+
+	@paperGroup.command(name="buy", description="Execute a paper buy trade.")
+	async def paper_buy(
+		self,
+		ctx,
+		tickerId: Option(str, "Ticker id of an asset.", name="ticker"),
+		amount: Option(float, "Trade amount in base currency.", name="amount"),
+		level: Option(float, "Limit order price for the trade.", name="price", required=False, default=None),
+		assetType: Option(str, "Asset class of the ticker.", name="type", autocomplete=BaseCommand.get_types, required=False, default="")
+	):
+		await self.paper_order_proxy(ctx, tickerId, amount, level, assetType, "buy")
+
+	@paperGroup.command(name="sell", description="Execute a paper sell trade.")
+	async def paper_sell(
+		self,
+		ctx,
+		tickerId: Option(str, "Ticker id of an asset.", name="ticker"),
+		amount: Option(float, "Trade amount in base currency.", name="amount"),
+		level: Option(float, "Limit order price for the trade.", name="price", required=False, default=None),
+		assetType: Option(str, "Asset class of the ticker.", name="type", autocomplete=BaseCommand.get_types, required=False, default="")
+	):
+		await self.paper_order_proxy(ctx, tickerId, amount, level, assetType, "sell")
 
 	@paperGroup.command(name="balance", description="Fetch paper trading balance.")
 	async def paper_balance(
@@ -137,10 +142,10 @@ class PaperCommand(BaseCommand):
 			if request is None: return
 
 			if request.is_registered():
-				paperOrders = await database.collection("details/openPaperOrders/{}".format(request.accountId)).get()
+				paperOrders = await self.database.collection("details/openPaperOrders/{}".format(request.accountId)).get()
 				paperBalances = request.accountProperties["paperTrader"].get("balance", {})
 
-				embed = discord.Embed(title="Paper balance:", color=constants.colors["deep purple"])
+				embed = Embed(title="Paper balance:", color=constants.colors["deep purple"])
 				embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon)
 
 				holdingAssets = set()
@@ -194,7 +199,7 @@ class PaperCommand(BaseCommand):
 				await ctx.interaction.edit_original_message(embed=embed)
 
 			else:
-				embed = discord.Embed(title=":joystick: You must have an Alpha Account connected to your Discord to use Alpha Paper Trader.", description="[Sign up for a free account on our website](https://www.alphabotsystem.com/sign-up). If you already signed up, [sign in](https://www.alphabotsystem.com/sign-in), and connect your account with your Discord profile.", color=constants.colors["deep purple"])
+				embed = Embed(title=":joystick: You must have an Alpha Account connected to your Discord to use Alpha Paper Trader.", description="[Sign up for a free account on our website](https://www.alphabotsystem.com/sign-up). If you already signed up, [sign in](https://www.alphabotsystem.com/sign-in), and connect your account with your Discord profile.", color=constants.colors["deep purple"])
 				embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon)
 				await ctx.interaction.edit_original_message(embed=embed)
 
@@ -215,7 +220,7 @@ class PaperCommand(BaseCommand):
 			if request.is_registered():
 				paperOrders = await self.database.collection("details/openPaperOrders/{}".format(request.accountId)).get()
 				if len(paperOrders) == 0:
-					embed = discord.Embed(title="No open paper orders.", color=constants.colors["deep purple"])
+					embed = Embed(title="No open paper orders.", color=constants.colors["deep purple"])
 					embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon)
 					await ctx.interaction.edit_original_message(embed=embed)
 				else:
@@ -228,11 +233,11 @@ class PaperCommand(BaseCommand):
 						quoteText = ticker.get("quote")
 						side = order["orderType"].replace("-", " ")
 
-						embed = discord.Embed(title="Paper {} {} {} at {} {}".format(side, order["amountText"], ticker.get("base"), order["priceText"], quoteText), color=constants.colors["deep purple"])
+						embed = Embed(title="Paper {} {} {} at {} {}".format(side, order["amountText"], ticker.get("base"), order["priceText"], quoteText), color=constants.colors["deep purple"])
 						await ctx.interaction.edit_original_message(embed=embed, view=DeleteView(database=self.database, authorId=request.authorId, pathId=request.accountId, orderId=element.id))
 
 			else:
-				embed = discord.Embed(title=":joystick: You must have an Alpha Account connected to your Discord to use Alpha Paper Trader.", description="[Sign up for a free account on our website](https://www.alphabotsystem.com/sign-up). If you already signed up, [sign in](https://www.alphabotsystem.com/sign-in), and connect your account with your Discord profile.", color=constants.colors["deep purple"])
+				embed = Embed(title=":joystick: You must have an Alpha Account connected to your Discord to use Alpha Paper Trader.", description="[Sign up for a free account on our website](https://www.alphabotsystem.com/sign-up). If you already signed up, [sign in](https://www.alphabotsystem.com/sign-in), and connect your account with your Discord profile.", color=constants.colors["deep purple"])
 				embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon)
 				await ctx.interaction.edit_original_message(embed=embed)
 
@@ -253,11 +258,11 @@ class PaperCommand(BaseCommand):
 			if request.is_registered():
 				paperHistory = await self.database.collection("details/paperOrderHistory/{}".format(request.accountId)).limit(50).get()
 				if len(paperHistory) == 0:
-					embed = discord.Embed(title="No paper trading history.", color=constants.colors["deep purple"])
+					embed = Embed(title="No paper trading history.", color=constants.colors["deep purple"])
 					embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon)
 					await ctx.interaction.edit_original_message(embed=embed)
 				else:
-					embed = discord.Embed(title="Paper trading history:", color=constants.colors["deep purple"])
+					embed = Embed(title="Paper trading history:", color=constants.colors["deep purple"])
 					embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon)
 
 					for element in paperHistory:
@@ -275,7 +280,7 @@ class PaperCommand(BaseCommand):
 					await ctx.interaction.edit_original_message(embed=embed)
 			
 			else:
-				embed = discord.Embed(title=":joystick: You must have an Alpha Account connected to your Discord to use Alpha Paper Trader.", description="[Sign up for a free account on our website](https://www.alphabotsystem.com/sign-up). If you already signed up, [sign in](https://www.alphabotsystem.com/sign-in), and connect your account with your Discord profile.", color=constants.colors["deep purple"])
+				embed = Embed(title=":joystick: You must have an Alpha Account connected to your Discord to use Alpha Paper Trader.", description="[Sign up for a free account on our website](https://www.alphabotsystem.com/sign-up). If you already signed up, [sign in](https://www.alphabotsystem.com/sign-in), and connect your account with your Discord profile.", color=constants.colors["deep purple"])
 				embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon)
 				await ctx.interaction.edit_original_message(embed=embed)
 
@@ -323,7 +328,7 @@ class PaperCommand(BaseCommand):
 
 			topBalances.sort(reverse=True)
 
-			embed = discord.Embed(title="Paper trading leaderboard:", color=constants.colors["deep purple"])
+			embed = Embed(title="Paper trading leaderboard:", color=constants.colors["deep purple"])
 			embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon)
 
 			for index, (balance, lastReset, authorId) in enumerate(topBalances[:10]):
@@ -412,28 +417,11 @@ class PaperCommand(BaseCommand):
 			print(format_exc())
 			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /paper reset".format(ctx.author.id))
 
-	async def process_trade(self, paper, orderType, currentPlatform, request, payload):
+	async def process_trade(self, paper, execAmount, execPrice, orderType, currentPlatform, request, payload):
 		outputTitle = None
 		outputMessage = None
 
 		ticker = request.get("ticker")
-		if ticker.get("isReversed"):
-			outputTitle = "Cannot trade on an inverse ticker."
-			outputMessage = "Try flipping the base and the quote currency, then try again with an inverse order."
-			return outputTitle, outputMessage, paper, None
-
-		isLimitOrder = {"id": "isLimitOrder", "value": "limitOrder"} in request.get("preferences")
-		isAmountPercent = {"id": "isAmountPercent", "value": "amountPercent"} in request.get("preferences")
-		isPricePercent = {"id": "isPricePercent", "value": "pricePercent"} in request.get("preferences")
-		if not isLimitOrder:
-			execPrice = payload["candles"][-1][4]
-		elif isLimitOrder and len(request.get("numericalParameters")) != 2:
-			outputTitle = "Execution price was not provided."
-			outputMessage = "A limit order execution price must be provided."
-			return outputTitle, outputMessage, paper, None
-		else:
-			execPrice = request.get("numericalParameters")[1]
-		execAmount = request.get("numericalParameters")[0]
 
 		if "balance" not in paper:
 			paper["balance"] = {"USD": 10000, "CCXT": {}, "IEXC": {}}
@@ -446,12 +434,9 @@ class PaperCommand(BaseCommand):
 		else:
 			quoteBalance = paper["balance"][currentPlatform].get(ticker.get("quote"), 0)
 
-		if orderType.endswith("buy"):
-			if isPricePercent: execPrice = payload["candles"][-1][4] * (1 - execPrice / 100)
-			execAmount = (abs(quoteBalance) / execPrice * (execAmount / 100)) if isAmountPercent else execAmount
-		elif orderType.endswith("sell"):
-			if isPricePercent: execPrice = payload["candles"][-1][4] * (1 + execPrice / 100)
-			execAmount = (baseBalance * (execAmount / 100)) if isAmountPercent else execAmount
+		if execPrice is None: execPrice = payload["candles"][-1][4]
+		if orderType.endswith("sell"): execAmount = min((baseBalance), execAmount)
+		else: execAmount = min((abs(quoteBalance) / execPrice), execAmount)
 
 		if currentPlatform == "CCXT":
 			execPriceText = await TickerParser.get_formatted_price_ccxt(ticker.get("exchange").get("id"), ticker.get("symbol"), execPrice)
@@ -486,17 +471,17 @@ class PaperCommand(BaseCommand):
 			"orderType": orderType,
 			"amount": execAmount,
 			"amountText": execAmountText,
-			"price": request.get("numericalParameters")[0] if isPricePercent else execPrice,
+			"price": execPrice,
 			"priceText": execPriceText,
 			"timestamp": int(time() * 1000),
 			"status": "placed",
-			"parameters": [isPricePercent, isLimitOrder],
+			"isLimit": execPrice is not None,
 			"thumbnailUrl": thumbnailUrl
 		}
 		newOrder["placement"] = "above" if newOrder["price"] > payload["candles"][-1][4] else "below"
 
-		priceText = "{:,.2f} %".format(request.get("numericalParameters")[0]) if isPricePercent else "{} {}".format(execPriceText, ticker.get("quote"))
-		conversionText = None if isPricePercent else "{} {} ≈ {:,.6f} {}".format(execAmountText, ticker.get("base"), quoteValue, ticker.get("quote"))
+		priceText = "{} {}".format(execPriceText, ticker.get("quote"))
+		conversionText = "{} {} ≈ {:,.6f} {}".format(execAmountText, ticker.get("base"), quoteValue, ticker.get("quote"))
 
 		return None, None, paper, Order(newOrder, priceText=priceText, conversionText=conversionText, amountText=execAmountText)
 
@@ -504,7 +489,7 @@ class PaperCommand(BaseCommand):
 		ticker = request.get("ticker")
 		execPrice = pendingOrder.parameters["price"]
 		execAmount = pendingOrder.parameters["amount"]
-		isLimitOrder = pendingOrder.parameters["parameters"][1]
+		isLimitOrder = pendingOrder.parameters["isLimit"]
 
 		base = ticker.get("base")
 		quote = ticker.get("quote")
@@ -552,7 +537,7 @@ class DeleteView(View):
 
 			properties = await accountProperties.get(self.pathId)
 
-			order = await database.document("details/openPaperOrders/{}/{}".format(self.pathId, self.orderId)).get()
+			order = await self.database.document("details/openPaperOrders/{}/{}".format(self.pathId, self.orderId)).get()
 			if order is None: return
 			order = order.to_dict()
 
@@ -578,8 +563,8 @@ class DeleteView(View):
 			elif order["orderType"] == "sell":
 				baseBalance[base] += order["amount"]
 
-			await database.document("details/openPaperOrders/{}/{}".format(self.pathId, self.orderId)).delete()
-			await database.document("accounts/{}".format(self.pathId)).set({"paperTrader": properties["paperTrader"]}, merge=True)
+			await self.database.document("details/openPaperOrders/{}/{}".format(self.pathId, self.orderId)).delete()
+			await self.database.document("accounts/{}".format(self.pathId)).set({"paperTrader": properties["paperTrader"]}, merge=True)
 
 			embed = Embed(title="Paper order has been canceled.", color=constants.colors["gray"])
 			await interaction.response.edit_message(embed=embed, view=None)

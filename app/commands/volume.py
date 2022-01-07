@@ -77,7 +77,7 @@ class VolumeCommand(BaseCommand):
 			request = await self.create_request(ctx, autodelete=-1)
 			if request is None: return
 
-			arguments = " ".join([venue]).lower().split()
+			arguments = [venue]
 			outputMessage, task = await Processor.process_quote_arguments(request, arguments, tickerId=tickerId.upper())
 
 			if outputMessage is not None:

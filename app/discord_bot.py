@@ -36,6 +36,7 @@ from MessageRequest import MessageRequest
 from commands.assistant import AlphaCommand
 from commands.alerts import AlertCommand
 from commands.charts import ChartCommand
+from commands.depth import DepthCommand
 from commands.prices import PriceCommand
 from commands.volume import VolumeCommand
 from commands.convert import ConvertCommand
@@ -507,10 +508,6 @@ async def on_message(message):
 							totalWeight = messageRequest.get_limit()
 							break
 						else:
-							if requestSlice.startswith("am ") or requestSlice.startswith("wc ") or requestSlice.startswith("tl ") or requestSlice.startswith("tv ") or requestSlice.startswith("bm ") or requestSlice.startswith("gc ") or requestSlice.startswith("fv "):
-								await message.channel.send(embed=discord.Embed(title="We're deprecating the old platform override syntax. Use `c {} {}` from now on instead.".format(requestSlice[3:], requestSlice[:2]), color=constants.colors["gray"]))
-								return
-
 							chartMessages, weight = await chart(message, messageRequest, requestSlice)
 							sentMessages += chartMessages
 							totalWeight += weight - 1
@@ -569,28 +566,7 @@ async def on_message(message):
 				await finish_request(message, messageRequest, totalWeight, sentMessages)
 
 			elif messageRequest.content.startswith("d "):
-				requestSlices = split(", d | d |, ", messageRequest.content.split(" ", 1)[1])
-				totalWeight = len(requestSlices)
-				if totalWeight > messageRequest.get_limit() / 2:
-					await hold_up(message, messageRequest)
-					return
-				for requestSlice in requestSlices:
-					rateLimited[messageRequest.authorId] = rateLimited.get(messageRequest.authorId, 0) + 2
-
-					if rateLimited[messageRequest.authorId] >= messageRequest.get_limit():
-						await message.channel.send(content="<@!{}>".format(messageRequest.authorId), embed=discord.Embed(title="You reached your limit of requests per minute. You can try again in a bit.", color=constants.colors["gray"]))
-						rateLimited[messageRequest.authorId] = messageRequest.get_limit()
-						totalWeight = messageRequest.get_limit()
-						break
-					else:
-						chartMessages, weight = await depth(message, messageRequest, requestSlice)
-						sentMessages += chartMessages
-						totalWeight += weight - 1
-
-						rateLimited[messageRequest.authorId] = rateLimited.get(messageRequest.authorId, 0) + weight - 2
-
-				await database.document("discord/statistics").set({_snapshot: {"d": Increment(totalWeight)}}, merge=True)
-				await finish_request(message, messageRequest, totalWeight, sentMessages)
+				await deprecation_message(message, "d", isGone=True)
 
 			elif messageRequest.content.startswith(("alert ", "alerts ")):
 				await deprecation_message(message, "alert", isGone=True)
@@ -610,7 +586,7 @@ async def on_message(message):
 						totalWeight = messageRequest.get_limit()
 						break
 					else:
-						quoteMessages, weight = await price_old(message, messageRequest, requestSlice)
+						quoteMessages, weight = await price(message, messageRequest, requestSlice)
 						sentMessages += quoteMessages
 						totalWeight += weight - 1
 
@@ -626,28 +602,7 @@ async def on_message(message):
 				await deprecation_message(message, "convert", isGone=True)
 
 			elif messageRequest.content.startswith(("m ", "info")):
-				requestSlices = split(", m | m |, info | info |, ", messageRequest.content.split(" ", 1)[1])
-				totalWeight = len(requestSlices)
-				if totalWeight > messageRequest.get_limit() / 2:
-					await hold_up(message, messageRequest)
-					return
-				for requestSlice in requestSlices:
-					rateLimited[messageRequest.authorId] = rateLimited.get(messageRequest.authorId, 0) + 2
-
-					if rateLimited[messageRequest.authorId] >= messageRequest.get_limit():
-						await message.channel.send(content="<@!{}>".format(messageRequest.authorId), embed=discord.Embed(title="You reached your limit of requests per minute. You can try again in a bit.", color=constants.colors["gray"]))
-						rateLimited[messageRequest.authorId] = messageRequest.get_limit()
-						totalWeight = messageRequest.get_limit()
-						break
-					else:
-						detailMessages, weight = await details(message, messageRequest, requestSlice)
-						sentMessages += detailMessages
-						totalWeight += weight - 1
-
-						rateLimited[messageRequest.authorId] = rateLimited.get(messageRequest.authorId, 0) + weight - 2
-
-				await database.document("discord/statistics").set({_snapshot: {"mcap": Increment(totalWeight)}}, merge=True)
-				await finish_request(message, messageRequest, totalWeight, sentMessages)
+				await deprecation_message(message, "info", isGone=True)
 
 			elif messageRequest.content.startswith("top"):
 				requestSlices = split(", t | t |, top | top |, ", messageRequest.content.split(" ", 1)[1])
@@ -1080,49 +1035,12 @@ async def heatmap(message, messageRequest, requestSlice):
 		await unknown_error(message, messageRequest.authorId)
 	return (sentMessages, len(sentMessages))
 
-async def depth(message, messageRequest, requestSlice):
-	sentMessages = []
-	try:
-		arguments = requestSlice.split(" ")
-
-		async with message.channel.typing():
-			outputMessage, request = await Processor.process_quote_arguments(messageRequest, arguments[1:], tickerId=arguments[0].upper(), excluded=["CoinGecko", "LLD"])
-
-			if outputMessage is not None:
-				if not messageRequest.is_muted() and outputMessage != "":
-					embed = discord.Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/orderbook-visualizations).", color=constants.colors["gray"])
-					embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
-					sentMessages.append(await message.channel.send(embed=embed))
-				return (sentMessages, len(sentMessages))
-
-			currentRequest = request.get(request.get("currentPlatform"))
-			payload, chartText = await Processor.process_task("depth", messageRequest.authorId, request)
-
-			if payload is None:
-				embed = discord.Embed(title="Requested orderbook visualization for `{}` is not available.".format(currentRequest.get("ticker").get("name")), color=constants.colors["gray"])
-				embed.set_author(name="Chart not available", icon_url=static_storage.icon_bw)
-				sentMessages.append(await message.channel.send(embed=embed))
-			else:
-				currentRequest = request.get(payload.get("platform"))
-				sentMessages.append(await message.channel.send(content=chartText, file=discord.File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, messageRequest.authorId, randint(1000, 9999)))))
-
-		for chartMessage in sentMessages:
-			try: await chartMessage.add_reaction("☑")
-			except: pass
-
-	except CancelledError: pass
-	except Exception:
-		print(format_exc())
-		if environ["PRODUCTION_MODE"]: logging.report_exception(user=f"{message.author.id}: {message.clean_content}")
-		await unknown_error(message, messageRequest.authorId)
-	return (sentMessages, len(sentMessages))
-
 
 # -------------------------
 # Quotes
 # -------------------------
 
-async def price_old(message, messageRequest, requestSlice):
+async def price(message, messageRequest, requestSlice):
 	sentMessages = []
 	try:
 		await deprecation_message(message, "p")
@@ -1173,112 +1091,6 @@ async def price_old(message, messageRequest, requestSlice):
 # -------------------------
 # Details
 # -------------------------
-
-async def details(message, messageRequest, requestSlice):
-	sentMessages = []
-	try:
-		await deprecation_message(message, "info")
-
-		arguments = requestSlice.split(" ")
-
-		async with message.channel.typing():
-			outputMessage, request = await Processor.process_detail_arguments(messageRequest, arguments[1:], tickerId=arguments[0].upper())
-
-			if outputMessage is not None:
-				if not messageRequest.is_muted() and outputMessage != "":
-					embed = discord.Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/asset-details).", color=constants.colors["gray"])
-					embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
-					sentMessages.append(await message.channel.send(embed=embed))
-				return (sentMessages, len(sentMessages))
-
-			currentRequest = request.get(request.get("currentPlatform"))
-			payload, detailText = await Processor.process_task("detail", messageRequest.authorId, request)
-
-			if payload is None:
-				errorMessage = "Requested details for `{}` are not available.".format(currentRequest.get("ticker").get("name")) if detailText is None else detailText
-				embed = discord.Embed(title=errorMessage, color=constants.colors["gray"])
-				embed.set_author(name="Data not available", icon_url=static_storage.icon_bw)
-				quoteMessage = await message.channel.send(embed=embed)
-				sentMessages.append(quoteMessage)
-				try: await quoteMessage.add_reaction("☑")
-				except: pass
-			else:
-				currentRequest = request.get(payload.get("platform"))
-				ticker = currentRequest.get("ticker")
-
-				embed = discord.Embed(title=payload["name"], description=payload.get("description", discord.embeds.EmptyEmbed), url=payload.get("url", discord.embeds.EmptyEmbed), color=constants.colors["lime"])
-				if payload.get("image") is not None:
-					embed.set_thumbnail(url=payload["image"])
-
-				assetFundementals = ""
-				assetInfo = ""
-				assetSupply = ""
-				assetScore = ""
-				if payload.get("marketcap") is not None:
-					assetFundementals += "\nMarket cap: {:,.0f} {}{}".format(payload["marketcap"], "USD", "" if payload.get("rank") is None else " (ranked #{})".format(payload["rank"]))
-				if payload.get("volume") is not None:
-					assetFundementals += "\nTotal volume: {:,.0f} {}".format(payload["volume"], "USD")
-				if payload.get("industry") is not None:
-					assetFundementals += "\nIndustry: {}".format(payload["industry"])
-				if payload.get("info") is not None:
-					if payload["info"].get("location") is not None:
-						assetInfo += "\nLocation: {}".format(payload["info"]["location"])
-					if payload["info"].get("employees") is not None:
-						assetInfo += "\nEmployees: {}".format(payload["info"]["employees"])
-				if payload.get("supply") is not None:
-					if payload["supply"].get("total") is not None:
-						assetSupply += "\nTotal supply: {:,.0f} {}".format(payload["supply"]["total"], ticker.get("base"))
-					if payload["supply"].get("circulating") is not None:
-						assetSupply += "\nCirculating supply: {:,.0f} {}".format(payload["supply"]["circulating"], ticker.get("base"))
-				if payload.get("score") is not None:
-					if payload["score"].get("developer") is not None:
-						assetScore += "\nDeveloper score: {:,.1f}/100".format(payload["score"]["developer"])
-					if payload["score"].get("community") is not None:
-						assetScore += "\nCommunity score: {:,.1f}/100".format(payload["score"]["community"])
-					if payload["score"].get("liquidity") is not None:
-						assetScore += "\nLiquidity score: {:,.1f}/100".format(payload["score"]["liquidity"])
-					if payload["score"].get("public interest") is not None:
-						assetScore += "\nPublic interest: {:,.3f}".format(payload["score"]["public interest"])
-				detailsText = assetFundementals[1:] + assetInfo + assetSupply + assetScore
-				if detailsText != "":
-					embed.add_field(name="Details", value=detailsText, inline=False)
-
-				assetPriceDetails = ""
-				if payload["price"].get("current") is not None:
-					assetPriceDetails += ("\nCurrent: ${:,.%df}" % Utils.add_decimal_zeros(payload["price"]["current"])).format(payload["price"]["current"])
-				if payload["price"].get("ath") is not None:
-					assetPriceDetails += ("\nAll-time high: ${:,.%df}" % Utils.add_decimal_zeros(payload["price"]["ath"])).format(payload["price"]["ath"])
-				if payload["price"].get("atl") is not None:
-					assetPriceDetails += ("\nAll-time low: ${:,.%df}" % Utils.add_decimal_zeros(payload["price"]["atl"])).format(payload["price"]["atl"])
-				if payload["price"].get("1y high") is not None:
-					assetPriceDetails += ("\n1-year high: ${:,.%df}" % Utils.add_decimal_zeros(payload["price"]["1y high"])).format(payload["price"]["1y high"])
-				if payload["price"].get("1y low") is not None:
-					assetPriceDetails += ("\n1-year low: ${:,.%df}" % Utils.add_decimal_zeros(payload["price"]["1y low"])).format(payload["price"]["1y low"])
-				if payload["price"].get("per") is not None:
-					assetPriceDetails += "\nPrice-to-earnings ratio: {:,.2f}".format(payload["price"]["per"])
-				if assetPriceDetails != "":
-					embed.add_field(name="Price", value=assetPriceDetails[1:], inline=True)
-
-				change24h = "Past day: no data"
-				change30d = ""
-				change1y = ""
-				if payload["change"].get("past day") is not None:
-					change24h = "\nPast day: *{:+,.2f} %*".format(payload["change"]["past day"])
-				if payload["change"].get("past month") is not None:
-					change30d = "\nPast month: *{:+,.2f} %*".format(payload["change"]["past month"])
-				if payload["change"].get("past year") is not None:
-					change1y = "\nPast year: *{:+,.2f} %*".format(payload["change"]["past year"])
-				embed.add_field(name="Price change", value=(change24h + change30d + change1y), inline=True)
-				embed.set_footer(text=payload["sourceText"])
-
-				sentMessages.append(await message.channel.send(embed=embed))
-
-	except CancelledError: pass
-	except Exception:
-		print(format_exc())
-		if environ["PRODUCTION_MODE"]: logging.report_exception(user=f"{message.author.id}: {message.clean_content}")
-		await unknown_error(message, messageRequest.authorId)
-	return (sentMessages, len(sentMessages))
 
 async def rankings(message, messageRequest, requestSlice):
 	sentMessages = []
@@ -1831,6 +1643,7 @@ async def create_request(ctx, autodelete=None):
 bot.add_cog(AlphaCommand(bot, create_request, database, logging))
 bot.add_cog(AlertCommand(bot, create_request, database, logging))
 bot.add_cog(ChartCommand(bot, create_request, database, logging))
+bot.add_cog(DepthCommand(bot, create_request, database, logging))
 bot.add_cog(PriceCommand(bot, create_request, database, logging))
 bot.add_cog(VolumeCommand(bot, create_request, database, logging))
 bot.add_cog(ConvertCommand(bot, create_request, database, logging))

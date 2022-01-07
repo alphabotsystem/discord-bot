@@ -39,6 +39,7 @@ class ChartCommand(BaseCommand):
 			else:
 				await ctx.interaction.edit_original_message(content=chartText, file=File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, request.authorId, randint(1000, 9999))))
 
+		await self.database.document("discord/statistics").set({request.snapshot: {"c": Increment(1)}}, merge=True)
 		await self.cleanup(ctx, request)
 
 	@slash_command(name="c", description="Pull charts from TradingView, TradingLite, GoCharting, and more. Command for power users.")

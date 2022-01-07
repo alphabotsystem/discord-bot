@@ -22,13 +22,13 @@ class AlertCommand(BaseCommand):
 	alertGroup = SlashCommandGroup("alert", "Set stock and cryptocurrency price alerts.")
 
 	@alertGroup.command(name="set", description="Set stock and cryptocurrency price alerts.")
-	async def alert(
+	async def alert_set(
 		self,
 		ctx,
 		tickerId: Option(str, "Ticker id of an asset.", name="ticker"),
 		level: Option(float, "Trigger price for the alert.", name="price"),
 		assetType: Option(str, "Asset class of the ticker.", name="type", autocomplete=BaseCommand.get_types, required=False, default=""),
-		venue: Option(str, "Venue to pull the volume from.", name="venue", autocomplete=BaseCommand.get_venues, required=False, default=""),
+		venue: Option(str, "Venue to pull the data from.", name="venue", autocomplete=BaseCommand.get_venues, required=False, default=""),
 		message: Option(str, "Public message to display on trigger.", name="message", required=False, default=None),
 		channel: Option(TextChannel, "Channel to display the alert in.", name="channel", required=False, default=None)
 	):
@@ -37,9 +37,8 @@ class AlertCommand(BaseCommand):
 			if request is None: return
 
 			if request.price_alerts_available():
-				arguments = []
-
-				outputMessage, task = await Processor.process_quote_arguments(request, arguments, tickerId=ticker.upper(), excluded=["CoinGecko", "LLD"])
+				arguments = [venue]
+				outputMessage, task = await Processor.process_quote_arguments(request, arguments, tickerId=tickerId.upper(), excluded=["CoinGecko", "LLD"])
 
 				if outputMessage is not None:
 					embed = Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/pro/price-alerts).", color=constants.colors["gray"])
@@ -60,8 +59,6 @@ class AlertCommand(BaseCommand):
 					embed = Embed(title="You can only create up to 50 price alerts.", color=constants.colors["gray"])
 					embed.set_author(name="Maximum number of price alerts reached", icon_url=static_storage.icon_bw)
 					await ctx.interaction.edit_original_message(embed=embed)
-				elif not currentTask.get("ticker").get("isSimple"):
-					request.set_error("Price alerts for aggregated tickers aren't available.", isFatal=True)
 
 				payload, quoteText = await Processor.process_task("candle", request.authorId, task)
 
@@ -133,6 +130,7 @@ class AlertCommand(BaseCommand):
 						await self.database.document("details/marketAlerts/{}/{}".format(request.accountId, alertId)).set(newAlert)
 						await self.database.document("accounts/{}".format(request.accountId)).set({"customer": {"addons": {"marketAlerts": 1}}}, merge=True)
 
+					await self.database.document("discord/statistics").set({request.snapshot: {"alert": Increment(1)}}, merge=True)
 					await self.cleanup(ctx, request)
 
 			elif request.is_pro():
@@ -151,7 +149,7 @@ class AlertCommand(BaseCommand):
 			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /alert set".format(ctx.author.id))
 
 	@alertGroup.command(name="list", description="List all price alerts.")
-	async def alert(
+	async def alert_list(
 		self,
 		ctx
 	):
@@ -180,7 +178,7 @@ class AlertCommand(BaseCommand):
 					currentTask = alert["request"].get(currentPlatform)
 					ticker = currentTask.get("ticker")
 
-					embed = Embed(title="{}{} price trigger at {}{}.".format(ticker.get("name"), "" if bool(ticker.get("exchange")) else " ({})".format(ticker.get("exchange").get("name")), alert.get("levelText", alert["level"]), "" if ticker.get("quote") is None else " " + ticker.get("quote")), color=constants.colors["deep purple"])
+					embed = Embed(title="{}{} price alert at {}{}.".format(ticker.get("name"), " ({})".format(ticker.get("exchange").get("name")) if ticker.get("exchange") else "", alert.get("levelText", alert["level"]), "" if ticker.get("quote") is None else " " + ticker.get("quote")), color=constants.colors["deep purple"])
 					await ctx.channel.send(embed=embed, view=DeleteView(database=self.database, authorId=request.authorId, pathId=matchedId, alertId=key))
 
 		except CancelledError: pass
