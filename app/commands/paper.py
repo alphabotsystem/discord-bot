@@ -551,44 +551,37 @@ class DeleteView(View):
 
 	@button(label="Cancel", style=ButtonStyle.danger)
 	async def delete(self, button: Button, interaction: Interaction):
-		try:
-			if self.authorId != interaction.user.id: return
+		if self.authorId != interaction.user.id: return
+		properties = await accountProperties.get(self.pathId)
 
-			properties = await accountProperties.get(self.pathId)
+		order = await self.database.document("details/openPaperOrders/{}/{}".format(self.pathId, self.orderId)).get()
+		if order is None: return
+		order = order.to_dict()
 
-			order = await self.database.document("details/openPaperOrders/{}/{}".format(self.pathId, self.orderId)).get()
-			if order is None: return
-			order = order.to_dict()
+		currentPlatform = order["request"].get("currentPlatform")
+		request = order["request"].get(currentPlatform)
+		ticker = request.get("ticker")
 
-			currentPlatform = order["request"].get("currentPlatform")
-			request = order["request"].get(currentPlatform)
-			ticker = request.get("ticker")
+		base = ticker.get("base")
+		quote = ticker.get("quote")
+		if base in ["USD", "USDT", "USDC", "DAI", "HUSD", "TUSD", "PAX", "USDK", "USDN", "BUSD", "GUSD", "USDS"]:
+			baseBalance = properties["paperTrader"]["balance"]
+			base = "USD"
+		else:
+			baseBalance = properties["paperTrader"]["balance"][currentPlatform]
+		if quote in ["USD", "USDT", "USDC", "DAI", "HUSD", "TUSD", "PAX", "USDK", "USDN", "BUSD", "GUSD", "USDS"]:
+			quoteBalance = properties["paperTrader"]["balance"]
+			quote = "USD"
+		else:
+			quoteBalance = properties["paperTrader"]["balance"][currentPlatform]
 
-			base = ticker.get("base")
-			quote = ticker.get("quote")
-			if base in ["USD", "USDT", "USDC", "DAI", "HUSD", "TUSD", "PAX", "USDK", "USDN", "BUSD", "GUSD", "USDS"]:
-				baseBalance = properties["paperTrader"]["balance"]
-				base = "USD"
-			else:
-				baseBalance = properties["paperTrader"]["balance"][currentPlatform]
-			if quote in ["USD", "USDT", "USDC", "DAI", "HUSD", "TUSD", "PAX", "USDK", "USDN", "BUSD", "GUSD", "USDS"]:
-				quoteBalance = properties["paperTrader"]["balance"]
-				quote = "USD"
-			else:
-				quoteBalance = properties["paperTrader"]["balance"][currentPlatform]
+		if order["orderType"] == "buy":
+			quoteBalance[quote] += order["amount"] * order["price"]
+		elif order["orderType"] == "sell":
+			baseBalance[base] += order["amount"]
 
-			if order["orderType"] == "buy":
-				quoteBalance[quote] += order["amount"] * order["price"]
-			elif order["orderType"] == "sell":
-				baseBalance[base] += order["amount"]
+		await self.database.document("details/openPaperOrders/{}/{}".format(self.pathId, self.orderId)).delete()
+		await self.database.document("accounts/{}".format(self.pathId)).set({"paperTrader": properties["paperTrader"]}, merge=True)
 
-			await self.database.document("details/openPaperOrders/{}/{}".format(self.pathId, self.orderId)).delete()
-			await self.database.document("accounts/{}".format(self.pathId)).set({"paperTrader": properties["paperTrader"]}, merge=True)
-
-			embed = Embed(title="Paper order has been canceled.", color=constants.colors["gray"])
-			await interaction.response.edit_message(embed=embed, view=None)
-
-		except CancelledError: pass
-		except Exception:
-			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /paper orders > delete action".format(ctx.author.id))
+		embed = Embed(title="Paper order has been canceled.", color=constants.colors["gray"])
+		await interaction.response.edit_message(embed=embed, view=None)

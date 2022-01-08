@@ -197,14 +197,7 @@ class DeleteView(View):
 
 	@button(label="Delete", style=ButtonStyle.danger)
 	async def delete(self, button: Button, interaction: Interaction):
-		try:
-			if self.authorId != interaction.user.id: return
-
-			await self.database.document("details/marketAlerts/{}/{}".format(self.pathId, self.alertId)).delete()
-			embed = Embed(title="Alert deleted", color=constants.colors["gray"])
-			await interaction.response.edit_message(embed=embed, view=None)
-
-		except CancelledError: pass
-		except Exception:
-			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /alert list > delete action".format(ctx.author.id))
+		if self.authorId != interaction.user.id: return
+		await self.database.document("details/marketAlerts/{}/{}".format(self.pathId, self.alertId)).delete()
+		embed = Embed(title="Alert deleted", color=constants.colors["gray"])
+		await interaction.response.edit_message(embed=embed, view=None)

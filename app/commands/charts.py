@@ -91,13 +91,7 @@ class ActionsView(View):
 
 	@button(emoji=PartialEmoji.from_str("<:remove_response:929342678976565298>"), style=ButtonStyle.gray)
 	async def delete(self, button: Button, interaction: Interaction):
-		try:
-			await interaction.message.delete()
-
-		except CancelledError: pass
-		except Exception:
-			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /c > delete action".format(ctx.author.id))
+		await interaction.message.delete()
 
 
 class IchibotView(ActionsView):
@@ -108,45 +102,49 @@ class IchibotView(ActionsView):
 
 	@button(label="Buy", style=ButtonStyle.green)
 	async def ichibot_buy(self, button: Button, interaction: Interaction):
-		try:
-			origin = "{}_{}_ichibot".format(self.request.accountId, self.request.authorId)
-			socket = Processor.get_direct_ichibot_socket(origin)
+		origin = "{}_{}_ichibot".format(self.request.accountId, self.request.authorId)
+		socket = Processor.get_direct_ichibot_socket(origin)
 
-			command = "check value askprice"
+		command = "check value askprice"
 
-			exchanges = ExchangesView(self.request.accountProperties.get("apiKeys", {}).keys())
+		availableKeys = list(self.request.accountProperties.get("apiKeys", {}).keys())
+		if len(availableKeys) == 0:
+			embed = Embed(title="Before you can execute trades via Ichibot, you have to add exchange API keys.", description="You can add API keys for FTX, Binance and Binance Futures to you Alpha Account in your [Ichibot Preferences](https://www.alphabotsystem.com/account/ichibot).", color=constants.colors["gray"])
+			embed.set_author(name="Ichibot", icon_url=static_storage.ichibot)
+			await interaction.response.send_message(embed=embed, view=exchanges, ephemeral=True)
+
+		else:
+			exchanges = ExchangesView(availableKeys, command)
 			embed = Embed(title="Please confirm your buy instruction via Ichibot.", description="You'll be executing `{}` via Ichibot.".format(command), color=constants.colors["pink"])
 			embed.set_author(name="Ichibot", icon_url=static_storage.ichibot)
 			await interaction.response.send_message(embed=embed, view=exchanges, ephemeral=True)
 			await exchanges.wait()
 			exchangeId = exchanges.children[0].values[0]
 
-			await socket.send_multipart([self.request.accountId.encode(), exchange.get("id").encode(), b"init"])
-
-		except CancelledError: pass
-		except Exception:
-			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /c > buy action".format(ctx.author.id))
+			# await socket.send_multipart([self.request.accountId.encode(), exchange.get("id").encode(), b"init"])
 
 	@button(label="Sell", style=ButtonStyle.red)
 	async def ichibot_sell(self, button: Button, interaction: Interaction):
-		try:
-			origin = "{}_{}_ichibot".format(self.request.accountId, self.request.authorId)
-			socket = Processor.get_direct_ichibot_socket(origin)
+		origin = "{}_{}_ichibot".format(self.request.accountId, self.request.authorId)
+		socket = Processor.get_direct_ichibot_socket(origin)
 
-			command = "check value bidprice"
+		command = "check value bidprice"
 
-			exchanges = ExchangesView(self.request.accountProperties.get("apiKeys", {}).keys())
+		availableKeys = list(self.request.accountProperties.get("apiKeys", {}).keys())
+		if len(availableKeys) == 0:
+			embed = Embed(title="Before you can execute trades via Ichibot, you have to add exchange API keys.", description="You can add API keys for FTX, Binance and Binance Futures to you Alpha Account in your [Ichibot Preferences](https://www.alphabotsystem.com/account/ichibot).", color=constants.colors["gray"])
+			embed.set_author(name="Ichibot", icon_url=static_storage.ichibot)
+			await interaction.response.send_message(embed=embed, view=exchanges, ephemeral=True)
+
+		else:
+			exchanges = ExchangesView(availableKeys, command)
 			embed = Embed(title="Please confirm your sell instruction via Ichibot.", description="You'll be executing `{}` via Ichibot.".format(command), color=constants.colors["pink"])
 			embed.set_author(name="Ichibot", icon_url=static_storage.ichibot)
 			await interaction.response.send_message(embed=embed, view=exchanges, ephemeral=True)
 			await exchanges.wait()
 			exchangeId = exchanges.children[0].values[0]
 
-		except CancelledError: pass
-		except Exception:
-			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /c > sell action".format(ctx.author.id))
+			# await socket.send_multipart([self.request.accountId.encode(), exchange.get("id").encode(), b"init"])
 
 
 class ExchangesView(View):
@@ -167,7 +165,7 @@ class ExchangesDropdown(Select):
 			"binancefutures": ["Binance Futures", "<:binance:929376117108916314>"],
 			"binance": ["Binance", "<:binance:929376117108916314>"]
 		}
-		options = [SelectOption(label=_map[key][0], emoji=PartialEmoji.from_str(_map[key][1]), value=key) for key in sorted(list(exchanges))]
+		options = [SelectOption(label=_map[key][0], emoji=PartialEmoji.from_str(_map[key][1]), value=key) for key in sorted(exchanges)]
 
 		super().__init__(
 			placeholder="Choose an exchange",
