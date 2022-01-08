@@ -29,7 +29,6 @@ from IchibotRelay import IchibotRelay
 from Processor import Processor
 from DatabaseConnector import DatabaseConnector
 from engine.presets import Presets
-from engine.trader import PaperTrader
 
 from MessageRequest import MessageRequest
 
@@ -1708,7 +1707,6 @@ async def job_queue():
 
 botStatus = [False, False]
 
-paperTrader = PaperTrader()
 ichibotRelay = IchibotRelay()
 
 alphaSettings = {}

@@ -179,22 +179,23 @@ class AlertCommand(BaseCommand):
 					ticker = currentTask.get("ticker")
 
 					embed = Embed(title="{}{} price alert at {}{}.".format(ticker.get("name"), " ({})".format(ticker.get("exchange").get("name")) if ticker.get("exchange") else "", alert.get("levelText", alert["level"]), "" if ticker.get("quote") is None else " " + ticker.get("quote")), color=constants.colors["deep purple"])
-					await ctx.channel.send(embed=embed, view=DeleteView(database=self.database, authorId=request.authorId, pathId=matchedId, alertId=key))
+					await ctx.channel.send(embed=embed, view=DeleteView(database=self.database, authorId=request.authorId, pathId=matchedId, alertId=key), ephemeral=True)
 
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
 			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /alert list".format(ctx.author.id))
 
+
 class DeleteView(View):
 	def __init__(self, database, authorId, pathId, alertId):
-		super().__init__()
+		super().__init__(timeout=None)
 		self.database = database
 		self.authorId = authorId
 		self.pathId = pathId
 		self.alertId = alertId
 
-	@button(label="Delete", style=ButtonStyle.red)
+	@button(label="Delete", style=ButtonStyle.danger)
 	async def delete(self, button: Button, interaction: Interaction):
 		try:
 			if self.authorId != interaction.user.id: return
