@@ -238,13 +238,14 @@ class PaperCommand(BaseCommand):
 
 			if request.is_registered():
 				paperOrders = await self.database.collection("details/openPaperOrders/{}".format(request.accountId)).get()
-				if len(paperOrders) == 0:
+				totalOrderCount = len(paperOrders)
+				if totalOrderCount == 0:
 					embed = Embed(title="No open paper orders.", color=constants.colors["deep purple"])
 					embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon)
 					await ctx.interaction.edit_original_message(embed=embed)
 
 				else:
-					embed = Embed(title="You've set {} paper order{}.".format(len(paperOrders), "" if totalAlertCount == 1 else "s"), color=constants.colors["light blue"])
+					embed = Embed(title="You've set {} paper order{}.".format(totalOrderCount, "" if totalOrderCount == 1 else "s"), color=constants.colors["light blue"])
 					await ctx.interaction.edit_original_message(embed=embed)
 
 					for i, element in enumerate(paperOrders):
