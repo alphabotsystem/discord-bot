@@ -70,7 +70,7 @@ class IchibotCommand(BaseCommand):
 	ichibotGroup = SlashCommandGroup("ichibot", "Use Ichibot crypto trading terminal right in Discord.")
 
 	@ichibotGroup.command(name="login", description="Login into Ichibot crypto trading terminal to open a trading session in Discord.")
-	async def convert(
+	async def login(
 		self,
 		ctx,
 		exchange: Option(str, "Crypto exchange to connect to.", name="exchange", autocomplete=BaseCommand.get_venues),
@@ -121,4 +121,4 @@ class IchibotCommand(BaseCommand):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /convert {} {} {}".format(ctx.author.id, fromTicker, toTicker, amount))
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /ichibot login {} {} {}".format(ctx.author.id, exchange, toTicker, amount))
