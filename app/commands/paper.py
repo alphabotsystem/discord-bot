@@ -16,6 +16,7 @@ from assets import static_storage
 from helpers.utils import Utils
 from Processor import Processor
 from TickerParser import TickerParser
+from DatabaseConnector import DatabaseConnector
 
 from commands.base import BaseCommand, Confirm
 
@@ -258,7 +259,7 @@ class PaperCommand(BaseCommand):
 						side = order["orderType"].replace("-", " ")
 
 						embed = Embed(title="Paper {} {} {} at {} {}".format(side, order["amountText"], ticker.get("base"), order["priceText"], quoteText), color=constants.colors["deep purple"])
-						await ctx.followup.send(embed=embed, view=DeleteView(database=self.database, authorId=request.authorId, pathId=request.accountId, orderId=element.id), ephemeral=True)
+						await ctx.followup.send(embed=embed, view=DeleteView(database=self.database, pathId=request.accountId, orderId=element.id, userId=request.authorId), ephemeral=True)
 
 			else:
 				embed = Embed(title=":joystick: You must have an Alpha Account connected to your Discord to use Alpha Paper Trader.", description="[Sign up for a free account on our website](https://www.alphabotsystem.com/sign-up). If you already signed up, [sign in](https://www.alphabotsystem.com/sign-in), and connect your account with your Discord profile.", color=constants.colors["deep purple"])
@@ -553,7 +554,7 @@ class DeleteView(View):
 	@button(label="Cancel", style=ButtonStyle.danger)
 	async def delete(self, button: Button, interaction: Interaction):
 		if self.userId != interaction.user.id: return
-		properties = await accountProperties.get(self.pathId)
+		properties = await DatabaseConnector(mode="account").get(self.pathId)
 
 		order = await self.database.document("details/openPaperOrders/{}/{}".format(self.pathId, self.orderId)).get()
 		if order is None: return
