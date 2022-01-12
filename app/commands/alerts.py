@@ -33,7 +33,7 @@ class AlertCommand(BaseCommand):
 		channel: Option(TextChannel, "Channel to display the alert in.", name="channel", required=False, default=None)
 	):
 		try:
-			request = await self.create_request(ctx, autodelete=-1)
+			request = await self.create_request(ctx)
 			if request is None: return
 
 			if request.price_alerts_available():
@@ -154,7 +154,7 @@ class AlertCommand(BaseCommand):
 		ctx
 	):
 		try:
-			request = await self.create_request(ctx, autodelete=-1)
+			request = await self.create_request(ctx)
 			if request is None: return
 
 			response1, response2 = [], []
@@ -179,7 +179,7 @@ class AlertCommand(BaseCommand):
 					ticker = currentTask.get("ticker")
 
 					embed = Embed(title="{}{} price alert at {}{}.".format(ticker.get("name"), " ({})".format(ticker.get("exchange").get("name")) if ticker.get("exchange") else "", alert.get("levelText", alert["level"]), "" if ticker.get("quote") is None else " " + ticker.get("quote")), color=constants.colors["deep purple"])
-					await ctx.channel.send(embed=embed, view=DeleteView(database=self.database, authorId=request.authorId, pathId=matchedId, alertId=key), ephemeral=True)
+					await ctx.followup.send(embed=embed, view=DeleteView(database=self.database, authorId=request.authorId, pathId=matchedId, alertId=key), ephemeral=True)
 
 		except CancelledError: pass
 		except Exception:

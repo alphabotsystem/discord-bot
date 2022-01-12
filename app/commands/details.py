@@ -113,11 +113,11 @@ class DetailsCommand(BaseCommand):
 		venue: Option(str, "Venue to pull the information from.", name="venue", autocomplete=BaseCommand.get_venues, required=False, default="")
 	):
 		try:
-			request = await self.create_request(ctx, autodelete=-1)
+			request = await self.create_request(ctx)
 			if request is None: return
 
 			arguments = [venue]
-			outputMessage, task = await Processor.process_quote_arguments(request, arguments, tickerId=tickerId.upper(), platformQueue=["CoinGecko", "CCXT"])
+			outputMessage, task = await Processor.process_quote_arguments(request, arguments, tickerId=tickerId.upper())
 
 			if outputMessage is not None:
 				embed = Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/asset-details).", color=constants.colors["gray"])

@@ -36,7 +36,7 @@ class AlphaCommand(BaseCommand):
 		question: Option(str, "Question you want to ask.", name="question")
 	):
 		try:
-			request = await self.create_request(ctx, autodelete=-1)
+			request = await self.create_request(ctx)
 			if request is None: return
 
 			if len(question) > 500: return

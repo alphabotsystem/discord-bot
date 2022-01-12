@@ -95,7 +95,7 @@ class PaperCommand(BaseCommand):
 		orderType
 	):
 		try:
-			request = await self.create_request(ctx, autodelete=-1)
+			request = await self.create_request(ctx)
 			if request is None: return
 
 			if request.is_registered():
@@ -157,7 +157,7 @@ class PaperCommand(BaseCommand):
 		ctx,
 	):
 		try:
-			request = await self.create_request(ctx, autodelete=-1)
+			request = await self.create_request(ctx)
 			if request is None: return
 
 			if request.is_registered():
@@ -233,7 +233,7 @@ class PaperCommand(BaseCommand):
 		ctx
 	):
 		try:
-			request = await self.create_request(ctx, autodelete=-1)
+			request = await self.create_request(ctx)
 			if request is None: return
 
 			if request.is_registered():
@@ -257,7 +257,7 @@ class PaperCommand(BaseCommand):
 						side = order["orderType"].replace("-", " ")
 
 						embed = Embed(title="Paper {} {} {} at {} {}".format(side, order["amountText"], ticker.get("base"), order["priceText"], quoteText), color=constants.colors["deep purple"])
-						await ctx.channel.send(embed=embed, view=DeleteView(database=self.database, authorId=request.authorId, pathId=request.accountId, orderId=element.id), ephemeral=True)
+						await ctx.followup.send(embed=embed, view=DeleteView(database=self.database, authorId=request.authorId, pathId=request.accountId, orderId=element.id), ephemeral=True)
 
 			else:
 				embed = Embed(title=":joystick: You must have an Alpha Account connected to your Discord to use Alpha Paper Trader.", description="[Sign up for a free account on our website](https://www.alphabotsystem.com/sign-up). If you already signed up, [sign in](https://www.alphabotsystem.com/sign-in), and connect your account with your Discord profile.", color=constants.colors["deep purple"])
@@ -275,7 +275,7 @@ class PaperCommand(BaseCommand):
 		ctx
 	):
 		try:
-			request = await self.create_request(ctx, autodelete=-1)
+			request = await self.create_request(ctx)
 			if request is None: return
 
 			if request.is_registered():
@@ -319,7 +319,7 @@ class PaperCommand(BaseCommand):
 	):
 		return
 		try:
-			request = await self.create_request(ctx, autodelete=-1)
+			request = await self.create_request(ctx)
 			if request is None: return
 
 			paperTraders = await self.database.collection("accounts").where("paperTrader.balance", "!=", "").get()
@@ -370,7 +370,7 @@ class PaperCommand(BaseCommand):
 		ctx,
 	):
 		try:
-			request = await self.create_request(ctx, autodelete=-1)
+			request = await self.create_request(ctx)
 			if request is None: return
 
 			if not request.is_registered():

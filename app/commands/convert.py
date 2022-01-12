@@ -24,7 +24,7 @@ class ConvertCommand(BaseCommand):
 		amount: Option(float, "Amount to convert.", name="amount")
 	):
 		try:
-			request = await self.create_request(ctx, autodelete=-1)
+			request = await self.create_request(ctx)
 			if request is None: return
 
 			payload, quoteText = await Processor.process_conversion(request, fromTicker.upper(), toTicker.upper(), amount)

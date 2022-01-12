@@ -46,7 +46,7 @@ class VolumeCommand(BaseCommand):
 		arguments: Option(str, "Request arguments starting with ticker id.", name="arguments")
 	):
 		try:
-			request = await self.create_request(ctx, autodelete=-1)
+			request = await self.create_request(ctx)
 			if request is None: return
 
 			arguments = arguments.lower().split()
@@ -74,7 +74,7 @@ class VolumeCommand(BaseCommand):
 		venue: Option(str, "Venue to pull the volume from.", name="venue", autocomplete=BaseCommand.get_venues, required=False, default="")
 	):
 		try:
-			request = await self.create_request(ctx, autodelete=-1)
+			request = await self.create_request(ctx)
 			if request is None: return
 
 			arguments = [venue]

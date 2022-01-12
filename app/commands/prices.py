@@ -52,7 +52,7 @@ class PriceCommand(BaseCommand):
 		arguments: Option(str, "Request arguments starting with ticker id.", name="arguments")
 	):
 		try:
-			request = await self.create_request(ctx, autodelete=-1)
+			request = await self.create_request(ctx)
 			if request is None: return
 
 			arguments = arguments.lower().split()
@@ -80,7 +80,7 @@ class PriceCommand(BaseCommand):
 		venue: Option(str, "Venue to pull the price from.", name="venue", autocomplete=BaseCommand.get_venues, required=False, default="")
 	):
 		try:
-			request = await self.create_request(ctx, autodelete=-1)
+			request = await self.create_request(ctx)
 			if request is None: return
 
 			arguments = [venue]

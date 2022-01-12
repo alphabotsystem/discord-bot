@@ -1,4 +1,6 @@
 from os import environ, _exit
+environ["PRODUCTION_MODE"] = environ["PRODUCTION_MODE"] if "PRODUCTION_MODE" in environ and environ["PRODUCTION_MODE"] else ""
+
 from re import split
 from random import randint
 from math import ceil, floor
@@ -25,7 +27,6 @@ from helpers.utils import Utils
 from helpers import constants
 
 from TickerParser import TickerParser
-from IchibotRelay import IchibotRelay
 from Processor import Processor
 from DatabaseConnector import DatabaseConnector
 from engine.presets import Presets
@@ -41,6 +42,7 @@ from commands.volume import VolumeCommand
 from commands.convert import ConvertCommand
 from commands.details import DetailsCommand
 from commands.paper import PaperCommand
+from commands.cope import CopeVoteCommand
 
 
 database = FirestoreAsnycClient()
@@ -62,8 +64,6 @@ COPE_CONSENSUS_VOTE_TESTING = [
 # Initialization
 # -------------------------
 
-environ["PRODUCTION_MODE"] = environ["PRODUCTION_MODE"] if "PRODUCTION_MODE" in environ and environ["PRODUCTION_MODE"] else ""
-
 intents = discord.Intents.all()
 intents.bans = False
 intents.invites = False
@@ -71,7 +71,7 @@ intents.voice_states = False
 intents.typing = False
 intents.presences = False
 
-bot = discord.AutoShardedBot(intents=intents, chunk_guilds_at_startup=False, max_messages=10000, status=discord.Status.idle, activity=discord.Activity(type=discord.ActivityType.playing, name="a reboot, brb!"))
+bot = discord.AutoShardedBot(intents=intents, chunk_guilds_at_startup=False, status=discord.Status.idle, activity=discord.Activity(type=discord.ActivityType.playing, name="a reboot, brb!"))
 
 # -------------------------
 # Guild count & management
@@ -710,12 +710,6 @@ async def on_message(message):
 # -------------------------
 
 @bot.event
-async def on_raw_reaction_add(payload):
-	if payload.user_id in [487714342301859854, 401328409499664394] or not hasattr(payload.emoji, "id"): return
-	if payload.emoji.id == 875344892291846175 or payload.emoji.id == 875345212258529310:
-		await ichibotRelay.submit_vote(payload.message_id, payload.channel_id, payload.user_id, int(payload.emoji.id == 875344892291846175))
-
-@bot.event
 async def on_reaction_add(reaction, user):
 	try:
 		if user.id in [487714342301859854, 401328409499664394]: return
@@ -898,30 +892,21 @@ async def chart(message, messageRequest, requestSlice):
 				return (sentMessages, len(sentMessages))
 
 			currentRequest = request.get(request.get("currentPlatform"))
-			ichibotRelaySubmitions = []
 			timeframes = request.pop("timeframes")
 			for i in range(request.get("requestCount")):
 				for p, t in timeframes.items(): request[p]["currentTimeframe"] = t[i]
 				payload, chartText = await Processor.process_task("chart", messageRequest.authorId, request)
 
 				if payload is None:
-					ichibotRelaySubmitions.append({})
 					errorMessage = "Requested chart for `{}` is not available.".format(currentRequest.get("ticker").get("name")) if chartText is None else chartText
 					embed = discord.Embed(title=errorMessage, color=constants.colors["gray"])
 					embed.set_author(name="Chart not available", icon_url=static_storage.icon_bw)
 					sentMessages.append(await message.channel.send(embed=embed))
 				else:
 					currentRequest = request.get(payload.get("platform"))
-					ichibotRelaySubmitions.append(deepcopy(currentRequest))
 					sentMessages.append(await message.channel.send(content=chartText, file=discord.File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, messageRequest.authorId, randint(1000, 9999)))))
 
-		for chartMessage, currentRequest in zip(sentMessages, ichibotRelaySubmitions):
-			if currentRequest.get("ticker", {}).get("isTradable") and messageRequest.guildId in ICHIBOT_TESTING:
-				try: await chartMessage.add_reaction("<:ichibot_buy:875344892291846175>")
-				except: pass
-				try: await chartMessage.add_reaction("<:ichibot_sell:875345212258529310>")
-				except: pass
-				await ichibotRelay.submit_image(chartMessage.id, currentRequest)
+		for chartMessage in sentMessages:
 			try: await chartMessage.add_reaction("☑")
 			except: pass
 
@@ -1200,283 +1185,6 @@ async def markets(message, messageRequest, requestSlice):
 
 
 # -------------------------
-# Cope consensus voting
-# -------------------------
-
-async def vote(message, messageRequest, requestSlice):
-	sentMessages = []
-	try:
-		arguments = requestSlice.split(" ")
-
-		if messageRequest.guildId == -1:
-			embed = discord.Embed(title=":dart: You can't hold a vote outside of a community.", color=constants.colors["gray"])
-			embed.set_author(name="Alpha", icon_url=static_storage.icon_bw)
-			await message.channel.send(embed=embed)
-
-		elif all([str(role.id) not in messageRequest.guildProperties["settings"].get("cope", {}).get("holding", []) for role in message.author.roles]):
-			embed = discord.Embed(title=":dart: You don't have the permission to hold a vote.", color=constants.colors["gray"])
-			embed.set_author(name="Alpha", icon_url=static_storage.icon_bw)
-			await message.channel.send(embed=embed)
-
-		elif messageRequest.guildId not in COPE_CONSENSUS_VOTE_TESTING:
-			embed = discord.Embed(title=":dart: Cope consensus voting is not available to the public just yet. How did you find this prompt anyway ...", color=constants.colors["gray"])
-			embed.set_author(name="Alpha", icon_url=static_storage.icon_bw)
-			await message.channel.send(embed=embed)
-
-		else:
-			async with message.channel.typing():
-				outputMessage, request = await Processor.process_quote_arguments(messageRequest, arguments[1:], tickerId=arguments[0].upper(), platformQueue=["Ichibot"])
-
-				if outputMessage is not None:
-					if not messageRequest.is_muted() and outputMessage != "":
-						embed = discord.Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/prices).", color=constants.colors["gray"])
-						embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
-						sentMessages.append(await message.channel.send(embed=embed))
-					return (sentMessages, len(sentMessages))
-
-				currentRequest = request.get(request.get("currentPlatform"))
-				ticker = currentRequest.get("ticker")
-				copePoolAccountId = "TPeMv6ZJvRZ1QLw0ivCRkCzoirU2" if environ["PRODUCTION_MODE"] else "ebOX1w1N2DgMtXVN978fnL0FKCP2"
-
-				if ticker.get("exchange").get("id") != "ftx":
-					embed = discord.Embed(title="Cope consensus trading is only available on FTX.", color=constants.colors["gray"])
-					sentMessages.append(await message.channel.send(embed=embed))
-					return (sentMessages, len(sentMessages))
-
-				origin = "{}_{}_ichibot".format(copePoolAccountId, messageRequest.authorId)
-
-				if origin in ichibotSockets:
-					socket = ichibotSockets.get(origin)
-				else:
-					socket = Processor.get_direct_ichibot_socket(origin)
-					ichibotSockets[origin] = socket
-					bot.loop.create_task(process_ichibot_messages(origin, message.author))
-
-				await socket.send_multipart([copePoolAccountId.encode(), b"ftx", b"init"])
-
-				embed = discord.Embed(title="Ichibot connection to FTX is being initiated.", color=constants.colors["deep purple"])
-				embed.set_author(name="Cope consensus trading", icon_url=static_storage.cope)
-				await message.author.send(embed=embed)
-
-			# Vote parameters
-			votePeriod = 60.0
-			voteMajority = messageRequest.guildProperties["settings"]["cope"].get("majority", 70)
-			voteMinimum = messageRequest.guildProperties["settings"]["cope"].get("minimum", 20)
-			allowedVoters = messageRequest.guildProperties["settings"]["cope"].get("voting", [])
-			logChannelId = messageRequest.guildProperties["settings"]["channels"].get("private")
-			logChannel = None if logChannelId is None else bot.get_channel(int(logChannelId))
-
-			embed = discord.Embed(title="For how many minutes do you want to hold the vote?", description="Participants will be voting for a directional bet on {}. A consensus will be reached if {:,.1f} % of votes agree and at least {} votes are cast.".format(ticker.get("id"), voteMajority, voteMinimum), color=constants.colors["light blue"])
-			embed.set_author(name="Cope consensus trading", icon_url=static_storage.cope)
-			addTriggerMessage = await message.channel.send(embed=embed)
-			lockedUsers.add(messageRequest.authorId)
-
-			def set_duration(m):
-				if m.author.id == messageRequest.authorId:
-					if m.clean_content.lower() == "cancel": raise Exception
-					try:
-						duration = float(m.clean_content.split()[0])
-					except:
-						pass
-					else:
-						if duration > 60:
-							bot.loop.create_task(message.channel.send(embed=discord.Embed(title="Vote can only be held for up to an hour.", color=constants.colors["gray"])))
-						elif duration < 1:
-							bot.loop.create_task(message.channel.send(embed=discord.Embed(title="Vote has to be held for at least a minute.", color=constants.colors["gray"])))
-						else:
-							return True
-
-			try:
-				triggerMessage = await bot.wait_for('message', timeout=60.0, check=set_duration)
-			except:
-				lockedUsers.discard(messageRequest.authorId)
-				embed = discord.Embed(title="Prompt has been canceled.", description="~~How many minutes until vote concludes?~~", color=constants.colors["gray"])
-				embed.set_author(name="Cope consensus trading", icon_url=static_storage.cope)
-				try: await addTriggerMessage.edit(embed=embed)
-				except: pass
-				return (sentMessages, len(sentMessages))
-			else:
-				votePeriod = float(triggerMessage.clean_content.split()[0]) * 60.0
-				await triggerMessage.delete()
-				await addTriggerMessage.delete()
-
-			# Long command
-			longCommand = ""
-			embed = discord.Embed(title="Which command do you want to execute, if a vote to open a long wins?", description="Response must start with `x` followed by a valid Ichibot command.", color=constants.colors["light blue"])
-			embed.set_author(name="Cope consensus trading", icon_url=static_storage.cope)
-			addTriggerMessage = await message.channel.send(embed=embed)
-
-			def set_command(m):
-				if m.author.id == messageRequest.authorId:
-					if m.clean_content.lower() == "cancel": raise Exception
-					return m.clean_content.startswith("x ")
-
-			try:
-				triggerMessage = await bot.wait_for('message', timeout=60.0, check=set_command)
-			except:
-				lockedUsers.discard(messageRequest.authorId)
-				embed = discord.Embed(title="Prompt has been canceled.", description="~~Which command do you want to execute, if a vote to open a long wins?~~", color=constants.colors["gray"])
-				embed.set_author(name="Cope consensus trading", icon_url=static_storage.cope)
-				try: await addTriggerMessage.edit(embed=embed)
-				except: pass
-				return (sentMessages, len(sentMessages))
-			else:
-				longCommand = triggerMessage.clean_content.split(" ", 1)[1]
-				await triggerMessage.delete()
-				await addTriggerMessage.delete()
-
-			# Short command
-			shortCommand = ""
-			embed = discord.Embed(title="Which command do you want to execute, if a vote to open a short wins?", description="Response must start with `x` followed by a valid Ichibot command.", color=constants.colors["light blue"])
-			embed.set_author(name="Cope consensus trading", icon_url=static_storage.cope)
-			addTriggerMessage = await message.channel.send(embed=embed)
-
-			try:
-				triggerMessage = await bot.wait_for('message', timeout=60.0, check=set_command)
-			except:
-				lockedUsers.discard(messageRequest.authorId)
-				embed = discord.Embed(title="Prompt has been canceled.", description="~~Which command do you want to execute, if a vote to open a short wins?~~", color=constants.colors["gray"])
-				embed.set_author(name="Cope consensus trading", icon_url=static_storage.cope)
-				try: await addTriggerMessage.edit(embed=embed)
-				except: pass
-				return (sentMessages, len(sentMessages))
-			else:
-				lockedUsers.discard(messageRequest.authorId)
-				shortCommand = triggerMessage.clean_content.split(" ", 1)[1]
-				await triggerMessage.delete()
-				await addTriggerMessage.delete()
-
-			# Change instrument
-			await socket.send_multipart([copePoolAccountId.encode(), b"", "instrument {}".format(ticker.get("symbol")).encode()])
-
-			# Voting
-			startTimestamp = time()
-			allVotes = []
-			longVoters = []
-			shortVoters = []
-			skipVoters = []
-
-			embed = discord.Embed(title="Vote on the next trade for {} ({})".format(ticker.get("id"), ticker.get("exchange").get("name")), description="No votes have been received yet.", color=constants.colors["light blue"])
-			embed.add_field(name="Vote concludes in {:,.1f} minutes. Reaction is removed when your vote is received.".format(votePeriod / 60), value="If consensus is reached, `{}` or `{}` will be executed via Ichibot to long or short respectively. ".format(longCommand, shortCommand), inline=False)
-			embed.set_author(name="Cope consensus trading", icon_url=static_storage.cope)
-			voteMessage = await message.channel.send(embed=embed)
-
-			async def send_vote_confirmation(_user, _side, _isChange):
-				if _isChange:
-					if logChannel is not None:
-						try: await logChannel.send(content="{} voted to {}".format(_user.mention, _side))
-						except: pass
-					votesSummaryText = ", ".join(allVotes[-20:])
-					if len(allVotes) == 21:
-						votesSummaryText = ", ".join(allVotes[-21:-1]) + " and " + allVotes[-1]
-					elif len(allVotes) > 21:
-						votesSummaryText += " and {} others".format(len(allVotes) - 20)
-					votesSummaryText += " voted so far."
-					embed.description = votesSummaryText
-					try: await voteMessage.edit(embed=embed)
-					except: pass
-				else:
-					if logChannel is not None:
-						try: await logChannel.send(content="{} changed their vote to {}".format(_user.mention, _side))
-						except: pass
-
-			def count_votes(reaction, user):
-				if reaction.message.id == voteMessage.id and not user.bot:
-					if hasattr(reaction.emoji, "id") and any([str(role.id) in allowedVoters for role in user.roles]):
-						_side = None
-						if reaction.emoji.id == 861570114616688681:
-							if user.mention not in longVoters:
-								_side = "long"
-								longVoters.append(user.mention)
-							if user.mention in shortVoters: shortVoters.remove(user.mention)
-							if user.mention in skipVoters: skipVoters.remove(user.mention)
-						elif reaction.emoji.id == 861570190357954590:
-							if user.mention in longVoters: longVoters.remove(user.mention)
-							if user.mention not in shortVoters:
-								_side = "short"
-								shortVoters.append(user.mention)
-							if user.mention in skipVoters: skipVoters.remove(user.mention)
-						elif reaction.emoji.id == 876103292504137799:
-							if user.mention in longVoters: longVoters.remove(user.mention)
-							if user.mention in shortVoters: shortVoters.remove(user.mention)
-							if user.mention not in skipVoters:
-								_side = "skip"
-								skipVoters.append(user.mention)
-						else:
-							return False
-						if user.mention not in allVotes:
-							allVotes.append(user.mention)
-							bot.loop.create_task(send_vote_confirmation(user, _side, True))
-						elif _side is not None:
-							bot.loop.create_task(send_vote_confirmation(user, _side, False))
-					bot.loop.create_task(reaction.remove(user))
-				return False
-
-			await voteMessage.add_reaction("<:bullish:861570114616688681>")
-			await voteMessage.add_reaction("<:bearish:861570190357954590>")
-			await voteMessage.add_reaction("<:skip:876103292504137799>")
-
-			async def check_for_cancelation():
-				try: await bot.wait_for('message', timeout=votePeriod, check=lambda m: m.author.id == messageRequest.authorId and m.clean_content.lower() == "cancel")
-				except: return False
-				else: return True
-
-			cancelationListenerTask = bot.loop.create_task(check_for_cancelation())
-			try: await bot.wait_for('reaction_add', timeout=votePeriod, check=count_votes)
-			except: pass
-			shouldCancel = await cancelationListenerTask
-			await voteMessage.delete()
-
-			# Handle cancelation
-			if shouldCancel:
-				embed = discord.Embed(title="Vote has been canceled.", description="No command has been executed via Ichibot.", color=constants.colors["gray"])
-				embed.set_author(name="Cope consensus trading", icon_url=static_storage.cope)
-				sentMessages.append(await message.channel.send(embed=embed))
-				return (sentMessages, len(sentMessages))
-
-			# Count votes
-			totalLong = float(len(longVoters))
-			totalShort = float(len(shortVoters))
-			totalSkip = float(len(skipVoters))
-			totalVotes = int(totalLong + totalShort + totalSkip)
-
-			if totalVotes == 0:
-				embed = discord.Embed(title="No consensus has been reached.", description="There were no participants in the vote. No command has been executed via Ichibot.".format(totalVotes, totalLong / totalVotes * 100, totalShort / totalVotes * 100, totalSkip / totalVotes * 100), color=constants.colors["deep purple"])
-				embed.set_author(name="Cope consensus trading", icon_url=static_storage.cope)
-				sentMessages.append(await message.channel.send(embed=embed))
-			elif totalVotes >= voteMinimum and totalLong / totalVotes >= voteMajority / 100.0:
-				await socket.send_multipart([copePoolAccountId.encode(), b"", longCommand.encode()])
-				embed = discord.Embed(title="Consensus has been reached, community voted to go long on {}!".format(ticker.get("id")), description="{:,.1f} % out of {} participants voted to go long. `{}` is being executed via Ichibot.".format(totalLong / totalVotes * 100, totalVotes, longCommand), color=constants.colors["deep purple"])
-				embed.set_author(name="Cope consensus trading", icon_url=static_storage.cope)
-				sentMessages.append(await message.channel.send(embed=embed))
-			elif totalVotes >= voteMinimum and totalShort / totalVotes >= voteMajority / 100.0:
-				await socket.send_multipart([copePoolAccountId.encode(), b"", shortCommand.encode()])
-				embed = discord.Embed(title="Consensus has been reached, community voted to go short on {}!".format(ticker.get("id")), description="{:,.1f} % out of {} participants voted to go short. `{}` is being executed via Ichibot.".format(totalShort / totalVotes * 100, totalVotes, shortCommand), color=constants.colors["deep purple"])
-				embed.set_author(name="Cope consensus trading", icon_url=static_storage.cope)
-				sentMessages.append(await message.channel.send(embed=embed))
-			elif totalVotes >= voteMinimum and totalSkip / totalVotes >= voteMajority / 100.0:
-				embed = discord.Embed(title="Consensus has been reached, community voted to skip this trade on {}!".format(ticker.get("id")), description="{:,.1f} % out of {} participants voted to skip. No command has been executed via Ichibot.".format(len(totalSkip) / totalVotes * 100, totalVotes), color=constants.colors["deep purple"])
-				embed.set_author(name="Cope consensus trading", icon_url=static_storage.cope)
-				sentMessages.append(await message.channel.send(embed=embed))
-			else:
-				embed = discord.Embed(title="No consensus has been reached.", description="{} participants voted, {:,.1f} % of which to go long, {:,.1f} % to go short and {:,.1f} % to skip. No command has been executed via Ichibot.".format(totalVotes, totalLong / totalVotes * 100, totalShort / totalVotes * 100, totalSkip / totalVotes * 100), color=constants.colors["deep purple"])
-				embed.set_author(name="Cope consensus trading", icon_url=static_storage.cope)
-				sentMessages.append(await message.channel.send(embed=embed))
-
-			try:
-				await logChannel.send(content="Voted to long: {}".format(", ".join(longVoters)))
-				await logChannel.send(content="Voted to short: {}".format(", ".join(shortVoters)))
-				await logChannel.send(content="Votes to skip: {}".format(", ".join(skipVoters)))
-			except: pass
-
-	except CancelledError: pass
-	except Exception:
-		print(format_exc())
-		if environ["PRODUCTION_MODE"]: logging.report_exception(user=f"{message.author.id}: {message.clean_content}")
-		await unknown_error(message, messageRequest.authorId)
-	return (sentMessages, len(sentMessages))
-
-# -------------------------
 # Trading
 # -------------------------
 
@@ -1581,7 +1289,7 @@ async def process_ichibot_command(message, messageRequest, requestSlice):
 # Slash command prelight
 # -------------------------
 
-async def create_request(ctx, autodelete=None):
+async def create_request(ctx, autodelete=-1):
 	_authorId = ctx.author.id
 	_accountId = None
 	_guildId = ctx.guild.id if ctx.guild is not None else -1
@@ -1648,6 +1356,7 @@ bot.add_cog(VolumeCommand(bot, create_request, database, logging))
 bot.add_cog(ConvertCommand(bot, create_request, database, logging))
 bot.add_cog(DetailsCommand(bot, create_request, database, logging))
 bot.add_cog(PaperCommand(bot, create_request, database, logging))
+bot.add_cog(CopeVoteCommand(bot, create_request, database, logging))
 
 # -------------------------
 # Error handling
@@ -1706,8 +1415,6 @@ async def job_queue():
 # -------------------------
 
 botStatus = [False, False]
-
-ichibotRelay = IchibotRelay()
 
 alphaSettings = {}
 accountProperties = DatabaseConnector(mode="account")
