@@ -47,7 +47,7 @@ class PaperCommand(BaseCommand):
 			await ctx.interaction.edit_original_message(embed=embed)
 			return
 
-		confirmation = Confirm()
+		confirmation = Confirm(userId=request.authorId)
 		confirmationText = "Do you want to place a paper {} order of {} {} at {}?".format(orderType.replace("-", " "), pendingOrder.amountText, ticker.get("base"), pendingOrder.priceText)
 		embed = Embed(title=confirmationText, description=pendingOrder.conversionText, color=constants.colors["pink"])
 		embed.set_author(name="Paper order confirmation", icon_url=pendingOrder.parameters.get("thumbnailUrl"))
@@ -385,7 +385,7 @@ class PaperCommand(BaseCommand):
 				await ctx.interaction.edit_original_message(embed=embed)
 
 			elif request.accountProperties["paperTrader"]["globalLastReset"] + 604800 < time():
-				confirmation = Confirm()
+				confirmation = Confirm(userId=request.authorId)
 				embed = Embed(title="Do you really want to reset your paper balance? This cannot be undone.", description="Paper balance can only be reset once every seven days. Your last public reset date will be publicly visible.", color=constants.colors["pink"])
 				embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon)
 				await ctx.interaction.edit_original_message(embed=embed, view=confirmation)
@@ -543,16 +543,16 @@ class Order(object):
 
 
 class DeleteView(View):
-	def __init__(self, database, authorId, pathId, orderId):
+	def __init__(self, database, pathId, orderId, userId):
 		super().__init__(timeout=None)
 		self.database = database
-		self.authorId = authorId
 		self.pathId = pathId
 		self.orderId = orderId
+		self.userId = userId
 
 	@button(label="Cancel", style=ButtonStyle.danger)
 	async def delete(self, button: Button, interaction: Interaction):
-		if self.authorId != interaction.user.id: return
+		if self.userId != interaction.user.id: return
 		properties = await accountProperties.get(self.pathId)
 
 		order = await self.database.document("details/openPaperOrders/{}/{}".format(self.pathId, self.orderId)).get()

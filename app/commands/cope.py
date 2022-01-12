@@ -3,7 +3,7 @@ from asyncio import CancelledError
 from traceback import format_exc
 
 from discord import Embed, ButtonStyle, Interaction
-from discord.commands import slash_command, SlashCommandGroup, Option
+from discord.commands import slash_command, Option
 from discord.ui import View, button, Button
 
 from google.cloud.firestore import Increment
@@ -13,6 +13,7 @@ from assets import static_storage
 from Processor import Processor
 
 from commands.base import BaseCommand, Confirm
+from commands.ichibot import Ichibot
 
 
 COPE_CONSENSUS_VOTE_TESTING = [926518026457739304, 824445607585775646]
@@ -62,12 +63,12 @@ class CopeVoteCommand(BaseCommand):
 
 				origin = "{}_{}_ichibot".format(copePoolAccountId, request.authorId)
 
-				if origin in ichibotSockets:
-					socket = ichibotSockets.get(origin)
+				if origin in Ichibot.sockets:
+					socket = Ichibot.sockets.get(origin)
 				else:
 					socket = Processor.get_direct_ichibot_socket(origin)
-					ichibotSockets[origin] = socket
-					bot.loop.create_task(process_ichibot_messages(origin, message.author))
+					Ichibot.sockets[origin] = socket
+					bot.loop.create_task(Ichibot.process_ichibot_messages(origin, message.author))
 
 				await socket.send_multipart([copePoolAccountId.encode(), b"ftx", b"init"])
 
@@ -81,7 +82,7 @@ class CopeVoteCommand(BaseCommand):
 				logChannelId = request.guildProperties["settings"]["channels"].get("private")
 				logChannel = None if logChannelId is None else bot.get_channel(int(logChannelId))
 
-				confirmation = Confirm()
+				confirmation = Confirm(userId=request.authorId)
 				confirmationText = "Participants will be voting for {} minutes on a directional bet on {}. A consensus will be reached if {:,.1f} % of votes agree and at least {} votes are cast.".format(votePeriod, ticker.get("id"), voteMajority, voteMinimum)
 				embed = Embed(title="Confirm the consensus poll.", description=confirmationText, color=constants.colors["pink"])
 				embed.set_author(name="Cope consensus trading", icon_url=static_storage.cope)

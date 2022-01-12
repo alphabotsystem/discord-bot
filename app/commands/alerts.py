@@ -179,7 +179,7 @@ class AlertCommand(BaseCommand):
 					ticker = currentTask.get("ticker")
 
 					embed = Embed(title="{}{} price alert at {}{}.".format(ticker.get("name"), " ({})".format(ticker.get("exchange").get("name")) if ticker.get("exchange") else "", alert.get("levelText", alert["level"]), "" if ticker.get("quote") is None else " " + ticker.get("quote")), color=constants.colors["deep purple"])
-					await ctx.followup.send(embed=embed, view=DeleteView(database=self.database, authorId=request.authorId, pathId=matchedId, alertId=key), ephemeral=True)
+					await ctx.followup.send(embed=embed, view=DeleteView(database=self.database, pathId=matchedId, alertId=key, userId=request.authorId), ephemeral=True)
 
 		except CancelledError: pass
 		except Exception:
@@ -188,16 +188,16 @@ class AlertCommand(BaseCommand):
 
 
 class DeleteView(View):
-	def __init__(self, database, authorId, pathId, alertId):
+	def __init__(self, database, pathId, alertId, userId=None):
 		super().__init__(timeout=None)
 		self.database = database
-		self.authorId = authorId
 		self.pathId = pathId
 		self.alertId = alertId
+		self.userId = userId
 
 	@button(label="Delete", style=ButtonStyle.danger)
 	async def delete(self, button: Button, interaction: Interaction):
-		if self.authorId != interaction.user.id: return
+		if self.userId != interaction.user.id: return
 		await self.database.document("details/marketAlerts/{}/{}".format(self.pathId, self.alertId)).delete()
 		embed = Embed(title="Alert deleted", color=constants.colors["gray"])
 		await interaction.response.edit_message(embed=embed, view=None)

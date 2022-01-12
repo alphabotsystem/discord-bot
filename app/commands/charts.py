@@ -15,6 +15,7 @@ from assets import static_storage
 from Processor import Processor
 
 from commands.base import BaseCommand
+from commands.ichibot import Ichibot
 
 
 ICHIBOT_TESTING = [
@@ -45,9 +46,9 @@ class ChartCommand(BaseCommand):
 			else:
 				actions = None
 				if currentTask.get("ticker", {}).get("isTradable") and request.guildId in ICHIBOT_TESTING:
-					actions = IchibotView(request, task)
+					actions = IchibotView(request, task, userId=request.authorId)
 				else:
-					actions = ActionsView()
+					actions = ActionsView(userId=request.authorId)
 				await ctx.interaction.edit_original_message(content=chartText, file=File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, request.authorId, randint(1000, 9999))), view=actions)
 
 		await self.database.document("discord/statistics").set({request.snapshot: {"c": Increment(1)}}, merge=True)
@@ -86,17 +87,19 @@ class ChartCommand(BaseCommand):
 
 
 class ActionsView(View):
-	def __init__(self):
+	def __init__(self, userId=None):
 		super().__init__(timeout=None)
+		self.userId = userId
 
 	@button(emoji=PartialEmoji.from_str("<:remove_response:929342678976565298>"), style=ButtonStyle.gray)
 	async def delete(self, button: Button, interaction: Interaction):
+		if self.userId != interaction.user.id: return
 		await interaction.message.delete()
 
 
 class IchibotView(ActionsView):
-	def __init__(self, request, task):
-		super().__init__()
+	def __init__(self, request, task, userId=None):
+		super().__init__(userId=userId)
 		self.request = request
 		self.task = task
 

@@ -46,6 +46,9 @@ class BaseCommand(Cog):
 		"paper": {
 			"stocks": ["IEXC"],
 			"crypto": ["CCXT"]
+		},
+		"ichibot": {
+			"crypto": ["Ichibot"]
 		}
 	}
 
@@ -81,7 +84,8 @@ class BaseCommand(Cog):
 		assetType = " ".join(ctx.options.get("type", "").lower().split())
 		venue = " ".join(ctx.options.get("venue", "").lower().split())
 
-		if assetType == "" or tickerId == "": return []
+		if assetType == "" and command == "ichibot": assetType = "crypto"
+		elif assetType == "" or tickerId == "": return []
 		platforms = cls.sources.get(command).get(assetType, [])
 		if len(platforms) == 0: return []
 		venues = await TickerParser.get_venues(",".join(platforms), tickerId)
@@ -90,16 +94,19 @@ class BaseCommand(Cog):
 
 
 class Confirm(View):
-	def __init__(self):
+	def __init__(self, userId=None):
 		super().__init__(timeout=None)
+		self.userId = userId
 		self.value = None
 
 	@button(label="Confirm", style=ButtonStyle.primary)
 	async def confirm(self, button: Button, interaction: Interaction):
+		if self.userId != interaction.user.id: return
 		self.value = True
 		self.stop()
 
 	@button(label="Cancel", style=ButtonStyle.secondary)
 	async def cancel(self, button: Button, interaction: Interaction):
+		if self.userId != interaction.user.id: return
 		self.value = False
 		self.stop()

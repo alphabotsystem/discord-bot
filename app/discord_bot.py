@@ -42,6 +42,7 @@ from commands.volume import VolumeCommand
 from commands.convert import ConvertCommand
 from commands.details import DetailsCommand
 from commands.paper import PaperCommand
+from commands.ichibot import IchibotCommand, Ichibot
 from commands.cope import CopeVoteCommand
 
 
@@ -51,12 +52,6 @@ snapshots = FirestoreClient()
 
 BETA_SERVERS = [
 	414498292655980583, 849579081800482846, 779004662157934665, 707238867840925706, 493617351216857088, 642039300208459796, 704211103139233893, 710291265689878669, 614609141318680581, 719265732214390816, 788809517818445875, 834195584398524526, 771423228903030804, 778444625639374858, 813915848510537728, 816446013274718209, 807785366526230569, 817764642423177227, 618471986586189865, 663752459424104456, 697085377802010634, 719215888938827776, 726478017924169748, 748813732620009503, 814738213599445013, 856938896713580555, 793014166553755698, 838822602708353056, 837526018088239105, 700113101353123923, 732072413969383444, 784964427962777640, 828430973775511575, 838573421281411122, 625105491743473689, 469530035645317120, 814256366067253268, 848053870197473290, 802692756773273600, 782315810621882369, 597269708345180160, 821150986567548948, 737326609329291335, 746804569303941281, 825933090311503905, 804771454561681439, 827433009598038016, 830534974381752340, 824300337887576135, 747441663193907232, 832625164801802261, 530964559801090079, 831928179299844166, 812819897305399296, 460731020245991424, 829028161983348776, 299922493924311054, 608761795531767814, 336233207269687299, 805453662746968064, 379077201775296513, 785702300886499369, 690135278978859023
-]
-ICHIBOT_TESTING = [
-	414498292655980583, 460731020245991424
-]
-COPE_CONSENSUS_VOTE_TESTING = [
-	824445607585775646, 414498292655980583
 ]
 
 
@@ -177,47 +172,6 @@ async def send_alpha_messages(messageId, message):
 		print(format_exc())
 		if environ["PRODUCTION_MODE"]: logging.report_exception()
 
-async def process_ichibot_messages(origin, author):
-	try:
-		socket = ichibotSockets.get(origin)
-
-		while origin in ichibotSockets:
-			try:
-				messageContent = "```ruby"
-
-				while True:
-					try: [messenger, message] = await socket.recv_multipart(flags=NOBLOCK)
-					except: break
-					if messenger.decode() == "alpha":
-						embed = discord.Embed(title=message.decode(), color=constants.colors["gray"])
-						embed.set_author(name="Ichibot", icon_url=static_storage.ichibot)
-						try: await author.send(embed=embed)
-						except: pass
-					else:
-						message = message.decode()
-						if len(message) + len(messageContent) + 4 >= 2000:
-							messageContent = messageContent[:1997] + "```"
-							try: await author.send(content=messageContent)
-							except discord.errors.Forbidden: pass
-							messageContent = "```ruby"
-						messageContent += "\n" + message
-
-				if messageContent != "```ruby":
-					messageContent = messageContent[:1997] + "```"
-					try: await author.send(content=messageContent)
-					except discord.errors.Forbidden: pass
-				await sleep(1)
-
-			except:
-				print(format_exc())
-				if environ["PRODUCTION_MODE"]: logging.report_exception(user=origin)
-
-		socket.close()
-
-	except:
-		print(format_exc())
-		if environ["PRODUCTION_MODE"]: logging.report_exception(user=origin)
-
 # -------------------------
 # Job functions
 # -------------------------
@@ -335,7 +289,7 @@ async def on_message(message):
 				_messageContent, _guildId = _messageContent.split(" --guild ")[0], int(_messageContent.split(" --guild ")[1])
 
 		# Ignore if user if locked in a prompt, or banned
-		if _authorId in lockedUsers or _authorId in constants.blockedUsers or _guildId in constants.blockedGuilds: return
+		if _authorId in constants.blockedUsers or _guildId in constants.blockedGuilds: return
 
 		_accountProperties = {}
 		_guildProperties = await guildProperties.get(_guildId, {})
@@ -367,76 +321,16 @@ async def on_message(message):
 		if not messageRequest.content.startswith("preset "):
 			messageRequest.content, messageRequest.presetUsed, parsedPresets = Presets.process_presets(messageRequest.content, messageRequest.accountProperties)
 
-			if not messageRequest.presetUsed and messageRequest.guildId in usedPresetsCache:
-				for preset in usedPresetsCache[messageRequest.guildId]:
-					if preset["phrase"] == messageRequest.content:
-						if preset["phrase"] not in [p["phrase"] for p in parsedPresets]:
-							parsedPresets = [preset]
-							messageRequest.presetUsed = False
-							break
-
-			if messageRequest.presetUsed or len(parsedPresets) != 0:
+			if messageRequest.presetUsed:
 				if messageRequest.command_presets_available():
 					if messageRequest.presetUsed:
-						if messageRequest.guildId != -1:
-							if messageRequest.guildId not in usedPresetsCache: usedPresetsCache[messageRequest.guildId] = []
-							for preset in parsedPresets:
-								if preset not in usedPresetsCache[messageRequest.guildId]: usedPresetsCache[messageRequest.guildId].append(preset)
-							usedPresetsCache[messageRequest.guildId] = usedPresetsCache[messageRequest.guildId][-3:]
-
 						embed = discord.Embed(title="Running `{}` command from personal preset.".format(messageRequest.content), color=constants.colors["light blue"])
 						sentMessages.append(await message.channel.send(embed=embed))
-					elif len(parsedPresets) != 0:
-						embed = discord.Embed(title="Do you want to add `{}` preset to your account?".format(parsedPresets[0]["phrase"]), description="`{}` → `{}`".format(parsedPresets[0]["phrase"], parsedPresets[0]["shortcut"]), color=constants.colors["light blue"])
-						addPresetMessage = await message.channel.send(embed=embed)
-						lockedUsers.add(messageRequest.authorId)
-
-						def confirm_order(m):
-							if m.author.id == messageRequest.authorId:
-								response = ' '.join(m.clean_content.lower().split())
-								if response in ["y", "yes", "sure", "confirm", "execute"]: return True
-								elif response in ["n", "no", "cancel", "discard", "reject"]: raise Exception
-
-						try:
-							await bot.wait_for('message', timeout=60.0, check=confirm_order)
-						except:
-							lockedUsers.discard(messageRequest.authorId)
-							embed = discord.Embed(title="Prompt has been canceled.", description="~~Do you want to add `{}` preset to your account?~~".format(parsedPresets[0]["phrase"]), color=constants.colors["gray"])
-							try: await addPresetMessage.edit(embed=embed)
-							except: pass
-							return
-						else:
-							lockedUsers.discard(messageRequest.authorId)
-							messageRequest.content = "preset add {} {}".format(parsedPresets[0]["phrase"], parsedPresets[0]["shortcut"])
-
-				elif messageRequest.is_pro():
-					if not message.author.bot and message.channel.permissions_for(message.author).administrator:
-						embed = discord.Embed(title=":pushpin: Command Presets are disabled.", description="You can enable Command Presets feature for your account in [Discord Preferences](https://www.alphabotsystem.com/account/discord) or for the entire community in your [Communities Dashboard](https://www.alphabotsystem.com/communities/manage?id={}).".format(messageRequest.guildId), color=constants.colors["gray"])
-						embed.set_author(name="Command Presets", icon_url=static_storage.icon_bw)
-						await message.channel.send(embed=embed)
-					else:
-						embed = discord.Embed(title=":pushpin: Command Presets are disabled.", description="You can enable Command Presets feature for your account in [Discord Preferences](https://www.alphabotsystem.com/account/discord).", color=constants.colors["gray"])
-						embed.set_author(name="Command Presets", icon_url=static_storage.icon_bw)
-						await message.channel.send(embed=embed)
-					return
-
-				elif messageRequest.is_registered():
-					embed = discord.Embed(title=":gem: Command Presets are available to Alpha Pro users or communities for only $1.00 per month.", description="If you'd like to start your 14-day free trial, visit your [subscription page](https://www.alphabotsystem.com/account/subscription).", color=constants.colors["deep purple"])
-					embed.set_image(url="https://www.alphabotsystem.com/files/uploads/pro-hero.jpg")
-					await message.channel.send(embed=embed)
-					return
 
 		messageRequest.content = Utils.shortcuts(messageRequest.content)
 		isCommand = messageRequest.content.startswith(tuple(constants.commandWakephrases))
 
 		if messageRequest.guildId != -1:
-			if messageRequest.guildId in maliciousUsers:
-				if any([e.id in maliciousUsers[messageRequest.guildId][0] for e in message.guild.members]) and time() + 60 < maliciousUsers[messageRequest.guildId][1]:
-					maliciousUsers[messageRequest.guildId][1] = time()
-					embed = discord.Embed(title="This Discord guild has one or more members disguising as Alpha Bot or one of the team members. Guild admins are advised to take action.", description="Users flagged for impersonation are: {}".format(", ".join(["<@!{}>".format(e.id) for e in maliciousUsers])), color=0x000000)
-					try: await message.channel.send(embed=embed)
-					except: pass
-
 			if isCommand:
 				if not hasPermissions:
 					p1 = _availablePermissions.send_messages
@@ -479,14 +373,8 @@ async def on_message(message):
 				await deprecation_message(message, "alpha", isGone=True)
 
 			elif messageRequest.content.startswith("preset "):
-				if message.author.bot: return
-
-				requestSlices = split(", preset | preset ", messageRequest.content.split(" ", 1)[1])
-				if len(requestSlices) > messageRequest.get_limit() / 2:
-					await hold_up(message, messageRequest)
-					return
-				for requestSlice in requestSlices:
-					await presets(message, messageRequest, requestSlice)
+				embed = discord.Embed(title="Command presets are getting deprecated. A replacement is in the works.", color=constants.colors["gray"])
+				await message.channel.send(embed=embed)
 
 			elif messageRequest.content.startswith("c "):
 				if messageRequest.content == "c help":
@@ -655,7 +543,7 @@ async def on_message(message):
 				requestSlice = messageRequest.content.split(" ", 1)[1]
 				forceDelete = False
 				if messageRequest.content.startswith(("x ichibot", "x ichi", "x login")):
-					await initiate_ichibot(message, messageRequest, requestSlice)
+					await deprecation_message(message, "ichibot", isGone=True)
 				elif messageRequest.guildId == -1 or messageRequest.marketBias == "crypto" or len(messageRequest.accountProperties.get("apiKeys", {}).keys()) != 0:
 					await process_ichibot_command(message, messageRequest, requestSlice)
 					forceDelete = True
@@ -664,40 +552,10 @@ async def on_message(message):
 				await finish_request(message, messageRequest, 0, [], force=forceDelete)
 
 			elif messageRequest.content.startswith("paper "):
-				requestSlices = split(', paper | paper |, ', messageRequest.content.split(" ", 1)[1])
-				totalWeight = len(requestSlices)
-				for requestSlice in requestSlices:
-					if messageRequest.content == "paper balance":
-						await deprecation_message(message, "paper balance", isGone=True)
-					elif messageRequest.content == "paper leaderboard":
-						await deprecation_message(message, "paper leaderboard", isGone=True)
-					elif messageRequest.content == "paper history":
-						await deprecation_message(message, "paper history", isGone=True)
-					elif messageRequest.content == "paper orders":
-						await deprecation_message(message, "paper orders", isGone=True)
-					elif messageRequest.content == "paper reset":
-						await deprecation_message(message, "paper reset", isGone=True)
-					else:
-						await deprecation_message(message, "paper", isGone=True)
-
-				await database.document("discord/statistics").set({_snapshot: {"paper": Increment(totalWeight)}}, merge=True)
+				await deprecation_message(message, "paper", isGone=True)
 			
 			elif messageRequest.content.startswith("/vote ") and messageRequest.authorId in [361916376069439490, 362371656267595778, 430223866993049620]:
-				requestSlice = messageRequest.content.split(" ", 1)[1]
-
-				rateLimited[messageRequest.authorId] = rateLimited.get(messageRequest.authorId, 0) + 2
-
-				if rateLimited[messageRequest.authorId] >= messageRequest.get_limit():
-					await message.channel.send(content="<@!{}>".format(messageRequest.authorId), embed=discord.Embed(title="You reached your limit of requests per minute. You can try again in a bit.", color=constants.colors["gray"]))
-					rateLimited[messageRequest.authorId] = messageRequest.get_limit()
-				else:
-					quoteMessages, weight = await vote(message, messageRequest, requestSlice)
-					sentMessages += quoteMessages
-
-					rateLimited[messageRequest.authorId] = rateLimited.get(messageRequest.authorId, 0) - 1
-
-				await database.document("discord/statistics").set({_snapshot: {"vote": Increment(1)}}, merge=True)
-				await finish_request(message, messageRequest, 1, sentMessages)
+				await deprecation_message(message, "vote` as a `slash command", isGone=True)
 
 	except CancelledError: pass
 	except Exception:
@@ -708,60 +566,6 @@ async def on_message(message):
 # -------------------------
 # Message actions
 # -------------------------
-
-@bot.event
-async def on_reaction_add(reaction, user):
-	try:
-		if user.id in [487714342301859854, 401328409499664394]: return
-		if reaction.message.author.id in [487714342301859854, 401328409499664394]:
-			try: users = await reaction.users().flatten()
-			except: return
-			if reaction.message.author in users:
-				if reaction.emoji == "☑":
-					if reaction.message.guild is not None:
-						guildPermissions = reaction.message.channel.permissions_for(user).manage_messages or user.id in [361916376069439490, 243053168823369728]
-						if len(reaction.message.attachments) == 0:
-							try: await reaction.message.delete()
-							except: pass
-						elif str(user.id) in reaction.message.attachments[0].filename or guildPermissions:
-							try: await reaction.message.delete()
-							except: pass
-						else:
-							try: await reaction.remove(user)
-							except: pass
-					else:
-						await reaction.message.delete()
-
-				elif reaction.emoji == '❌' and len(reaction.message.embeds) == 1:
-					titleText = reaction.message.embeds[0].title
-					footerText = reaction.message.embeds[0].footer.text
-
-					if " → `" in titleText and titleText.endswith("`"):
-						accountId = await accountProperties.match(user.id, user.id)
-						properties = await accountProperties.get(accountId)
-
-						properties, (titleMessage, _, _) = Presets.update_presets(properties, remove=titleText.split("`")[1])
-						if titleMessage == "Preset removed":
-							if not "customer" in properties:
-								await database.document("discord/properties/users/{}".format(user.id)).set({"commandPresets": properties["commandPresets"]}, merge=True)
-							else:
-								await database.document("accounts/{}".format(accountId)).set({"commandPresets": properties["commandPresets"]}, merge=True)
-
-							embed = discord.Embed(title="Preset deleted", color=constants.colors["gray"])
-							embed.set_footer()
-							try:
-								await reaction.message.edit(embed=embed)
-								await reaction.message.clear_reactions()
-							except:
-								pass
-						else:
-							try: await reaction.remove(user)
-							except: pass
-
-	except CancelledError: pass
-	except Exception:
-		print(format_exc())
-		if environ["PRODUCTION_MODE"]: logging.report_exception()
 
 async def finish_request(message, messageRequest, weight, sentMessages, force=False):
 	await sleep(60)
@@ -778,98 +582,6 @@ async def finish_request(message, messageRequest, weight, sentMessages, force=Fa
 			if messageRequest.autodelete: await message.delete()
 			else: await message.remove_reaction("☑", message.channel.guild.me)
 		except: pass
-
-
-# -------------------------
-# Command Presets
-# -------------------------
-
-async def presets(message, messageRequest, requestSlice):
-	sentMessages = []
-	try:
-		arguments = requestSlice.replace("`", "").split(" ", 2)
-		method = arguments[0]
-
-		if method in ["set", "create", "add"]:
-			if len(arguments) == 3:
-				if messageRequest.command_presets_available():
-					async with message.channel.typing():
-						title = arguments[1]
-						shortcut = arguments[2]
-
-						if len(title) > 20:
-							embed = discord.Embed(title="Shortcut title can be only up to 20 characters long.", color=constants.colors["gray"])
-							embed.set_author(name="Shortcut title is too long", icon_url=static_storage.icon_bw)
-							sentMessages.append(await message.channel.send(embed=embed))
-							return (sentMessages, len(sentMessages))
-						elif len(shortcut) > 200:
-							embed = discord.Embed(title="Shortcut command can be only up to 200 characters long.", color=constants.colors["gray"])
-							embed.set_author(name="Shortcut command is too long.", icon_url=static_storage.icon_bw)
-							sentMessages.append(await message.channel.send(embed=embed))
-							return (sentMessages, len(sentMessages))
-
-						properties, statusParts = Presets.update_presets(messageRequest.accountProperties, add=title, shortcut=shortcut, messageRequest=messageRequest)
-						statusTitle, statusMessage, statusColor = statusParts
-
-						if not messageRequest.is_registered():
-							await database.document("discord/properties/users/{}".format(messageRequest.authorId)).set({"commandPresets": properties["commandPresets"]}, merge=True)
-						elif messageRequest.serverwide_command_presets_available():
-							await database.document("accounts/{}".format(messageRequest.accountId)).set({"commandPresets": properties["commandPresets"]}, merge=True)
-						elif messageRequest.personal_command_presets_available():
-							await database.document("accounts/{}".format(messageRequest.accountId)).set({"commandPresets": properties["commandPresets"], "customer": {"addons": {"commandPresets": 1}}}, merge=True)
-
-						embed = discord.Embed(title=statusMessage, color=constants.colors[statusColor])
-						embed.set_author(name=statusTitle, icon_url=static_storage.icon)
-						sentMessages.append(await message.channel.send(embed=embed))
-
-				elif messageRequest.is_pro():
-					if not message.author.bot and message.channel.permissions_for(message.author).administrator:
-						embed = discord.Embed(title=":pushpin: Command Presets are disabled.", description="You can enable Command Presets feature for your account in [Discord Preferences](https://www.alphabotsystem.com/account/discord) or for the entire community in your [Communities Dashboard](https://www.alphabotsystem.com/communities/manage?id={}).".format(messageRequest.guildId), color=constants.colors["gray"])
-						embed.set_author(name="Command Presets", icon_url=static_storage.icon_bw)
-						await message.channel.send(embed=embed)
-					else:
-						embed = discord.Embed(title=":pushpin: Command Presets are disabled.", description="You can enable Command Presets feature for your account in [Discord Preferences](https://www.alphabotsystem.com/account/discord).", color=constants.colors["gray"])
-						embed.set_author(name="Command Presets", icon_url=static_storage.icon_bw)
-						await message.channel.send(embed=embed)
-
-				else:
-					embed = discord.Embed(title=":gem: Command Presets are available to Alpha Pro users or communities for only $1.00 per month.", description="If you'd like to start your 14-day free trial, visit your [subscription page](https://www.alphabotsystem.com/account/subscription).", color=constants.colors["deep purple"])
-					embed.set_image(url="https://www.alphabotsystem.com/files/uploads/pro-hero.jpg")
-					await message.channel.send(embed=embed)
-
-		elif method in ["list", "all"]:
-			if len(arguments) == 1:
-				await message.channel.trigger_typing()
-				
-				if "commandPresets" in messageRequest.accountProperties and len(messageRequest.accountProperties["commandPresets"]) > 0:
-					allPresets = {}
-					numberOfPresets = len(messageRequest.accountProperties["commandPresets"])
-					for preset in messageRequest.accountProperties["commandPresets"]:
-						allPresets[preset["phrase"]] = preset["shortcut"]
-
-					for i, phrase in enumerate(sorted(allPresets.keys())):
-						embed = discord.Embed(title="`{}` → `{}`".format(phrase, allPresets[phrase]), color=constants.colors["deep purple"])
-						embed.set_footer(text="Preset {}/{}".format(i + 1, numberOfPresets))
-						presetMessage = await message.channel.send(embed=embed)
-						sentMessages.append(presetMessage)
-						try: await presetMessage.add_reaction('❌')
-						except: pass
-				else:
-					embed = discord.Embed(title="You don't have any presets.", color=constants.colors["gray"])
-					embed.set_author(name="Command Presets", icon_url=static_storage.icon)
-					sentMessages.append(await message.channel.send(embed=embed))
-
-		else:
-			embed = discord.Embed(title="`{}` is not a valid argument.".format(method), description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/pro/command-presets).", color=constants.colors["gray"])
-			embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
-			sentMessages.append(await message.channel.send(embed=embed))
-
-	except CancelledError: pass
-	except Exception:
-		print(format_exc())
-		if environ["PRODUCTION_MODE"]: logging.report_exception(user=f"{message.author.id}: {message.clean_content}")
-		await unknown_error(message, messageRequest.authorId)
-	return (sentMessages, len(sentMessages))
 
 
 # -------------------------
@@ -905,10 +617,6 @@ async def chart(message, messageRequest, requestSlice):
 				else:
 					currentRequest = request.get(payload.get("platform"))
 					sentMessages.append(await message.channel.send(content=chartText, file=discord.File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, messageRequest.authorId, randint(1000, 9999)))))
-
-		for chartMessage in sentMessages:
-			try: await chartMessage.add_reaction("☑")
-			except: pass
 
 	except CancelledError: pass
 	except Exception:
@@ -1188,63 +896,6 @@ async def markets(message, messageRequest, requestSlice):
 # Trading
 # -------------------------
 
-async def initiate_ichibot(message, messageRequest, requestSlice):
-	sentMessages = []
-	try:
-		arguments = requestSlice.split(" ")
-		method = arguments[0]
-
-		if method in ["ichibot", "ichi", "login"]:
-			if messageRequest.is_registered():
-				outputMessage, request = await Processor.process_trade_arguments(messageRequest, arguments[1:], platformQueue=["Ichibot"])
-				if outputMessage is not None:
-					if not messageRequest.is_muted() and outputMessage != "":
-						embed = discord.Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/ichibot).", color=constants.colors["gray"])
-						embed.set_author(name="Invalid argument", icon_url=static_storage.ichibot)
-						sentMessages.append(await message.channel.send(embed=embed))
-					return (sentMessages, len(sentMessages))
-
-				currentRequest = request.get(request.get("currentPlatform"))
-
-				exchange = currentRequest.get("exchange")
-				origin = "{}_{}_ichibot".format(messageRequest.accountId, messageRequest.authorId)
-
-				if origin in ichibotSockets:
-					socket = ichibotSockets.get(origin)
-				else:
-					socket = Processor.get_direct_ichibot_socket(origin)
-					ichibotSockets[origin] = socket
-					bot.loop.create_task(process_ichibot_messages(origin, message.author))
-
-				await socket.send_multipart([messageRequest.accountId.encode(), exchange.get("id").encode(), b"init"])
-
-				try:
-					embed = discord.Embed(title="Ichibot connection to {} is being initiated.".format(exchange.get("name")), color=constants.colors["deep purple"])
-					embed.set_author(name="Ichibot", icon_url=static_storage.ichibot)
-					await message.author.send(embed=embed)
-
-					if not isinstance(message.channel, discord.channel.DMChannel):
-						embed = discord.Embed(title="Ichibot connection to {} is being initiated.".format(exchange.get("name")), color=constants.colors["deep purple"])
-						embed.set_author(name="Ichibot", icon_url=static_storage.ichibot)
-						await message.channel.send(embed=embed)
-
-				except discord.errors.Forbidden:
-					embed = discord.Embed(title="Ichibot connection to {} is being initiated, however the bot cannot DM you.".format(exchange.get("name")), description="A common reason for this is when the bot is blocked, or when your DMs are disabled. Before you can start trading you must enable open your Direct Messages with Alpha Bot.", color=constants.colors["deep purple"])
-					embed.set_author(name="Ichibot", icon_url=static_storage.ichibot)
-					await message.channel.send(embed=embed)
-
-			else:
-				embed = discord.Embed(title=":dart: You must have an Alpha Account connected to your Discord to execute live trades.", description="[Sign up for a free account on our website](https://www.alphabotsystem.com/sign-up). If you already signed up, [sign in](https://www.alphabotsystem.com/sign-in), connect your account with your Discord profile, and add an API key.", color=constants.colors["deep purple"])
-				embed.set_author(name="Ichibot", icon_url=static_storage.ichibot)
-				await message.channel.send(embed=embed)
-
-	except CancelledError: pass
-	except Exception:
-		print(format_exc())
-		if environ["PRODUCTION_MODE"]: logging.report_exception(user=f"{message.author.id}: {message.clean_content}")
-		await unknown_error(message, messageRequest.authorId)
-	return (sentMessages, len(sentMessages))
-
 async def process_ichibot_command(message, messageRequest, requestSlice):
 	sentMessages = []
 	try:
@@ -1256,14 +907,14 @@ async def process_ichibot_command(message, messageRequest, requestSlice):
 		elif messageRequest.is_registered():
 			origin = "{}_{}_ichibot".format(messageRequest.accountId, messageRequest.authorId)
 
-			if origin in ichibotSockets:
-				socket = ichibotSockets.get(origin)
+			if origin in Ichibot.sockets:
+				socket = Ichibot.sockets.get(origin)
 				await socket.send_multipart([messageRequest.accountId.encode(), b"", messageRequest.raw.split(" ", 1)[1].encode()])
 				try: await message.add_reaction("✅")
 				except: pass
 
 				if requestSlice in ["q", "quit", "exit", "logout"]:
-					ichibotSockets.pop(origin)
+					Ichibot.sockets.pop(origin)
 					embed = discord.Embed(title="Ichibot connection has been closed.", color=constants.colors["deep purple"])
 					embed.set_author(name="Ichibot", icon_url=static_storage.ichibot)
 					await message.channel.send(embed=embed)
@@ -1296,7 +947,7 @@ async def create_request(ctx, autodelete=-1):
 	_channelId = ctx.channel.id if ctx.channel is not None else -1
 
 	# Ignore if user if locked in a prompt, or banned
-	if _authorId in lockedUsers or _authorId in constants.blockedUsers or _guildId in constants.blockedGuilds: return
+	if _authorId in constants.blockedUsers or _guildId in constants.blockedGuilds: return
 
 	await ctx.defer()
 
@@ -1356,7 +1007,9 @@ bot.add_cog(VolumeCommand(bot, create_request, database, logging))
 bot.add_cog(ConvertCommand(bot, create_request, database, logging))
 bot.add_cog(DetailsCommand(bot, create_request, database, logging))
 bot.add_cog(PaperCommand(bot, create_request, database, logging))
+bot.add_cog(IchibotCommand(bot, create_request, database, logging))
 bot.add_cog(CopeVoteCommand(bot, create_request, database, logging))
+
 
 # -------------------------
 # Error handling
@@ -1422,14 +1075,9 @@ guildProperties = DatabaseConnector(mode="guild")
 Processor.clientId = b"discord_alpha"
 
 rateLimited = {}
-lockedUsers = set()
-usedPresetsCache = {}
-maliciousUsers = {}
 
 discordSettingsLink = snapshots.document("discord/settings").on_snapshot(update_alpha_settings)
 discordMessagesLink = snapshots.collection("discord/properties/messages").on_snapshot(process_alpha_messages)
-
-ichibotSockets = {}
 
 @bot.event
 async def on_ready():

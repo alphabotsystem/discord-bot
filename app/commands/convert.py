@@ -3,7 +3,7 @@ from asyncio import CancelledError
 from traceback import format_exc
 
 from discord import Embed
-from discord.commands import slash_command, SlashCommandGroup, Option
+from discord.commands import slash_command, Option
 
 from google.cloud.firestore import Increment
 
