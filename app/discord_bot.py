@@ -543,7 +543,7 @@ async def on_message(message):
 				requestSlice = messageRequest.content.split(" ", 1)[1]
 				forceDelete = False
 				if messageRequest.content.startswith(("x ichibot", "x ichi", "x login")):
-					await deprecation_message(message, "ichibot", isGone=True)
+					await deprecation_message(message, "ichibot login", isGone=True)
 				elif messageRequest.guildId == -1 or messageRequest.marketBias == "crypto" or len(messageRequest.accountProperties.get("apiKeys", {}).keys()) != 0:
 					await process_ichibot_command(message, messageRequest, requestSlice)
 					forceDelete = True

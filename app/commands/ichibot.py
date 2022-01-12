@@ -35,7 +35,6 @@ class Ichibot(object):
 					while True:
 						try: [messenger, message] = await socket.recv_multipart(flags=NOBLOCK)
 						except: break
-						print(messenger, message)
 						if messenger.decode() == "alpha":
 							embed = Embed(title=message.decode(), color=constants.colors["gray"])
 							embed.set_author(name="Ichibot", icon_url=static_storage.ichibot)
