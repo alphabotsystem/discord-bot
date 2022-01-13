@@ -1,7 +1,7 @@
 from os import environ
 from time import time
 from random import randint
-from asyncio import CancelledError
+from asyncio import CancelledError, sleep
 from traceback import format_exc
 
 from discord import Embed, File, ButtonStyle, SelectOption, Interaction, PartialEmoji
@@ -13,6 +13,7 @@ from google.cloud.firestore import Increment
 from helpers import constants
 from assets import static_storage
 from Processor import Processor
+from DatabaseConnector import DatabaseConnector
 
 from commands.base import BaseCommand
 from commands.ichibot import Ichibot
@@ -45,8 +46,8 @@ class ChartCommand(BaseCommand):
 				await ctx.interaction.edit_original_message(embed=embed)
 			else:
 				actions = None
-				if currentTask.get("ticker", {}).get("isTradable") and request.guildId in ICHIBOT_TESTING:
-					actions = IchibotView(request, task, userId=request.authorId)
+				if currentTask.get("ticker", {}).get("tradable") and request.guildId in ICHIBOT_TESTING:
+					actions = IchibotView(self.bot.loop, currentTask, userId=request.authorId)
 				else:
 					actions = ActionsView(userId=request.authorId)
 				await ctx.interaction.edit_original_message(content=chartText, file=File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, request.authorId, randint(1000, 9999))), view=actions)
@@ -93,61 +94,89 @@ class ActionsView(View):
 
 	@button(emoji=PartialEmoji.from_str("<:remove_response:929342678976565298>"), style=ButtonStyle.gray)
 	async def delete(self, button: Button, interaction: Interaction):
-		if self.userId != interaction.user.id: return
+		if self.userId != interaction.user.id and not interaction.permissions.manage_messages: return
 		await interaction.message.delete()
 
 
 class IchibotView(ActionsView):
-	def __init__(self, request, task, userId=None):
+	def __init__(self, eventLoop, task, userId=None):
 		super().__init__(userId=userId)
-		self.request = request
+		self.eventLoop = eventLoop
 		self.task = task
+		self.accountProperties = DatabaseConnector(mode="account")
+
+	async def prepare(self, interaction: Interaction):
+		accountId = await self.accountProperties.match(interaction.user.id)
+		if accountId is None:
+			accountProperties = {}
+		else:
+			accountProperties = await self.accountProperties.get(accountId, {})
+
+		if not accountProperties.get("apiKeys", {}):
+			embed = Embed(title="Before you can execute trades via Ichibot, you have to add exchange API keys.", description="You can add API keys for FTX, Binance and Binance Futures to you Alpha Account in your [Ichibot Preferences](https://www.alphabotsystem.com/account/ichibot).", color=constants.colors["gray"])
+			embed.set_author(name="Ichibot", icon_url=static_storage.ichibot)
+			await interaction.response.send_message(embed=embed, view=exchanges, ephemeral=True)
+			return accountId, None, None
+
+		origin = "{}_{}_ichibot".format(accountId, interaction.user.id)
+		if origin in Ichibot.sockets:
+			socket = Ichibot.sockets.get(origin)
+		else:
+			socket = Processor.get_direct_ichibot_socket(origin)
+			Ichibot.sockets[origin] = socket
+			self.eventLoop.create_task(Ichibot.process_ichibot_messages(origin, interaction.user))
+
+		matches = self.task.get("ticker").get("tradable")
+		availableKeys = [key for key in accountProperties.get("apiKeys", {}).keys() if key in matches]
+
+		if len(availableKeys) == 0:
+			_e = {"ftx": "FTX", "binance": "Binance", "binancefutures": "Binance Futures"}
+			embed = Embed(title="Add API keys for {}.".format(" or ".join([_e[e] for e in matches.keys()])), description="`{}` is only available on {} for which you haven't added API keys yet.".format(self.task.get("ticker").get("name"), " and ".join([_e[e] for e in matches.keys()])), color=constants.colors["gray"])
+			embed.set_author(name="Ichibot", icon_url=static_storage.ichibot)
+			await interaction.response.send_message(embed=embed, view=exchanges, ephemeral=True)
+			return accountId, None, None
+
+		return accountId, availableKeys, socket
 
 	@button(label="Buy", style=ButtonStyle.green)
 	async def ichibot_buy(self, button: Button, interaction: Interaction):
-		origin = "{}_{}_ichibot".format(self.request.accountId, self.request.authorId)
-		socket = Processor.get_direct_ichibot_socket(origin)
+		accountId, availableKeys, socket = await self.prepare(interaction)
+		if socket is None: return
 
-		command = "check value askprice"
+		quickAction = "check value askprice"
 
-		availableKeys = list(self.request.accountProperties.get("apiKeys", {}).keys())
-		if len(availableKeys) == 0:
-			embed = Embed(title="Before you can execute trades via Ichibot, you have to add exchange API keys.", description="You can add API keys for FTX, Binance and Binance Futures to you Alpha Account in your [Ichibot Preferences](https://www.alphabotsystem.com/account/ichibot).", color=constants.colors["gray"])
-			embed.set_author(name="Ichibot", icon_url=static_storage.ichibot)
-			await interaction.response.send_message(embed=embed, view=exchanges, ephemeral=True)
+		exchanges = ExchangesView(availableKeys, quickAction)
+		embed = Embed(title="Please confirm your buy instruction via Ichibot.", description="You'll be executing `{}` via Ichibot.".format(quickAction), color=constants.colors["pink"])
+		embed.set_author(name="Ichibot", icon_url=static_storage.ichibot)
+		await interaction.response.send_message(embed=embed, view=exchanges, ephemeral=True)
+		await exchanges.wait()
+		exchangeId = exchanges.children[0].values[0]
 
-		else:
-			exchanges = ExchangesView(availableKeys, command)
-			embed = Embed(title="Please confirm your buy instruction via Ichibot.", description="You'll be executing `{}` via Ichibot.".format(command), color=constants.colors["pink"])
-			embed.set_author(name="Ichibot", icon_url=static_storage.ichibot)
-			await interaction.response.send_message(embed=embed, view=exchanges, ephemeral=True)
-			await exchanges.wait()
-			exchangeId = exchanges.children[0].values[0]
+		command = "instrument {}, {}".format(self.task.get("ticker").get("tradable").get(exchangeId), quickAction)
 
-			# await socket.send_multipart([self.request.accountId.encode(), exchange.get("id").encode(), b"init"])
+		await socket.send_multipart([accountId.encode(), exchangeId.encode(), b"init"])
+		await sleep(10)
+		await socket.send_multipart([accountId.encode(), b"", command.encode()])
 
 	@button(label="Sell", style=ButtonStyle.red)
 	async def ichibot_sell(self, button: Button, interaction: Interaction):
-		origin = "{}_{}_ichibot".format(self.request.accountId, self.request.authorId)
-		socket = Processor.get_direct_ichibot_socket(origin)
+		accountId, availableKeys, socket = await self.prepare(interaction)
+		if socket is None: return
 
-		command = "check value bidprice"
+		quickAction = "check value bidprice"
 
-		availableKeys = list(self.request.accountProperties.get("apiKeys", {}).keys())
-		if len(availableKeys) == 0:
-			embed = Embed(title="Before you can execute trades via Ichibot, you have to add exchange API keys.", description="You can add API keys for FTX, Binance and Binance Futures to you Alpha Account in your [Ichibot Preferences](https://www.alphabotsystem.com/account/ichibot).", color=constants.colors["gray"])
-			embed.set_author(name="Ichibot", icon_url=static_storage.ichibot)
-			await interaction.response.send_message(embed=embed, view=exchanges, ephemeral=True)
+		exchanges = ExchangesView(availableKeys, quickAction)
+		embed = Embed(title="Please confirm your sell instruction via Ichibot.", description="You'll be executing `{}` via Ichibot.".format(quickAction), color=constants.colors["pink"])
+		embed.set_author(name="Ichibot", icon_url=static_storage.ichibot)
+		await interaction.response.send_message(embed=embed, view=exchanges, ephemeral=True)
+		await exchanges.wait()
+		exchangeId = exchanges.children[0].values[0]
 
-		else:
-			exchanges = ExchangesView(availableKeys, command)
-			embed = Embed(title="Please confirm your sell instruction via Ichibot.", description="You'll be executing `{}` via Ichibot.".format(command), color=constants.colors["pink"])
-			embed.set_author(name="Ichibot", icon_url=static_storage.ichibot)
-			await interaction.response.send_message(embed=embed, view=exchanges, ephemeral=True)
-			await exchanges.wait()
-			exchangeId = exchanges.children[0].values[0]
+		command = "instrument {}, check value bidprice".format(self.task.get("ticker").get("tradable").get(exchangeId), quickAction)
 
-			# await socket.send_multipart([self.request.accountId.encode(), exchange.get("id").encode(), b"init"])
+		await socket.send_multipart([accountId.encode(), exchangeId.encode(), b"init"])
+		await sleep(10)
+		await socket.send_multipart([accountId.encode(), b"", command.encode()])
 
 
 class ExchangesView(View):
@@ -178,7 +207,7 @@ class ExchangesDropdown(Select):
 		)
 
 	async def callback(self, interaction: Interaction):
-		embed = Embed(title="Executing your instruction.", description="`{}` is being sent to Ichibot and will be executed momentarily.".format(self.command), color=constants.colors["deep purple"])
+		embed = Embed(title="Instruction is being executed.", description="`{}` is being sent to Ichibot and will be executed momentarily.".format(self.command), color=constants.colors["deep purple"])
 		embed.set_author(name="Ichibot", icon_url=static_storage.ichibot)
 		await interaction.response.edit_message(embed=embed, view=None)
 		self._callback()

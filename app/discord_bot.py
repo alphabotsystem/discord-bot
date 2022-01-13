@@ -59,12 +59,12 @@ BETA_SERVERS = [
 # Initialization
 # -------------------------
 
-intents = discord.Intents.all()
-intents.bans = False
-intents.invites = False
-intents.voice_states = False
-intents.typing = False
-intents.presences = False
+intents = discord.Intents.none()
+intents.dm_messages = True
+intents.guild_messages = True
+intents.guilds = True
+intents.integrations = True
+intents.webhooks = True
 
 bot = discord.AutoShardedBot(intents=intents, chunk_guilds_at_startup=False, status=discord.Status.idle, activity=discord.Activity(type=discord.ActivityType.playing, name="a reboot, brb!"))
 
@@ -405,28 +405,8 @@ async def on_message(message):
 					await finish_request(message, messageRequest, totalWeight, sentMessages)
 
 			elif messageRequest.content.startswith("flow "):
-				requestSlices = split(", flow | flow |, ", messageRequest.content.split(" ", 1)[1])
-				totalWeight = len(requestSlices)
-				if totalWeight > messageRequest.get_limit() / 2:
-					await hold_up(message, messageRequest)
-					return
-				for requestSlice in requestSlices:
-					rateLimited[messageRequest.authorId] = rateLimited.get(messageRequest.authorId, 0) + 2
-
-					if rateLimited[messageRequest.authorId] >= messageRequest.get_limit():
-						await message.channel.send(content="<@!{}>".format(messageRequest.authorId), embed=discord.Embed(title="You reached your limit of requests per minute. You can try again in a bit.", color=constants.colors["gray"]))
-						rateLimited[messageRequest.authorId] = messageRequest.get_limit()
-						totalWeight = messageRequest.get_limit()
-						break
-					else:
-						chartMessages, weight = await flow(message, messageRequest, requestSlice)
-						sentMessages += chartMessages
-						totalWeight += weight - 1
-
-						rateLimited[messageRequest.authorId] = rateLimited.get(messageRequest.authorId, 0) + weight - 2
-
-				await database.document("discord/statistics").set({_snapshot: {"flow": Increment(totalWeight)}}, merge=True)
-				await finish_request(message, messageRequest, totalWeight, sentMessages)
+				embed = discord.Embed(title="Flow command is being updated, and is currently unavailable.", description="All Alpha Pro subscribers using Alpha Flow will receive reimbursment in form of credit, or a refund if requested.", color=constants.colors["gray"])
+				await message.channel.send(embed=embed)
 
 			elif messageRequest.content.startswith("hmap "):
 				requestSlices = split(", hmap | hmap |, ", messageRequest.content.split(" ", 1)[1])
@@ -617,67 +597,6 @@ async def chart(message, messageRequest, requestSlice):
 				else:
 					currentRequest = request.get(payload.get("platform"))
 					sentMessages.append(await message.channel.send(content=chartText, file=discord.File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, messageRequest.authorId, randint(1000, 9999)))))
-
-	except CancelledError: pass
-	except Exception:
-		print(format_exc())
-		if environ["PRODUCTION_MODE"]: logging.report_exception(user=f"{message.author.id}: {message.clean_content}")
-		await unknown_error(message, messageRequest.authorId)
-	return (sentMessages, len(sentMessages))
-
-async def flow(message, messageRequest, requestSlice):
-	sentMessages = []
-	try:
-		embed = discord.Embed(title="Flow command is being updated, and is currently unavailable.", description="All Alpha Pro subscribers using Alpha Flow will receive reimbursment in form of credit, or a refund if requested.", color=constants.colors["gray"])
-		sentMessages.append(await message.channel.send(embed=embed))
-		return (sentMessages, len(sentMessages))
-
-		arguments = requestSlice.split(" ")
-
-		if messageRequest.flow_available():
-			async with message.channel.typing():
-				outputMessage, request = await Processor.process_chart_arguments(messageRequest, arguments[1:], tickerId=arguments[0].upper(), platformQueue=["Alpha Flow"])
-			
-				if outputMessage is not None:
-					if not messageRequest.is_muted() and messageRequest.is_registered() and outputMessage != "":
-						embed = discord.Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/pro/flow).", color=constants.colors["gray"])
-						embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
-						sentMessages.append(await message.channel.send(embed=embed))
-					return (sentMessages, len(sentMessages))
-
-				currentRequest = request.get(request.get("currentPlatform"))
-				timeframes = request.pop("timeframes")
-				for i in range(request.get("requestCount")):
-					for p, t in timeframes.items(): request[p]["currentTimeframe"] = t[i]
-					payload, chartText = await Processor.process_task("chart", messageRequest.authorId, request)
-
-					if payload is None:
-						errorMessage = "Requested orderflow data for `{}` is not available.".format(currentRequest.get("ticker").get("name")) if chartText is None else chartText
-						embed = discord.Embed(title=errorMessage, color=constants.colors["gray"])
-						embed.set_author(name="Data not available", icon_url=static_storage.icon_bw)
-						sentMessages.append(await message.channel.send(embed=embed))
-					else:
-						currentRequest = request.get(payload.get("platform"))
-						sentMessages.append(await message.channel.send(content=chartText, file=discord.File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, messageRequest.authorId, randint(1000, 9999)))))
-
-			for chartMessage in sentMessages:
-				try: await chartMessage.add_reaction("☑")
-				except: pass
-
-		elif messageRequest.is_pro():
-			if not message.author.bot and message.channel.permissions_for(message.author).administrator:
-				embed = discord.Embed(title=":microscope: Alpha Flow is disabled.", description="You can enable Alpha Flow feature for your account in [Discord Preferences](https://www.alphabotsystem.com/account/discord) or for the entire community in your [Communities Dashboard](https://www.alphabotsystem.com/communities/manage?id={}).".format(messageRequest.guildId), color=constants.colors["gray"])
-				embed.set_author(name="Alpha Flow", icon_url=static_storage.icon_bw)
-				await message.channel.send(embed=embed)
-			else:
-				embed = discord.Embed(title=":microscope: Alpha Flow is disabled.", description="You can enable Alpha Flow feature for your account in [Discord Preferences](https://www.alphabotsystem.com/account/discord).", color=constants.colors["gray"])
-				embed.set_author(name="Alpha Flow", icon_url=static_storage.icon_bw)
-				await message.channel.send(embed=embed)
-
-		else:
-			embed = discord.Embed(title=":gem: Alpha Flow is available to Alpha Pro users or communities for only $15.00 per month.", description="If you'd like to start your 14-day free trial, visit your [subscription page](https://www.alphabotsystem.com/account/subscription).", color=constants.colors["deep purple"])
-			embed.set_image(url="https://www.alphabotsystem.com/files/uploads/pro-hero.jpg")
-			await message.channel.send(embed=embed)
 
 	except CancelledError: pass
 	except Exception:
