@@ -369,10 +369,7 @@ async def on_message(message):
 					return
 
 		if isCommand:
-			if messageRequest.content.startswith(("alpha ", "alpha, ", "@alpha ", "@alpha, ")):
-				await deprecation_message(message, "alpha", isGone=True)
-
-			elif messageRequest.content.startswith("preset "):
+			if messageRequest.content.startswith("preset "):
 				embed = discord.Embed(title="Command presets are getting deprecated. A replacement is in the works.", color=constants.colors["gray"])
 				await message.channel.send(embed=embed)
 
