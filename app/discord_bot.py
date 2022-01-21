@@ -554,12 +554,6 @@ async def finish_request(message, messageRequest, weight, sentMessages, force=Fa
 		try: await message.delete()
 		except: pass
 
-	for message in sentMessages:
-		try:
-			if messageRequest.autodelete: await message.delete()
-			else: await message.remove_reaction("☑", message.channel.guild.me)
-		except: pass
-
 
 # -------------------------
 # Charting
@@ -632,10 +626,6 @@ async def heatmap(message, messageRequest, requestSlice):
 					currentRequest = request.get(payload.get("platform"))
 					sentMessages.append(await message.channel.send(content=chartText, file=discord.File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, messageRequest.authorId, randint(1000, 9999)))))
 
-		for chartMessage in sentMessages:
-			try: await chartMessage.add_reaction("☑")
-			except: pass
-
 	except CancelledError: pass
 	except Exception:
 		print(format_exc())
@@ -674,8 +664,6 @@ async def price(message, messageRequest, requestSlice):
 				embed.set_author(name="Data not available", icon_url=static_storage.icon_bw)
 				quoteMessage = await message.channel.send(embed=embed)
 				sentMessages.append(quoteMessage)
-				try: await quoteMessage.add_reaction("☑")
-				except: pass
 			else:
 				currentRequest = request.get(payload.get("platform"))
 				if payload.get("platform") in ["Alternative.me"]:
