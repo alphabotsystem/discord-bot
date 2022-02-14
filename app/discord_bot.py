@@ -785,6 +785,7 @@ alphaSettings = {}
 accountProperties = DatabaseConnector(mode="account")
 guildProperties = DatabaseConnector(mode="guild")
 Processor.clientId = b"discord_alpha"
+Ichibot.logging = logging
 
 rateLimited = {}
 

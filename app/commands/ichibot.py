@@ -23,6 +23,7 @@ SUPPORTED_EXCHANGES = ["ftx", "binance", "binancefutures"]
 
 class Ichibot(object):
 	sockets = {}
+	logging = None
 
 	async def process_ichibot_messages(origin, author):
 		try:
@@ -57,13 +58,13 @@ class Ichibot(object):
 
 				except:
 					print(format_exc())
-					if environ["PRODUCTION_MODE"]: logging.report_exception(user=origin)
+					if environ["PRODUCTION_MODE"]: Ichibot.logging.report_exception(user=origin)
 
 			socket.close()
 
 		except:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: logging.report_exception(user=origin)
+			if environ["PRODUCTION_MODE"]: Ichibot.logging.report_exception(user=origin)
 
 
 class IchibotCommand(BaseCommand):
