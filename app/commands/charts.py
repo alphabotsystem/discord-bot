@@ -72,6 +72,8 @@ class ChartCommand(BaseCommand):
 
 			for part in parts:
 				partArguments = part.lower().split()
+				if len(partArguments): continue
+
 				outputMessage, task = await Processor.process_chart_arguments(request, partArguments[1:], tickerId=partArguments[0].upper())
 
 				if outputMessage is not None:
