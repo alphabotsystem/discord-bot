@@ -81,6 +81,7 @@ class LookupCommand(BaseCommand):
 
 			if category.lower() in ["gainers", "gain", "gains"]:
 				rawData = CoinGeckoAPI().get_coins_markets(vs_currency="usd", order="market_cap_desc", per_page=250, price_change_percentage="24h")
+				response = []
 				for e in rawData:
 					if e.get("price_change_percentage_24h_in_currency", None) is not None:
 						response.append({"symbol": e["symbol"].upper(), "change": e["price_change_percentage_24h_in_currency"]})
@@ -93,6 +94,7 @@ class LookupCommand(BaseCommand):
 
 			elif category.lower() in ["losers", "loosers", "loss", "losses"]:
 				rawData = CoinGeckoAPI().get_coins_markets(vs_currency="usd", order="market_cap_desc", per_page=250, price_change_percentage="24h")
+				response = []
 				for e in rawData:
 					if e.get("price_change_percentage_24h_in_currency", None) is not None:
 						response.append({"symbol": e["symbol"].upper(), "change": e["price_change_percentage_24h_in_currency"]})
