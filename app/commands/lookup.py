@@ -9,6 +9,7 @@ from discord import Embed, ButtonStyle, Interaction
 from discord.commands import SlashCommandGroup, Option
 from discord.ui import View, button, Button
 
+from google.cloud.firestore import Increment
 from pycoingecko import CoinGeckoAPI
 
 from helpers import constants
@@ -61,6 +62,8 @@ class LookupCommand(BaseCommand):
 				embed.set_author(name="No listings", icon_url=static_storage.icon_bw)
 				await ctx.interaction.edit_original_message(embed=embed)
 
+			await self.database.document("discord/statistics").set({request.snapshot: {"mk": Increment(1)}}, merge=True)
+
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
@@ -99,6 +102,8 @@ class LookupCommand(BaseCommand):
 				for token in response:
 					embed.add_field(name=token["symbol"], value="Lost {:,.2f} %".format(token["change"]), inline=True)
 				await ctx.interaction.edit_original_message(embed=embed)
+
+			await self.database.document("discord/statistics").set({request.snapshot: {"t": Increment(1)}}, merge=True)
 
 		except CancelledError: pass
 		except Exception:

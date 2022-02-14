@@ -9,7 +9,7 @@ from discord import Embed, ButtonStyle, Interaction
 from discord.commands import SlashCommandGroup, Option
 from discord.ui import View, button, Button
 
-from google.cloud.firestore import DELETE_FIELD
+from google.cloud.firestore import Increment, DELETE_FIELD
 
 from helpers import constants
 from assets import static_storage

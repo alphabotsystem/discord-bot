@@ -144,6 +144,8 @@ class CopeVoteCommand(BaseCommand):
 						await logChannel.send(content="Votes to skip: {}".format(", ".join(poll.skipVoters)))
 					except: pass
 
+				await self.database.document("discord/statistics").set({request.snapshot: {"vote": Increment(1)}}, merge=True)
+
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
