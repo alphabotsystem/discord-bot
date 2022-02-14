@@ -10,14 +10,9 @@ class Utils(object):
 
 	@staticmethod
 	def shortcuts(raw):
-		if raw in ["c internals", "c internal"]: raw = "c uvol-dvol w, tick, dvn-decn, pcc d line"
-		elif raw in ["hmap"]: raw = "hmap change"
+		if raw in ["hmap"]: raw = "hmap change"
 		elif raw in ["flow"]: raw = "flow options"
-		elif raw in ["p gindex", "p gi", "p findex", "p fi", "p fgindex", "p fgi", "p gfindex", "p gfi"]: raw = "p fgi am"
 		elif raw in ["c gindex", "c gi", "c findex", "c fi", "c fgindex", "c fgi", "c gfindex", "c gfi"]: raw = "c fgi am"
-		elif raw in ["x ichi b", "x ichibot b", "x login b"]: raw = "x ichibot binanceusdm"
-		elif raw in ["x ichi s", "x ichibot s", "x login s"]: raw = "x ichibot binance"
-		elif raw in ["x ichi f", "x ichibot f", "x login f"]: raw = "x ichibot ftx"
 
 		return raw
 

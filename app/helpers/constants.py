@@ -1,5 +1,5 @@
-commandWakephrases = ["/", "alpha ", "alert ", "preset ", "c ", "flow ", "hmap ", "d ", "alerts ", "p ", "v ", "convert ", "m ", "info ", "t ", "top ", "mcap ", "mc ", "mk ", "n ", "x ", "paper "]
-commandKeywords = ["alpha", "alert", "preset", "c", "flow", "hmap", "d", "alerts", "p", "v", "convert", "m", "info", "t", "top", "mcap", "mc", "mk", "n", "x", "paper"]
+commandWakephrases = ["/", "alert ", "c ", "flow ", "hmap ", "alert ", "p ", "t ", "top ", "mc ", "mk ", "x "]
+commandKeywords = ["alert", "c", "flow", "hmap", "alert", "p", "t", "top", "mc", "mk", "x"]
 
 colors = {
 	"red": 0xF44336,

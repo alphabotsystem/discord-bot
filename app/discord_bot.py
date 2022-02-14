@@ -3,23 +3,20 @@ environ["PRODUCTION_MODE"] = environ["PRODUCTION_MODE"] if "PRODUCTION_MODE" in 
 
 from re import split
 from random import randint
-from math import ceil, floor
 from time import time
 from copy import deepcopy
 from datetime import datetime
 from pytz import utc
 from requests import post
-from asyncio import CancelledError, InvalidStateError, TimeoutError, sleep, all_tasks, wait_for
-from uuid import uuid4
-from orjson import loads, dumps, OPT_INDENT_2, OPT_SORT_KEYS
+from asyncio import CancelledError, sleep
 from zmq import NOBLOCK
 from traceback import format_exc
 
 import discord
-from discord.commands import Option, permissions
+from discord import AutoShardedBot, Embed, Intents, Activity, Status, ActivityType, MessageType
 from google.cloud.firestore import AsyncClient as FirestoreAsnycClient
 from google.cloud.firestore import Client as FirestoreClient
-from google.cloud.firestore import Increment, DELETE_FIELD
+from google.cloud.firestore import Increment
 from google.cloud.error_reporting import Client as ErrorReportingClient
 
 from assets import static_storage
@@ -29,18 +26,19 @@ from helpers import constants
 from TickerParser import TickerParser
 from Processor import Processor
 from DatabaseConnector import DatabaseConnector
-from engine.presets import Presets
 
 from MessageRequest import MessageRequest
 
 from commands.assistant import AlphaCommand
 from commands.alerts import AlertCommand
 from commands.charts import ChartCommand
+from commands.heatmaps import HeatmapCommand
 from commands.depth import DepthCommand
 from commands.prices import PriceCommand
 from commands.volume import VolumeCommand
 from commands.convert import ConvertCommand
 from commands.details import DetailsCommand
+from commands.lookup import LookupCommand
 from commands.paper import PaperCommand
 from commands.ichibot import IchibotCommand, Ichibot
 from commands.cope import CopeVoteCommand
@@ -59,14 +57,15 @@ BETA_SERVERS = [
 # Initialization
 # -------------------------
 
-intents = discord.Intents.none()
+intents = Intents.none()
 intents.dm_messages = True
 intents.guild_messages = True
 intents.guilds = True
 intents.integrations = True
 intents.webhooks = True
 
-bot = discord.AutoShardedBot(intents=intents, chunk_guilds_at_startup=False, status=discord.Status.idle, activity=discord.Activity(type=discord.ActivityType.playing, name="a reboot, brb!"))
+bot = AutoShardedBot(intents=intents, chunk_guilds_at_startup=False, status=Status.idle, activity=Activity(type=ActivityType.playing, name="a reboot, brb!"))
+
 
 # -------------------------
 # Guild count & management
@@ -131,7 +130,7 @@ async def send_alpha_messages(messageId, message):
 		while not botStatus[0]:
 			await sleep(60)
 
-		embed = discord.Embed(title=message["title"], color=message["color"])
+		embed = Embed(title=message["title"], color=message["color"])
 		if message.get("description") is not None: embed.description = message.get("description")
 		if message.get("subtitle") is not None: embed.set_author(name=message["subtitle"], icon_url=message.get("icon", static_storage.icon))
 		if message.get("image") is not None: embed.set_image(url=message["image"])
@@ -273,9 +272,8 @@ async def guild_secure_fetch(guildId):
 async def on_message(message):
 	try:
 		# Skip messages with empty content field, messages from self, or all messages when in startup mode
-		if message.clean_content == "" or message.type != discord.MessageType.default or message.author == bot.user or not is_bot_ready(): return
+		if message.clean_content == "" or message.type != MessageType.default or message.author == bot.user or not is_bot_ready(): return
 
-		_checkpoint1 = time() * 1000
 		_rawMessage = " ".join(message.clean_content.split())
 		_messageContent = _rawMessage.lower()
 		_authorId = message.author.id if message.webhook_id is None else message.webhook_id
@@ -293,14 +291,12 @@ async def on_message(message):
 
 		_accountProperties = {}
 		_guildProperties = await guildProperties.get(_guildId, {})
-		_checkpoint2 = time() * 1000
 		if not message.author.bot:
 			if message.webhook_id is None: _accountId = await accountProperties.match(_authorId)
 			if _accountId is None:
 				_accountProperties = await accountProperties.get(str(_authorId), {})
 			else:
 				_accountProperties = await accountProperties.get(_accountId, {})
-		_checkpoint3 = time() * 1000
 
 		messageRequest = MessageRequest(
 			raw=_rawMessage,
@@ -318,31 +314,21 @@ async def on_message(message):
 		_availablePermissions = None if messageRequest.guildId == -1 else message.channel.permissions_for(message.guild.me)
 		hasPermissions = True if messageRequest.guildId == -1 else (_availablePermissions.send_messages and _availablePermissions.embed_links and _availablePermissions.attach_files and _availablePermissions.add_reactions and _availablePermissions.use_external_emojis and _availablePermissions.manage_messages)
 
-		if not messageRequest.content.startswith("preset "):
-			messageRequest.content, messageRequest.presetUsed, parsedPresets = Presets.process_presets(messageRequest.content, messageRequest.accountProperties)
-
-			if messageRequest.presetUsed:
-				if messageRequest.command_presets_available():
-					if messageRequest.presetUsed:
-						embed = discord.Embed(title="Running `{}` command from personal preset.".format(messageRequest.content), color=constants.colors["light blue"])
-						sentMessages.append(await message.channel.send(embed=embed))
-
 		messageRequest.content = Utils.shortcuts(messageRequest.content)
 		isCommand = messageRequest.content.startswith(tuple(constants.commandWakephrases))
 
 		if messageRequest.guildId != -1:
 			if isCommand:
 				if not hasPermissions:
-					p1 = _availablePermissions.send_messages
-					p2 = _availablePermissions.embed_links
-					p3 = _availablePermissions.attach_files
-					p4 = _availablePermissions.add_reactions
-					p5 = _availablePermissions.use_external_emojis
-					p6 = _availablePermissions.manage_messages
-					errorText = "Alpha Bot is missing one or more critical permissions."
-					permissionsText = "Send messages: {}\nEmbed links: {}\nAttach files: {}\nAdd reactions: {}\nUse external emojis: {}\nManage Messages: {}".format(":white_check_mark:" if p1 else ":x:", ":white_check_mark:" if p2 else ":x:", ":white_check_mark:" if p3 else ":x:", ":white_check_mark:" if p4 else ":x:", ":white_check_mark:" if p5 else ":x:", ":white_check_mark:" if p6 else ":x:")
-					embed = discord.Embed(title=errorText, description=permissionsText, color=0x000000)
-					embed.add_field(name="Frequently asked questions", value="[alphabotsystem.com/faq](https://www.alphabotsystem.com/faq)", inline=False)
+					p1 = _availablePermissions.embed_links
+					p2 = _availablePermissions.attach_files
+					p3 = _availablePermissions.add_reactions
+					p4 = _availablePermissions.use_external_emojis
+					p5 = _availablePermissions.manage_messages
+					errorText = "Alpha Bot is missing one or more critical permissions for traditional commands."
+					permissionsText = "Use slash commands or fix the permissions below:\nembed links: {}\nattach files: {}\nadd reactions: {}\nuse external emojis: {}\nmanage Messages: {}".format(":white_check_mark:" if p1 else ":x:", ":white_check_mark:" if p2 else ":x:", ":white_check_mark:" if p3 else ":x:", ":white_check_mark:" if p4 else ":x:", ":white_check_mark:" if p5 else ":x:")
+					embed = Embed(title=errorText, description=permissionsText, color=0x000000)
+					embed.set_image(url="https://firebasestorage.googleapis.com/v0/b/nlc-bot-36685.appspot.com/o/alpha%2Fassets%2Fdiscord%2Fslash-commands.gif?alt=media&token=32e05ba1-9b06-47b1-a037-d37036b382a6")
 					embed.add_field(name="Alpha Discord guild", value="[Join now](https://discord.gg/GQeDE85)", inline=False)
 					try:
 						await message.channel.send(embed=embed)
@@ -351,7 +337,7 @@ async def on_message(message):
 						except: pass
 					return
 				elif len(alphaSettings["tosWatchlist"]["nicknames"]["blacklist"]) != 0 and message.guild.name in alphaSettings["tosWatchlist"]["nicknames"]["blacklist"]:
-					embed = discord.Embed(title="This Discord community guild was flagged for rebranding Alpha and is therefore violating the Terms of Service. Inability to comply will result in termination of all Alpha branded services.", color=0x000000)
+					embed = Embed(title="This Discord community guild was flagged for rebranding Alpha and is therefore violating the Terms of Service. Inability to comply will result in termination of all Alpha branded services.", color=0x000000)
 					embed.add_field(name="Terms of service", value="[Read now](https://www.alphabotsystem.com/terms-of-service)", inline=True)
 					embed.add_field(name="Alpha Discord guild", value="[Join now](https://discord.gg/GQeDE85)", inline=True)
 					await message.channel.send(embed=embed)
@@ -361,48 +347,40 @@ async def on_message(message):
 					if forcedFetch["settings"]["setup"]["completed"]:
 						messageRequest.guildProperties = forcedFetch
 					elif not message.author.bot and message.channel.permissions_for(message.author).administrator:
-						embed = discord.Embed(title="Hello world!", description="Thanks for adding Alpha Bot to your Discord community, we're thrilled to have you onboard. We think you're going to love everything Alpha Bot can do. Before you start using it, you must complete a short setup process. Sign into your [Alpha Account](https://www.alphabotsystem.com/communities) and visit your [Communities Dashboard](https://www.alphabotsystem.com/communities) to begin.", color=constants.colors["pink"])
+						embed = Embed(title="Hello world!", description="Thanks for adding Alpha Bot to your Discord community, we're thrilled to have you onboard. We think you're going to love everything Alpha Bot can do. Before you start using it, you must complete a short setup process. Sign into your [Alpha Account](https://www.alphabotsystem.com/communities) and visit your [Communities Dashboard](https://www.alphabotsystem.com/communities) to begin.", color=constants.colors["pink"])
 						await message.channel.send(embed=embed)
 					else:
-						embed = discord.Embed(title="Hello world!", description="This is Alpha Bot, the most advanced financial bot on Discord. A short setup process hasn't been completed in this Discord community yet. Ask administrators to complete it by signing into their [Alpha Account](https://www.alphabotsystem.com/communities) and visiting their [Communities Dashboard](https://www.alphabotsystem.com/communities).", color=constants.colors["pink"])
+						embed = Embed(title="Hello world!", description="This is Alpha Bot, the most advanced financial bot on Discord. A short setup process hasn't been completed in this Discord community yet. Ask administrators to complete it by signing into their [Alpha Account](https://www.alphabotsystem.com/communities) and visiting their [Communities Dashboard](https://www.alphabotsystem.com/communities).", color=constants.colors["pink"])
 						await message.channel.send(embed=embed)
 					return
 
 		if isCommand:
-			if messageRequest.content.startswith("preset "):
-				embed = discord.Embed(title="Command presets are getting deprecated. A replacement is in the works.", color=constants.colors["gray"])
-				await message.channel.send(embed=embed)
+			if messageRequest.content.startswith("c "):
+				requestSlices = split(", c | c |, ", messageRequest.content.split(" ", 1)[1])
+				totalWeight = len(requestSlices)
+				if totalWeight > messageRequest.get_limit() / 2:
+					await hold_up(message, messageRequest)
+					return
+				for requestSlice in requestSlices:
+					rateLimited[messageRequest.authorId] = rateLimited.get(messageRequest.authorId, 0) + 2
 
-			elif messageRequest.content.startswith("c "):
-				if messageRequest.content == "c help":
-					embed = discord.Embed(title=":chart_with_upwards_trend: Charts", description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide).", color=constants.colors["light blue"])
-					await message.channel.send(embed=embed)
-				else:
-					requestSlices = split(", c | c |, ", messageRequest.content.split(" ", 1)[1])
-					totalWeight = len(requestSlices)
-					if totalWeight > messageRequest.get_limit() / 2:
-						await hold_up(message, messageRequest)
-						return
-					for requestSlice in requestSlices:
-						rateLimited[messageRequest.authorId] = rateLimited.get(messageRequest.authorId, 0) + 2
+					if rateLimited[messageRequest.authorId] >= messageRequest.get_limit():
+						await message.channel.send(content="<@!{}>".format(messageRequest.authorId), embed=Embed(title="You reached your limit of requests per minute. You can try again in a bit.", color=constants.colors["gray"]))
+						rateLimited[messageRequest.authorId] = messageRequest.get_limit()
+						totalWeight = messageRequest.get_limit()
+						break
+					else:
+						chartMessages, weight = await chart(message, messageRequest, requestSlice)
+						sentMessages += chartMessages
+						totalWeight += weight - 1
 
-						if rateLimited[messageRequest.authorId] >= messageRequest.get_limit():
-							await message.channel.send(content="<@!{}>".format(messageRequest.authorId), embed=discord.Embed(title="You reached your limit of requests per minute. You can try again in a bit.", color=constants.colors["gray"]))
-							rateLimited[messageRequest.authorId] = messageRequest.get_limit()
-							totalWeight = messageRequest.get_limit()
-							break
-						else:
-							chartMessages, weight = await chart(message, messageRequest, requestSlice)
-							sentMessages += chartMessages
-							totalWeight += weight - 1
+						rateLimited[messageRequest.authorId] = rateLimited.get(messageRequest.authorId, 0) + weight - 2
 
-							rateLimited[messageRequest.authorId] = rateLimited.get(messageRequest.authorId, 0) + weight - 2
-
-					await database.document("discord/statistics").set({_snapshot: {"c": Increment(totalWeight)}}, merge=True)
-					await finish_request(message, messageRequest, totalWeight, sentMessages)
+				await database.document("discord/statistics").set({_snapshot: {"c": Increment(totalWeight)}}, merge=True)
+				await finish_request(message, messageRequest, totalWeight, sentMessages)
 
 			elif messageRequest.content.startswith("flow "):
-				embed = discord.Embed(title="Flow command is being updated, and is currently unavailable.", description="All Alpha Pro subscribers using Alpha Flow will receive reimbursment in form of credit, or a refund if requested.", color=constants.colors["gray"])
+				embed = Embed(title="Flow command is being updated, and is currently unavailable.", description="An updated flow command is coming after slash commands are stable, which is the priority. All Alpha Pro subscribers using Alpha Flow during August and September will receive reimbursment in form of credit, or a refund if requested. No charges were made since then. All trials will also be reset.", color=constants.colors["gray"])
 				await message.channel.send(embed=embed)
 
 			elif messageRequest.content.startswith("hmap "):
@@ -415,7 +393,7 @@ async def on_message(message):
 					rateLimited[messageRequest.authorId] = rateLimited.get(messageRequest.authorId, 0) + 2
 
 					if rateLimited[messageRequest.authorId] >= messageRequest.get_limit():
-						await message.channel.send(content="<@!{}>".format(messageRequest.authorId), embed=discord.Embed(title="You reached your limit of requests per minute. You can try again in a bit.", color=constants.colors["gray"]))
+						await message.channel.send(content="<@!{}>".format(messageRequest.authorId), embed=Embed(title="You reached your limit of requests per minute. You can try again in a bit.", color=constants.colors["gray"]))
 						rateLimited[messageRequest.authorId] = messageRequest.get_limit()
 						totalWeight = messageRequest.get_limit()
 						break
@@ -428,9 +406,6 @@ async def on_message(message):
 
 				await database.document("discord/statistics").set({_snapshot: {"hmap": Increment(totalWeight)}}, merge=True)
 				await finish_request(message, messageRequest, totalWeight, sentMessages)
-
-			elif messageRequest.content.startswith("d "):
-				await deprecation_message(message, "d", isGone=True)
 
 			elif messageRequest.content.startswith(("alert ", "alerts ")):
 				await deprecation_message(message, "alert", isGone=True)
@@ -445,7 +420,7 @@ async def on_message(message):
 					rateLimited[messageRequest.authorId] = rateLimited.get(messageRequest.authorId, 0) + 2
 
 					if rateLimited[messageRequest.authorId] >= messageRequest.get_limit():
-						await message.channel.send(content="<@!{}>".format(messageRequest.authorId), embed=discord.Embed(title="You reached your limit of requests per minute. You can try again in a bit.", color=constants.colors["gray"]))
+						await message.channel.send(content="<@!{}>".format(messageRequest.authorId), embed=Embed(title="You reached your limit of requests per minute. You can try again in a bit.", color=constants.colors["gray"]))
 						rateLimited[messageRequest.authorId] = messageRequest.get_limit()
 						totalWeight = messageRequest.get_limit()
 						break
@@ -459,62 +434,11 @@ async def on_message(message):
 				await database.document("discord/statistics").set({_snapshot: {"p": Increment(totalWeight)}}, merge=True)
 				await finish_request(message, messageRequest, totalWeight, sentMessages)
 
-			elif messageRequest.content.startswith("v "):
-				await deprecation_message(message, "v", isGone=True)
-
-			elif messageRequest.content.startswith("convert "):
-				await deprecation_message(message, "convert", isGone=True)
-
-			elif messageRequest.content.startswith(("m ", "info")):
-				await deprecation_message(message, "info", isGone=True)
-
 			elif messageRequest.content.startswith("top"):
-				requestSlices = split(", t | t |, top | top |, ", messageRequest.content.split(" ", 1)[1])
-				totalWeight = len(requestSlices)
-				if totalWeight > messageRequest.get_limit() / 2:
-					await hold_up(message, messageRequest)
-					return
-				for requestSlice in requestSlices:
-					rateLimited[messageRequest.authorId] = rateLimited.get(messageRequest.authorId, 0) + 2
-
-					if rateLimited[messageRequest.authorId] >= messageRequest.get_limit():
-						await message.channel.send(content="<@!{}>".format(messageRequest.authorId), embed=discord.Embed(title="You reached your limit of requests per minute. You can try again in a bit.", color=constants.colors["gray"]))
-						rateLimited[messageRequest.authorId] = messageRequest.get_limit()
-						totalWeight = messageRequest.get_limit()
-						break
-					else:
-						rankingsMessages, weight = await rankings(message, messageRequest, requestSlice)
-						sentMessages += rankingsMessages
-						totalWeight += weight - 1
-
-						rateLimited[messageRequest.authorId] = rateLimited.get(messageRequest.authorId, 0) + weight - 2
-
-				await database.document("discord/statistics").set({_snapshot: {"t": Increment(totalWeight)}}, merge=True)
-				await finish_request(message, messageRequest, totalWeight, sentMessages)
+				await deprecation_message(message, "lookup top", isGone=True)
 
 			elif messageRequest.content.startswith("mk "):
-				requestSlices = split(", mk | mk |, ", messageRequest.content.split(" ", 1)[1])
-				totalWeight = len(requestSlices)
-				if totalWeight > messageRequest.get_limit() / 2:
-					await hold_up(message, messageRequest)
-					return
-				for requestSlice in requestSlices:
-					rateLimited[messageRequest.authorId] = rateLimited.get(messageRequest.authorId, 0) + 2
-
-					if rateLimited[messageRequest.authorId] >= messageRequest.get_limit():
-						await message.channel.send(content="<@!{}>".format(messageRequest.authorId), embed=discord.Embed(title="You reached your limit of requests per minute. You can try again in a bit.", color=constants.colors["gray"]))
-						rateLimited[messageRequest.authorId] = messageRequest.get_limit()
-						totalWeight = messageRequest.get_limit()
-						break
-					else:
-						marketsMessages, weight = await markets(message, messageRequest, requestSlice)
-						sentMessages += marketsMessages
-						totalWeight += weight - 1
-
-						rateLimited[messageRequest.authorId] = rateLimited.get(messageRequest.authorId, 0) + weight - 2
-
-				await database.document("discord/statistics").set({_snapshot: {"mk": Increment(totalWeight)}}, merge=True)
-				await finish_request(message, messageRequest, totalWeight, sentMessages)
+				await deprecation_message(message, "lookup markets", isGone=True)
 
 			elif messageRequest.content.startswith("x "):
 				requestSlice = messageRequest.content.split(" ", 1)[1]
@@ -527,9 +451,6 @@ async def on_message(message):
 
 				await database.document("discord/statistics").set({_snapshot: {"x": Increment(1)}}, merge=True)
 				await finish_request(message, messageRequest, 0, [], force=forceDelete)
-
-			elif messageRequest.content.startswith("paper "):
-				await deprecation_message(message, "paper", isGone=True)
 			
 			elif messageRequest.content.startswith("/vote ") and messageRequest.authorId in [361916376069439490, 362371656267595778, 430223866993049620]:
 				await deprecation_message(message, "vote` as a `slash command", isGone=True)
@@ -556,7 +477,7 @@ async def finish_request(message, messageRequest, weight, sentMessages, force=Fa
 
 
 # -------------------------
-# Charting
+# Legacy
 # -------------------------
 
 async def chart(message, messageRequest, requestSlice):
@@ -569,7 +490,7 @@ async def chart(message, messageRequest, requestSlice):
 
 			if outputMessage is not None:
 				if not messageRequest.is_muted() and outputMessage != "":
-					embed = discord.Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/charting).", color=constants.colors["gray"])
+					embed = Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/charting).", color=constants.colors["gray"])
 					embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
 					sentMessages.append(await message.channel.send(embed=embed))
 				return (sentMessages, len(sentMessages))
@@ -582,7 +503,7 @@ async def chart(message, messageRequest, requestSlice):
 
 				if payload is None:
 					errorMessage = "Requested chart for `{}` is not available.".format(currentRequest.get("ticker").get("name")) if chartText is None else chartText
-					embed = discord.Embed(title=errorMessage, color=constants.colors["gray"])
+					embed = Embed(title=errorMessage, color=constants.colors["gray"])
 					embed.set_author(name="Chart not available", icon_url=static_storage.icon_bw)
 					sentMessages.append(await message.channel.send(embed=embed))
 				else:
@@ -599,6 +520,8 @@ async def chart(message, messageRequest, requestSlice):
 async def heatmap(message, messageRequest, requestSlice):
 	sentMessages = []
 	try:
+		await deprecation_message(message, "hmap")
+
 		arguments = requestSlice.split(" ")
 
 		async with message.channel.typing():
@@ -606,7 +529,7 @@ async def heatmap(message, messageRequest, requestSlice):
 		
 			if outputMessage is not None:
 				if not messageRequest.is_muted() and outputMessage != "":
-					embed = discord.Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/heat-maps).", color=constants.colors["gray"])
+					embed = Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/heat-maps).", color=constants.colors["gray"])
 					embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
 					sentMessages.append(await message.channel.send(embed=embed))
 				return (sentMessages, len(sentMessages))
@@ -619,7 +542,7 @@ async def heatmap(message, messageRequest, requestSlice):
 
 				if payload is None:
 					errorMessage = "Requested heat map is not available." if chartText is None else chartText
-					embed = discord.Embed(title=errorMessage, color=constants.colors["gray"])
+					embed = Embed(title=errorMessage, color=constants.colors["gray"])
 					embed.set_author(name="Heat map not available", icon_url=static_storage.icon_bw)
 					sentMessages.append(await message.channel.send(embed=embed))
 				else:
@@ -633,11 +556,6 @@ async def heatmap(message, messageRequest, requestSlice):
 		await unknown_error(message, messageRequest.authorId)
 	return (sentMessages, len(sentMessages))
 
-
-# -------------------------
-# Quotes
-# -------------------------
-
 async def price(message, messageRequest, requestSlice):
 	sentMessages = []
 	try:
@@ -650,7 +568,7 @@ async def price(message, messageRequest, requestSlice):
 
 			if outputMessage is not None:
 				if not messageRequest.is_muted() and outputMessage != "":
-					embed = discord.Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/prices).", color=constants.colors["gray"])
+					embed = Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/prices).", color=constants.colors["gray"])
 					embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
 					sentMessages.append(await message.channel.send(embed=embed))
 				return (sentMessages, len(sentMessages))
@@ -660,19 +578,19 @@ async def price(message, messageRequest, requestSlice):
 
 			if payload is None or "quotePrice" not in payload:
 				errorMessage = "Requested price for `{}` is not available.".format(currentRequest.get("ticker").get("name")) if quoteText is None else quoteText
-				embed = discord.Embed(title=errorMessage, color=constants.colors["gray"])
+				embed = Embed(title=errorMessage, color=constants.colors["gray"])
 				embed.set_author(name="Data not available", icon_url=static_storage.icon_bw)
 				quoteMessage = await message.channel.send(embed=embed)
 				sentMessages.append(quoteMessage)
 			else:
 				currentRequest = request.get(payload.get("platform"))
 				if payload.get("platform") in ["Alternative.me"]:
-					embed = discord.Embed(title="{} *({})*".format(payload["quotePrice"], payload["change"]), description=payload.get("quoteConvertedPrice", discord.embeds.EmptyEmbed), color=constants.colors[payload["messageColor"]])
+					embed = Embed(title="{} *({})*".format(payload["quotePrice"], payload["change"]), description=payload.get("quoteConvertedPrice", discord.embeds.EmptyEmbed), color=constants.colors[payload["messageColor"]])
 					embed.set_author(name=payload["title"], icon_url=payload.get("thumbnailUrl"))
 					embed.set_footer(text=payload["sourceText"])
 					sentMessages.append(await message.channel.send(embed=embed))
 				else:
-					embed = discord.Embed(title="{}{}".format(payload["quotePrice"], " *({})*".format(payload["change"]) if "change" in payload else ""), description=payload.get("quoteConvertedPrice", discord.embeds.EmptyEmbed), color=constants.colors[payload["messageColor"]])
+					embed = Embed(title="{}{}".format(payload["quotePrice"], " *({})*".format(payload["change"]) if "change" in payload else ""), description=payload.get("quoteConvertedPrice", discord.embeds.EmptyEmbed), color=constants.colors[payload["messageColor"]])
 					embed.set_author(name=payload["title"], icon_url=payload.get("thumbnailUrl"))
 					embed.set_footer(text=payload["sourceText"])
 					sentMessages.append(await message.channel.send(embed=embed))
@@ -685,126 +603,14 @@ async def price(message, messageRequest, requestSlice):
 	return (sentMessages, len(sentMessages))
 
 # -------------------------
-# Details
-# -------------------------
-
-async def rankings(message, messageRequest, requestSlice):
-	sentMessages = []
-	try:
-		arguments = requestSlice.split(" ", 2)
-		method = arguments[0]
-
-		if method in ["alpha", "requests", "charts"]:
-			if messageRequest.statistics_available():
-				response = []
-				async with message.channel.typing():
-					rawData = await database.document("dataserver/statistics").get()
-					rawData = rawData.to_dict()
-					response = rawData["top"][messageRequest.marketBias][:9:-1]
-
-				embed = discord.Embed(title="Top Alpha Bot requests", color=constants.colors["deep purple"])
-				for token in response:
-					embed.add_field(name=token["id"], value="Rank {:,.2f}/100".format(token["rank"]), inline=True)
-				sentMessages.append(await message.channel.send(embed=embed))
-
-			elif messageRequest.is_pro():
-				if not message.author.bot and message.channel.permissions_for(message.author).administrator:
-					embed = discord.Embed(title=":pushpin: Alpha Statistics are disabled.", description="You can enable Alpha Statistics feature for your account in [Discord Preferences](https://www.alphabotsystem.com/account/discord) or for the entire community in your [Communities Dashboard](https://www.alphabotsystem.com/communities/manage?id={}).".format(messageRequest.guildId), color=constants.colors["gray"])
-					embed.set_author(name="Alpha Statistics", icon_url=static_storage.icon_bw)
-					await message.channel.send(embed=embed)
-				else:
-					embed = discord.Embed(title=":pushpin: Alpha Statistics are disabled.", description="You can enable Alpha Statistics feature for your account in [Discord Preferences](https://www.alphabotsystem.com/account/discord).", color=constants.colors["gray"])
-					embed.set_author(name="Alpha Statistics", icon_url=static_storage.icon_bw)
-					await message.channel.send(embed=embed)
-
-			else:
-				embed = discord.Embed(title=":gem: Alpha Statistics information is available to Alpha Pro users or communities for only $5.00 per month.", description="If you'd like to start your 14-day free trial, visit your [subscription page](https://www.alphabotsystem.com/account/subscription).", color=constants.colors["deep purple"])
-				embed.set_image(url="https://www.alphabotsystem.com/files/uploads/pro-hero.jpg")
-				await message.channel.send(embed=embed)
-
-		elif method in ["gainers", "gain", "gains"]:
-			response = []
-			async with message.channel.typing():
-				from pycoingecko import CoinGeckoAPI
-				rawData = CoinGeckoAPI().get_coins_markets(vs_currency="usd", order="market_cap_desc", per_page=250, price_change_percentage="24h")
-				for e in rawData:
-					if e.get("price_change_percentage_24h_in_currency", None) is not None:
-						response.append({"symbol": e["symbol"].upper(), "change": e["price_change_percentage_24h_in_currency"]})
-				response = sorted(response, key=lambda k: k["change"], reverse=True)[:10]
-			
-			embed = discord.Embed(title="Top gainers", color=constants.colors["deep purple"])
-			for token in response:
-				embed.add_field(name=token["symbol"], value="Gained {:,.2f} %".format(token["change"]), inline=True)
-			sentMessages.append(await message.channel.send(embed=embed))
-
-		elif method in ["losers", "loosers", "loss", "losses"]:
-			response = []
-			async with message.channel.typing():
-				from pycoingecko import CoinGeckoAPI
-				rawData = CoinGeckoAPI().get_coins_markets(vs_currency="usd", order="market_cap_desc", per_page=250, price_change_percentage="24h")
-				for e in rawData:
-					if e.get("price_change_percentage_24h_in_currency", None) is not None:
-						response.append({"symbol": e["symbol"].upper(), "change": e["price_change_percentage_24h_in_currency"]})
-			response = sorted(response, key=lambda k: k["change"])[:10]
-			
-			embed = discord.Embed(title="Top losers", color=constants.colors["deep purple"])
-			for token in response:
-				embed.add_field(name=token["symbol"], value="Lost {:,.2f} %".format(token["change"]), inline=True)
-			sentMessages.append(await message.channel.send(embed=embed))
-
-	except CancelledError: pass
-	except Exception:
-		print(format_exc())
-		if environ["PRODUCTION_MODE"]: logging.report_exception(user=f"{message.author.id}: {message.clean_content}")
-		await unknown_error(message, messageRequest.authorId)
-	return (sentMessages, len(sentMessages))
-
-async def markets(message, messageRequest, requestSlice):
-	sentMessages = []
-	try:
-		arguments = requestSlice.split(" ")
-
-		async with message.channel.typing():
-			outputMessage, request = await Processor.process_quote_arguments(messageRequest, arguments[1:], tickerId=arguments[0].upper(), platformQueue=["CCXT"])
-
-			if outputMessage is not None:
-				if not messageRequest.is_muted() and outputMessage != "":
-					embed = discord.Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide).", color=constants.colors["gray"])
-					embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
-					sentMessages.append(await message.channel.send(embed=embed))
-				return (sentMessages, len(sentMessages))
-
-			currentRequest = request.get(request.get("currentPlatform"))
-			ticker = currentRequest.get("ticker")
-			listings, total = await TickerParser.get_listings(ticker.get("base"), ticker.get("quote"))
-			if total != 0:
-				embed = discord.Embed(color=constants.colors["deep purple"])
-				embed.set_author(name="{} listings".format(ticker.get("base")))
-				for quote, exchanges in listings:
-					embed.add_field(name="{} pair found on {} exchanges".format(quote, len(exchanges)), value="{}".format(", ".join(exchanges)), inline=False)
-				sentMessages.append(await message.channel.send(embed=embed))
-			else:
-				embed = discord.Embed(title="`{}` is not listed on any crypto exchange.".format(currentRequest.get("ticker").get("name")), color=constants.colors["gray"])
-				embed.set_author(name="No listings", icon_url=static_storage.icon_bw)
-				sentMessages.append(await message.channel.send(embed=embed))
-
-	except CancelledError: pass
-	except Exception:
-		print(format_exc())
-		if environ["PRODUCTION_MODE"]: logging.report_exception(user=f"{message.author.id}: {message.clean_content}")
-		await unknown_error(message, messageRequest.authorId)
-	return (sentMessages, len(sentMessages))
-
-
-# -------------------------
-# Trading
+# Ichibot
 # -------------------------
 
 async def process_ichibot_command(message, messageRequest, requestSlice):
 	sentMessages = []
 	try:
 		if requestSlice == "login":
-			embed = discord.Embed(title=":dart: API key preferences are available in your Alpha Account settings.", description="[Sign into you Alpha Account](https://www.alphabotsystem.com/sign-in) and visit [Ichibot preferences](https://www.alphabotsystem.com/account/ichibot) to update your API keys.", color=constants.colors["deep purple"])
+			embed = Embed(title=":dart: API key preferences are available in your Alpha Account settings.", description="[Sign into you Alpha Account](https://www.alphabotsystem.com/sign-in) and visit [Ichibot preferences](https://www.alphabotsystem.com/account/ichibot) to update your API keys.", color=constants.colors["deep purple"])
 			embed.set_author(name="Ichibot", icon_url=static_storage.ichibot)
 			await message.channel.send(embed=embed)
 		
@@ -819,16 +625,16 @@ async def process_ichibot_command(message, messageRequest, requestSlice):
 
 				if requestSlice in ["q", "quit", "exit", "logout"]:
 					Ichibot.sockets.pop(origin)
-					embed = discord.Embed(title="Ichibot connection has been closed.", color=constants.colors["deep purple"])
+					embed = Embed(title="Ichibot connection has been closed.", color=constants.colors["deep purple"])
 					embed.set_author(name="Ichibot", icon_url=static_storage.ichibot)
 					await message.channel.send(embed=embed)
 			else:
-				embed = discord.Embed(title="Ichibot connection is not open.", description="You can initiate a connection with `x login` followed by the exchange you want to connect to.", color=constants.colors["pink"])
+				embed = Embed(title="Ichibot connection is not open.", description="You can initiate a connection with `x login` followed by the exchange you want to connect to.", color=constants.colors["pink"])
 				embed.set_author(name="Ichibot", icon_url=static_storage.ichibot)
 				missingExchangeMessage = await message.channel.send(embed=embed)
 
 		else:
-			embed = discord.Embed(title=":dart: You must have an Alpha Account connected to your Discord to execute live trades.", description="[Sign up for a free account on our website](https://www.alphabotsystem.com/sign-up). If you already signed up, [sign in](https://www.alphabotsystem.com/sign-in), connect your account with your Discord profile, and add an API key.", color=constants.colors["deep purple"])
+			embed = Embed(title=":dart: You must have an Alpha Account connected to your Discord to execute live trades.", description="[Sign up for a free account on our website](https://www.alphabotsystem.com/sign-up). If you already signed up, [sign in](https://www.alphabotsystem.com/sign-in), connect your account with your Discord profile, and add an API key.", color=constants.colors["deep purple"])
 			embed.set_author(name="Ichibot", icon_url=static_storage.ichibot)
 			await message.channel.send(embed=embed)
 
@@ -876,7 +682,7 @@ async def create_request(ctx, autodelete=-1):
 
 	if request.guildId != -1:
 		if len(alphaSettings["tosWatchlist"]["nicknames"]["blacklist"]) != 0 and ctx.interaction.guild.name in alphaSettings["tosWatchlist"]["nicknames"]["blacklist"]:
-			embed = discord.Embed(title="This Discord community guild was flagged for rebranding Alpha and is therefore violating the Terms of Service. Inability to comply will result in termination of all Alpha branded services.", color=0x000000)
+			embed = Embed(title="This Discord community guild was flagged for rebranding Alpha and is therefore violating the Terms of Service. Inability to comply will result in termination of all Alpha branded services.", color=0x000000)
 			embed.add_field(name="Terms of service", value="[Read now](https://www.alphabotsystem.com/terms-of-service)", inline=True)
 			embed.add_field(name="Alpha Discord guild", value="[Join now](https://discord.gg/GQeDE85)", inline=True)
 			await ctx.interaction.edit_original_message(embed=embed)
@@ -888,10 +694,10 @@ async def create_request(ctx, autodelete=-1):
 				request.guildProperties = forcedFetch
 				return request
 			elif not ctx.bot and ctx.interaction.channel.permissions_for(ctx.author).administrator:
-				embed = discord.Embed(title="Hello world!", description="Thanks for adding Alpha Bot to your Discord community, we're thrilled to have you onboard. We think you're going to love everything Alpha Bot can do. Before you start using it, you must complete a short setup process. Sign into your [Alpha Account](https://www.alphabotsystem.com/communities) and visit your [Communities Dashboard](https://www.alphabotsystem.com/communities) to begin.", color=constants.colors["pink"])
+				embed = Embed(title="Hello world!", description="Thanks for adding Alpha Bot to your Discord community, we're thrilled to have you onboard. We think you're going to love everything Alpha Bot can do. Before you start using it, you must complete a short setup process. Sign into your [Alpha Account](https://www.alphabotsystem.com/communities) and visit your [Communities Dashboard](https://www.alphabotsystem.com/communities) to begin.", color=constants.colors["pink"])
 				await ctx.interaction.edit_original_message(embed=embed)
 			else:
-				embed = discord.Embed(title="Hello world!", description="This is Alpha Bot, the most advanced financial bot on Discord. A short setup process hasn't been completed in this Discord community yet. Ask administrators to complete it by signing into their [Alpha Account](https://www.alphabotsystem.com/communities) and visiting their [Communities Dashboard](https://www.alphabotsystem.com/communities).", color=constants.colors["pink"])
+				embed = Embed(title="Hello world!", description="This is Alpha Bot, the most advanced financial bot on Discord. A short setup process hasn't been completed in this Discord community yet. Ask administrators to complete it by signing into their [Alpha Account](https://www.alphabotsystem.com/communities) and visiting their [Communities Dashboard](https://www.alphabotsystem.com/communities).", color=constants.colors["pink"])
 				await ctx.interaction.edit_original_message(embed=embed)
 			return None
 
@@ -905,14 +711,16 @@ async def create_request(ctx, autodelete=-1):
 bot.add_cog(AlphaCommand(bot, create_request, database, logging))
 bot.add_cog(AlertCommand(bot, create_request, database, logging))
 bot.add_cog(ChartCommand(bot, create_request, database, logging))
+bot.add_cog(HeatmapCommand(bot, create_request, database, logging))
 bot.add_cog(DepthCommand(bot, create_request, database, logging))
 bot.add_cog(PriceCommand(bot, create_request, database, logging))
 bot.add_cog(VolumeCommand(bot, create_request, database, logging))
 bot.add_cog(ConvertCommand(bot, create_request, database, logging))
 bot.add_cog(DetailsCommand(bot, create_request, database, logging))
+bot.add_cog(LookupCommand(bot, create_request, database, logging))
 bot.add_cog(PaperCommand(bot, create_request, database, logging))
 bot.add_cog(IchibotCommand(bot, create_request, database, logging))
-# bot.add_cog(CopeVoteCommand(bot, create_request, database, logging))
+bot.add_cog(CopeVoteCommand(bot, create_request, database, logging))
 
 
 # -------------------------
@@ -920,25 +728,25 @@ bot.add_cog(IchibotCommand(bot, create_request, database, logging))
 # -------------------------
 
 async def unknown_error(ctx, authorId):
-	embed = discord.Embed(title="Looks like something went wrong. The issue has been reported.", color=constants.colors["gray"])
+	embed = Embed(title="Looks like something went wrong. The issue has been reported.", color=constants.colors["gray"])
 	embed.set_author(name="Something went wrong", icon_url=static_storage.icon_bw)
 	try: await ctx.channel.send(embed=embed)
 	except: return
 
 async def deprecation_message(ctx, command, isGone=False):
 	if isGone:
-		embed = discord.Embed(title=f"Alpha is transitioning to slash commands as is required by upcoming Discord changes. Use `/{command}` instead of the old syntax.", color=constants.colors["red"])
+		embed = Embed(title=f"Alpha is transitioning to slash commands as is required by upcoming Discord changes. Use `/{command}` instead of the old syntax.", color=constants.colors["red"])
 		embed.set_image(url="https://firebasestorage.googleapis.com/v0/b/nlc-bot-36685.appspot.com/o/alpha%2Fassets%2Fdiscord%2Fslash-commands.gif?alt=media&token=32e05ba1-9b06-47b1-a037-d37036b382a6")
 		try: await ctx.channel.send(embed=embed)
 		except: return
 	else:
-		embed = discord.Embed(title=f"Alpha is transitioning to slash commands as is required by upcoming Discord changes. Use `/{command}` to avoid this warning. Old syntax will no longer work after depreciation <t:1651276800:R>.", color=constants.colors["red"])
+		embed = Embed(title=f"Alpha is transitioning to slash commands as is required by upcoming Discord changes. Use `/{command}` to avoid this warning. Old syntax will no longer work after depreciation <t:1646136000:R>.", color=constants.colors["red"])
 		embed.set_image(url="https://firebasestorage.googleapis.com/v0/b/nlc-bot-36685.appspot.com/o/alpha%2Fassets%2Fdiscord%2Fslash-commands.gif?alt=media&token=32e05ba1-9b06-47b1-a037-d37036b382a6")
 		try: await ctx.channel.send(embed=embed)
 		except: return
 
 async def hold_up(task, request):
-	embed = discord.Embed(title="Only up to {:d} requests are allowed per command.".format(int(request.get_limit() / 2)), color=constants.colors["gray"])
+	embed = Embed(title="Only up to {:d} requests are allowed per command.".format(int(request.get_limit() / 2)), color=constants.colors["gray"])
 	embed.set_author(name="Too many requests", icon_url=static_storage.icon_bw)
 	await task.channel.send(embed=embed)
 
@@ -991,7 +799,7 @@ async def on_ready():
 		while not await accountProperties.check_status() or not await guildProperties.check_status():
 			await sleep(15)
 		botStatus[0] = True
-		await bot.change_presence(status=discord.Status.online, activity=discord.Activity(type=discord.ActivityType.watching, name="alphabotsystem.com"))
+		await bot.change_presence(status=Status.online, activity=Activity(type=ActivityType.watching, name="alphabotsystem.com"))
 	except:
 		print(format_exc())
 		if environ["PRODUCTION_MODE"]: logging.report_exception()

@@ -31,7 +31,8 @@ class ChartCommand(BaseCommand):
 		self,
 		ctx,
 		request,
-		task
+		task,
+		send_reply
 	):
 		currentTask = task.get(task.get("currentPlatform"))
 		timeframes = task.pop("timeframes")
@@ -43,14 +44,14 @@ class ChartCommand(BaseCommand):
 				errorMessage = "Requested chart for `{}` is not available.".format(currentTask.get("ticker").get("name")) if chartText is None else chartText
 				embed = Embed(title=errorMessage, color=constants.colors["gray"])
 				embed.set_author(name="Chart not available", icon_url=static_storage.icon_bw)
-				await ctx.interaction.edit_original_message(embed=embed)
+				await send_reply(embed=embed)
 			else:
 				actions = None
 				if currentTask.get("ticker", {}).get("tradable") and request.guildId in ICHIBOT_TESTING:
 					actions = IchibotView(self.bot.loop, currentTask, userId=request.authorId)
 				else:
 					actions = ActionsView(userId=request.authorId)
-				await ctx.interaction.edit_original_message(content=chartText, file=File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, request.authorId, randint(1000, 9999))), view=actions)
+				await send_reply(content=chartText, file=File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, request.authorId, randint(1000, 9999))), view=actions)
 
 		await self.database.document("discord/statistics").set({request.snapshot: {"c": Increment(1)}}, merge=True)
 		await self.cleanup(ctx, request, removeView=True)
@@ -66,20 +67,24 @@ class ChartCommand(BaseCommand):
 			request = await self.create_request(ctx, autodelete=autodelete)
 			if request is None: return
 
-			arguments = arguments.lower().split()
-			outputMessage, task = await Processor.process_chart_arguments(request, arguments[1:], tickerId=arguments[0].upper())
+			parts = arguments.split(",")
+			send_reply = ctx.interaction.edit_original_message if len(parts) == 1 else ctx.followup.send
 
-			if outputMessage is not None:
-				embed = Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/charting).", color=constants.colors["gray"])
-				embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
-				await ctx.interaction.edit_original_message(embed=embed)
-				return
-			elif autodelete is not None and (autodelete < 1 or autodelete > 10):
-				embed = Embed(title="Response autodelete duration must be between one and ten minutes.", color=constants.colors["gray"])
-				await ctx.interaction.edit_original_message(embed=embed)
-				return
+			for part in parts:
+				partArguments = part.lower().split()
+				outputMessage, task = await Processor.process_chart_arguments(request, partArguments[1:], tickerId=partArguments[0].upper())
 
-			await self.respond(ctx, request, task)
+				if outputMessage is not None:
+					embed = Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/charting).", color=constants.colors["gray"])
+					embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
+					await send_reply(embed=embed)
+					return
+				elif autodelete is not None and (autodelete < 1 or autodelete > 10):
+					embed = Embed(title="Response autodelete duration must be between one and ten minutes.", color=constants.colors["gray"])
+					await send_reply(embed=embed)
+					return
+
+				await self.respond(ctx, request, task, send_reply)
 
 		except CancelledError: pass
 		except Exception:

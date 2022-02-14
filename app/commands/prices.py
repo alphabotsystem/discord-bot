@@ -20,7 +20,8 @@ class PriceCommand(BaseCommand):
 		self,
 		ctx,
 		request,
-		task
+		task,
+		send_reply
 	):
 		currentTask = task.get(task.get("currentPlatform"))
 		payload, quoteText = await Processor.process_task("quote", request.authorId, task)
@@ -29,19 +30,19 @@ class PriceCommand(BaseCommand):
 			errorMessage = "Requested price for `{}` is not available.".format(currentTask.get("ticker").get("name")) if quoteText is None else quoteText
 			embed = Embed(title=errorMessage, color=constants.colors["gray"])
 			embed.set_author(name="Data not available", icon_url=static_storage.icon_bw)
-			await ctx.interaction.edit_original_message(embed=embed)
+			await send_reply(embed=embed)
 		else:
 			currentTask = task.get(payload.get("platform"))
 			if payload.get("platform") in ["Alternative.me"]:
 				embed = Embed(title="{} *({})*".format(payload["quotePrice"], payload["change"]), description=payload.get("quoteConvertedPrice", EmptyEmbed), color=constants.colors[payload["messageColor"]])
 				embed.set_author(name=payload["title"], icon_url=payload.get("thumbnailUrl"))
 				embed.set_footer(text=payload["sourceText"])
-				await ctx.interaction.edit_original_message(embed=embed)
+				await send_reply(embed=embed)
 			else:
 				embed = Embed(title="{}{}".format(payload["quotePrice"], " *({})*".format(payload["change"]) if "change" in payload else ""), description=payload.get("quoteConvertedPrice", EmptyEmbed), color=constants.colors[payload["messageColor"]])
 				embed.set_author(name=payload["title"], icon_url=payload.get("thumbnailUrl"))
 				embed.set_footer(text=payload["sourceText"])
-				await ctx.interaction.edit_original_message(embed=embed)
+				await send_reply(embed=embed)
 
 		await self.database.document("discord/statistics").set({request.snapshot: {"p": Increment(1)}}, merge=True)
 
@@ -55,16 +56,20 @@ class PriceCommand(BaseCommand):
 			request = await self.create_request(ctx)
 			if request is None: return
 
-			arguments = arguments.lower().split()
-			outputMessage, task = await Processor.process_quote_arguments(request, arguments[1:], tickerId=arguments[0].upper())
+			parts = arguments.split(",")
+			send_reply = ctx.interaction.edit_original_message if len(parts) == 1 else ctx.followup.send
 
-			if outputMessage is not None:
-				embed = Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/prices).", color=constants.colors["gray"])
-				embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
-				await ctx.interaction.edit_original_message(embed=embed)
-				return
+			for part in parts:
+				partArguments = part.lower().split()
+				outputMessage, task = await Processor.process_quote_arguments(request, partArguments[1:], tickerId=partArguments[0].upper())
 
-			await self.respond(ctx, request, task)
+				if outputMessage is not None:
+					embed = Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/prices).", color=constants.colors["gray"])
+					embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
+					await send_reply(embed=embed)
+					return
+
+				await self.respond(ctx, request, task, send_reply)
 
 		except CancelledError: pass
 		except Exception:
@@ -92,7 +97,7 @@ class PriceCommand(BaseCommand):
 				await ctx.interaction.edit_original_message(embed=embed)
 				return
 
-			await self.respond(ctx, request, task)
+			await self.respond(ctx, request, task, ctx.interaction.edit_original_message)
 
 		except CancelledError: pass
 		except Exception:
