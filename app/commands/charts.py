@@ -120,7 +120,7 @@ class IchibotView(ActionsView):
 		if not accountProperties.get("apiKeys", {}):
 			embed = Embed(title="Before you can execute trades via Ichibot, you have to add exchange API keys.", description="You can add API keys for FTX, Binance and Binance Futures to you Alpha Account in your [Ichibot Preferences](https://www.alphabotsystem.com/account/ichibot).", color=constants.colors["gray"])
 			embed.set_author(name="Ichibot", icon_url=static_storage.ichibot)
-			await interaction.response.send_message(embed=embed, view=exchanges, ephemeral=True)
+			await interaction.response.send_message(embed=embed, ephemeral=True)
 			return accountId, None, None
 
 		origin = "{}_{}_ichibot".format(accountId, interaction.user.id)
@@ -138,7 +138,7 @@ class IchibotView(ActionsView):
 			_e = {"ftx": "FTX", "binance": "Binance", "binancefutures": "Binance Futures"}
 			embed = Embed(title="Add API keys for {}.".format(" or ".join([_e[e] for e in matches.keys()])), description="`{}` is only available on {} for which you haven't added API keys yet.".format(self.task.get("ticker").get("name"), " and ".join([_e[e] for e in matches.keys()])), color=constants.colors["gray"])
 			embed.set_author(name="Ichibot", icon_url=static_storage.ichibot)
-			await interaction.response.send_message(embed=embed, view=exchanges, ephemeral=True)
+			await interaction.response.send_message(embed=embed, ephemeral=True)
 			return accountId, None, None
 
 		return accountId, availableKeys, socket
