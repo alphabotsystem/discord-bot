@@ -61,7 +61,7 @@ class PriceCommand(BaseCommand):
 
 			for part in parts:
 				partArguments = part.lower().split()
-				if len(partArguments): continue
+				if len(partArguments) == 0: continue
 
 				outputMessage, task = await Processor.process_quote_arguments(request, partArguments[1:], tickerId=partArguments[0].upper())
 
