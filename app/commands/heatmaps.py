@@ -45,7 +45,7 @@ class HeatmapCommand(BaseCommand):
 	async def hmap(
 		self,
 		ctx,
-		arguments: Option(str, "Request arguments.", name="arguments", required=False, default=""),
+		arguments: Option(str, "Request arguments.", name="arguments", required=False, default="change"),
 		autodelete: Option(float, "Bot response self destruct timer in minutes.", name="autodelete", required=False, default=None)
 	):
 		try:
