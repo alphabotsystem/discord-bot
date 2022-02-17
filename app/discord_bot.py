@@ -14,7 +14,7 @@ from traceback import format_exc
 
 import discord
 from discord import AutoShardedBot, Embed, Intents, Activity, Status, ActivityType, MessageType
-from google.cloud.firestore import AsyncClient as FirestoreAsnycClient
+from google.cloud.firestore import AsyncClient as FirestoreAsyncClient
 from google.cloud.firestore import Client as FirestoreClient
 from google.cloud.firestore import Increment
 from google.cloud.error_reporting import Client as ErrorReportingClient
@@ -44,7 +44,7 @@ from commands.ichibot import IchibotCommand, Ichibot
 from commands.cope import CopeVoteCommand
 
 
-database = FirestoreAsnycClient()
+database = FirestoreAsyncClient()
 logging = ErrorReportingClient(service="discord")
 snapshots = FirestoreClient()
 
