@@ -75,8 +75,8 @@ class BaseCommand(Cog):
 	async def get_types(cls, ctx):
 		_commandName = ctx.command.name if ctx.command.parent is None else ctx.command.parent.name
 		command = cls.commandMap.get(_commandName, _commandName)
-		assetType = " ".join(ctx.options.get("type").lower().split())
-		venue = " ".join(ctx.options.get("venue").lower().split())
+		assetType = " ".join(ctx.options.get("type", "").lower().split())
+		venue = " ".join(ctx.options.get("venue", "").lower().split())
 
 		venues = await TickerParser.get_venues("", "")
 		venueType = [v for v in venues if v.lower().startswith(venue)]
@@ -84,13 +84,13 @@ class BaseCommand(Cog):
 		return sorted([s for s in cls.sources.get(command) if s.lower().startswith(assetType) and (venue == "" or s in venueType)])
 
 	async def get_venues(cls, ctx):
-		if ctx.options.get("ticker") is None: return []
+		if ctx.options.get("ticker", "") is None: return []
 
 		_commandName = ctx.command.name if ctx.command.parent is None else ctx.command.parent.name
 		command = cls.commandMap.get(_commandName, _commandName)
-		tickerId = " ".join(ctx.options.get("ticker").lower().split())
-		assetType = " ".join(ctx.options.get("type").lower().split())
-		venue = " ".join(ctx.options.get("venue").lower().split())
+		tickerId = " ".join(ctx.options.get("ticker", "").lower().split())
+		assetType = " ".join(ctx.options.get("type", "").lower().split())
+		venue = " ".join(ctx.options.get("venue", "").lower().split())
 
 		if assetType == "" and command == "ichibot": assetType = "crypto"
 		elif assetType == "" or tickerId == "": return []
