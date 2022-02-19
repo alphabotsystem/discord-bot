@@ -15,7 +15,7 @@ from assets import static_storage
 from Processor import Processor
 from DatabaseConnector import DatabaseConnector
 
-from commands.base import BaseCommand
+from commands.base import BaseCommand, ActionsView
 from commands.ichibot import Ichibot
 
 
@@ -105,17 +105,6 @@ class ChartCommand(BaseCommand):
 			print(format_exc())
 			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /c {} autodelete:{}".format(ctx.author.id, " ".join(arguments), autodelete))
 			self.unknown_error(ctx)
-
-
-class ActionsView(View):
-	def __init__(self, userId=None):
-		super().__init__(timeout=None)
-		self.userId = userId
-
-	@button(emoji=PartialEmoji.from_str("<:remove_response:929342678976565298>"), style=ButtonStyle.gray)
-	async def delete(self, button: Button, interaction: Interaction):
-		if self.userId != interaction.user.id and not interaction.permissions.manage_messages: return
-		await interaction.message.delete()
 
 
 class IchibotView(ActionsView):

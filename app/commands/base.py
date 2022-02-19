@@ -118,3 +118,14 @@ class Confirm(View):
 		if self.userId != interaction.user.id: return
 		self.value = False
 		self.stop()
+
+
+class ActionsView(View):
+	def __init__(self, userId=None):
+		super().__init__(timeout=None)
+		self.userId = userId
+
+	@button(emoji=PartialEmoji.from_str("<:remove_response:929342678976565298>"), style=ButtonStyle.gray)
+	async def delete(self, button: Button, interaction: Interaction):
+		if self.userId != interaction.user.id and not interaction.permissions.manage_messages: return
+		await interaction.message.delete()

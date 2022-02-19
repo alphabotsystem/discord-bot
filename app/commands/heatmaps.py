@@ -13,7 +13,7 @@ from helpers import constants
 from assets import static_storage
 from Processor import Processor
 
-from commands.base import BaseCommand
+from commands.base import BaseCommand, ActionsView
 
 
 class HeatmapCommand(BaseCommand):
