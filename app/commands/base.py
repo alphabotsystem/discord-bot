@@ -1,6 +1,6 @@
 from asyncio import sleep
 
-from discord import ButtonStyle, Interaction
+from discord import ButtonStyle, Interaction, PartialEmoji
 from discord.ext.commands import Cog
 from discord.ui import View, button, Button
 
