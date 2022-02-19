@@ -31,29 +31,33 @@ class ChartCommand(BaseCommand):
 		self,
 		ctx,
 		request,
-		task,
-		send_reply
+		tasks
 	):
-		currentTask = task.get(task.get("currentPlatform"))
-		timeframes = task.pop("timeframes")
-		for i in range(task.get("requestCount")):
-			for p, t in timeframes.items(): task[p]["currentTimeframe"] = t[i]
-			payload, chartText = await Processor.process_task("chart", request.authorId, task)
+		files, embeds = [], []
+		for task in tasks:
+			currentTask = task.get(task.get("currentPlatform"))
+			timeframes = task.pop("timeframes")
+			for i in range(task.get("requestCount")):
+				for p, t in timeframes.items(): task[p]["currentTimeframe"] = t[i]
+				payload, chartText = await Processor.process_task("chart", request.authorId, task)
 
-			if payload is None:
-				errorMessage = "Requested chart for `{}` is not available.".format(currentTask.get("ticker").get("name")) if chartText is None else chartText
-				embed = Embed(title=errorMessage, color=constants.colors["gray"])
-				embed.set_author(name="Chart not available", icon_url=static_storage.icon_bw)
-				await send_reply(embed=embed)
-			else:
-				actions = None
-				if currentTask.get("ticker", {}).get("tradable") and request.guildId in ICHIBOT_TESTING:
-					actions = IchibotView(self.bot.loop, currentTask, userId=request.authorId)
+				if payload is None:
+					errorMessage = "Requested chart for `{}` is not available.".format(currentTask.get("ticker").get("name")) if chartText is None else chartText
+					embed = Embed(title=errorMessage, color=constants.colors["gray"])
+					embed.set_author(name="Chart not available", icon_url=static_storage.icon_bw)
+					embeds.append(embed)
 				else:
-					actions = ActionsView(userId=request.authorId)
-				await send_reply(content=chartText, file=File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, request.authorId, randint(1000, 9999))), view=actions)
+					files.append(File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, request.authorId, randint(1000, 9999))))
 
-		await self.database.document("discord/statistics").set({request.snapshot: {"c": Increment(1)}}, merge=True)
+		actions = None
+		if len(tasks) == 1 and currentTask.get("ticker", {}).get("tradable") and request.guildId in ICHIBOT_TESTING:
+			actions = IchibotView(self.bot.loop, currentTask, userId=request.authorId)
+		else:
+			actions = ActionsView(userId=request.authorId)
+
+		await ctx.interaction.edit_original_message(embeds=embeds, files=files, view=actions)
+
+		await self.database.document("discord/statistics").set({request.snapshot: {"c": Increment(len(tasks))}}, merge=True)
 		await self.cleanup(ctx, request, removeView=True)
 
 	@slash_command(name="c", description="Pull charts from TradingView, TradingLite, GoCharting, and more. Command for power users.")
@@ -68,7 +72,13 @@ class ChartCommand(BaseCommand):
 			if request is None: return
 
 			parts = arguments.split(",")
-			send_reply = ctx.interaction.edit_original_message if len(parts) == 1 else ctx.followup.send
+			tasks = []
+
+			if len(parts) > 5:
+				embed = Embed(title="Only up to 5 requests are allowed per command.", color=constants.colors["gray"])
+				embed.set_author(name="Too many requests", icon_url=static_storage.icon_bw)
+				await ctx.interaction.edit_original_message(embed=embed)
+				return
 
 			for part in parts:
 				partArguments = part.lower().split()
@@ -79,19 +89,22 @@ class ChartCommand(BaseCommand):
 				if outputMessage is not None:
 					embed = Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/charting).", color=constants.colors["gray"])
 					embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
-					await send_reply(embed=embed)
+					await ctx.interaction.edit_original_message(embed=embed)
 					return
 				elif autodelete is not None and (autodelete < 1 or autodelete > 10):
 					embed = Embed(title="Response autodelete duration must be between one and ten minutes.", color=constants.colors["gray"])
-					await send_reply(embed=embed)
+					await ctx.interaction.edit_original_message(embed=embed)
 					return
 
-				await self.respond(ctx, request, task, send_reply)
+				tasks.append(task)
+			
+			await self.respond(ctx, request, tasks)
 
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
 			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /c {} autodelete:{}".format(ctx.author.id, " ".join(arguments), autodelete))
+			self.unknown_error(ctx)
 
 
 class ActionsView(View):
@@ -137,7 +150,7 @@ class IchibotView(ActionsView):
 		availableKeys = [key for key in accountProperties.get("apiKeys", {}).keys() if key in matches]
 
 		if len(availableKeys) == 0:
-			_e = {"ftx": "FTX", "binance": "Binance", "binancefutures": "Binance Futures"}
+			_e = {"ftx": "FTX", "binance": "Binance", "binanceusdm": "Binance Futures"}
 			embed = Embed(title="Add API keys for {}.".format(" or ".join([_e[e] for e in matches.keys()])), description="`{}` is only available on {} for which you haven't added API keys yet.".format(self.task.get("ticker").get("name"), " and ".join([_e[e] for e in matches.keys()])), color=constants.colors["gray"])
 			embed.set_author(name="Ichibot", icon_url=static_storage.ichibot)
 			await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -200,11 +213,11 @@ class ExchangesDropdown(Select):
 		self.command = command
 		self._callback = callback
 		_map = {
-			"ftx": ["FTX", "<:ftx:929376008107356160>"],
-			"binancefutures": ["Binance Futures", "<:binance:929376117108916314>"],
-			"binance": ["Binance", "<:binance:929376117108916314>"]
+			"ftx": ["FTX", "<:ftx:929376008107356160>", "ftx"],
+			"binanceusdm": ["Binance Futures", "<:binance:929376117108916314>", "binancefutures"],
+			"binance": ["Binance", "<:binance:929376117108916314>", "binance"]
 		}
-		options = [SelectOption(label=_map[key][0], emoji=PartialEmoji.from_str(_map[key][1]), value=key) for key in sorted(exchanges)]
+		options = [SelectOption(label=_map[key][0], emoji=PartialEmoji.from_str(_map[key][1]), value=_map[key][2]) for key in sorted(exchanges)]
 
 		super().__init__(
 			placeholder="Choose an exchange",

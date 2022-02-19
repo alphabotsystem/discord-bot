@@ -61,6 +61,7 @@ class DepthCommand(BaseCommand):
 		except Exception:
 			print(format_exc())
 			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /d {}".format(ctx.author.id, " ".join(arguments)))
+			self.unknown_error(ctx)
 
 	@slash_command(name="depth", description="Pull orderbook visualization snapshots of stocks and cryptocurrencies.")
 	async def depth(
@@ -89,3 +90,4 @@ class DepthCommand(BaseCommand):
 		except Exception:
 			print(format_exc())
 			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /depth {} type:{} venue:{}".format(ctx.author.id, tickerId, assetType, venue))
+			self.unknown_error(ctx)

@@ -53,6 +53,7 @@ class AlphaCommand(BaseCommand):
 		except Exception:
 			print(format_exc())
 			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /alpha {}".format(ctx.author.id, question))
+			self.unknown_error(ctx)
 
 	def process_reply(self, question, hasPermissions):
 		response = self.funnyReplies(question.lower())

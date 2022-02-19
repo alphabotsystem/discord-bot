@@ -66,11 +66,17 @@ class BaseCommand(Cog):
 			try: await ctx.interaction.edit_original_message(view=None)
 			except: pass
 
+	async def unknown_error(self, ctx):
+		embed = Embed(title="Looks like something went wrong. The issue has been reported.", color=constants.colors["gray"])
+		embed.set_author(name="Something went wrong", icon_url=static_storage.icon_bw)
+		try: await ctx.interaction.edit_original_message(content=None, embed=embed, files=[])
+		except: return
+
 	async def get_types(cls, ctx):
 		_commandName = ctx.command.name if ctx.command.parent is None else ctx.command.parent.name
 		command = cls.commandMap.get(_commandName, _commandName)
-		assetType = " ".join(ctx.options.get("type", "").lower().split())
-		venue = " ".join(ctx.options.get("venue", "").lower().split())
+		assetType = " ".join(ctx.options.get("type").lower().split())
+		venue = " ".join(ctx.options.get("venue").lower().split())
 
 		venues = await TickerParser.get_venues("", "")
 		venueType = [v for v in venues if v.lower().startswith(venue)]
@@ -78,11 +84,13 @@ class BaseCommand(Cog):
 		return sorted([s for s in cls.sources.get(command) if s.lower().startswith(assetType) and (venue == "" or s in venueType)])
 
 	async def get_venues(cls, ctx):
+		if ctx.options.get("ticker") is None: return []
+
 		_commandName = ctx.command.name if ctx.command.parent is None else ctx.command.parent.name
 		command = cls.commandMap.get(_commandName, _commandName)
-		tickerId = " ".join(ctx.options.get("ticker", "").lower().split())
-		assetType = " ".join(ctx.options.get("type", "").lower().split())
-		venue = " ".join(ctx.options.get("venue", "").lower().split())
+		tickerId = " ".join(ctx.options.get("ticker").lower().split())
+		assetType = " ".join(ctx.options.get("type").lower().split())
+		venue = " ".join(ctx.options.get("venue").lower().split())
 
 		if assetType == "" and command == "ichibot": assetType = "crypto"
 		elif assetType == "" or tickerId == "": return []

@@ -45,3 +45,4 @@ class ConvertCommand(BaseCommand):
 		except Exception:
 			print(format_exc())
 			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /convert {} {} {}".format(ctx.author.id, fromTicker, toTicker, amount))
+			self.unknown_error(ctx)

@@ -150,6 +150,7 @@ class CopeVoteCommand(BaseCommand):
 		except Exception:
 			print(format_exc())
 			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /vote".format(ctx.author.id))
+			self.unknown_error(ctx)
 
 
 class VotingActions(View):
