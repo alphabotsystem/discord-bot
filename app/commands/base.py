@@ -1,9 +1,11 @@
 from asyncio import sleep
 
-from discord import ButtonStyle, Interaction, PartialEmoji
+from discord import Embed, ButtonStyle, Interaction, PartialEmoji
 from discord.ext.commands import Cog
 from discord.ui import View, button, Button
 
+from helpers import constants
+from assets import static_storage
 from Processor import Processor
 from TickerParser import TickerParser
 
