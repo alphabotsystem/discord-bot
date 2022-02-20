@@ -39,7 +39,9 @@ class HeatmapCommand(BaseCommand):
 				else:
 					files.append(File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, request.authorId, randint(1000, 9999))))
 		
-		actions = ActionsView(userId=request.authorId)
+		actions = None
+		if len(files) != 0:
+			actions = ActionsView(userId=request.authorId)
 
 		await ctx.interaction.edit_original_message(embeds=embeds, files=files, view=actions)
 

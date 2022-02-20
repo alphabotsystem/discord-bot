@@ -50,10 +50,11 @@ class ChartCommand(BaseCommand):
 					files.append(File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, request.authorId, randint(1000, 9999))))
 
 		actions = None
-		if len(tasks) == 1 and currentTask.get("ticker", {}).get("tradable") and request.guildId in ICHIBOT_TESTING:
-			actions = IchibotView(self.bot.loop, currentTask, userId=request.authorId)
-		else:
-			actions = ActionsView(userId=request.authorId)
+		if len(files) != 0:
+			if len(tasks) == 1 and currentTask.get("ticker", {}).get("tradable") and request.guildId in ICHIBOT_TESTING:
+				actions = IchibotView(self.bot.loop, currentTask, userId=request.authorId)
+			else:
+				actions = ActionsView(userId=request.authorId)
 
 		await ctx.interaction.edit_original_message(embeds=embeds, files=files, view=actions)
 
