@@ -68,7 +68,7 @@ class LookupCommand(BaseCommand):
 		except Exception:
 			print(format_exc())
 			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /lookup markets {}".format(ctx.author.id, tickerId))
-			self.unknown_error(ctx)
+			await self.unknown_error(ctx)
 
 	@lookupGroup.command(name="top", description="Lookup top ganers and losers in the crypto space.")
 	async def markets(
@@ -112,4 +112,4 @@ class LookupCommand(BaseCommand):
 		except Exception:
 			print(format_exc())
 			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /lookup top {}".format(ctx.author.id, category))
-			self.unknown_error(ctx)
+			await self.unknown_error(ctx)

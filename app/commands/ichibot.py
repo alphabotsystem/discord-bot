@@ -123,4 +123,4 @@ class IchibotCommand(BaseCommand):
 		except Exception:
 			print(format_exc())
 			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /ichibot login {} {} {}".format(ctx.author.id, exchange, toTicker, amount))
-			self.unknown_error(ctx)
+			await self.unknown_error(ctx)

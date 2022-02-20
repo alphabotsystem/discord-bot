@@ -131,4 +131,4 @@ class DetailsCommand(BaseCommand):
 		except Exception:
 			print(format_exc())
 			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /info {} type:{} venue:{}".format(ctx.author.id, tickerId, assetType, venue))
-			self.unknown_error(ctx)
+			await self.unknown_error(ctx)

@@ -131,7 +131,7 @@ class PaperCommand(BaseCommand):
 		except Exception:
 			print(format_exc())
 			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /paper {} {} {} {} {}".format(ctx.author.id, orderType, tickerId, amount, level, assetType))
-			self.unknown_error(ctx)
+			await self.unknown_error(ctx)
 
 	@paperGroup.command(name="buy", description="Execute a paper buy trade.")
 	async def paper_buy(
@@ -230,7 +230,7 @@ class PaperCommand(BaseCommand):
 		except Exception:
 			print(format_exc())
 			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /paper balance".format(ctx.author.id))
-			self.unknown_error(ctx)
+			await self.unknown_error(ctx)
 
 	@paperGroup.command(name="orders", description="Fetch open paper orders.")
 	async def paper_orders(
@@ -317,7 +317,7 @@ class PaperCommand(BaseCommand):
 		except Exception:
 			print(format_exc())
 			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /paper history".format(ctx.author.id))
-			self.unknown_error(ctx)
+			await self.unknown_error(ctx)
 
 	@paperGroup.command(name="leaderboard", description="Check Alpha's Paper Trader leaderboard.")
 	async def paper_leaderboard(
@@ -370,7 +370,7 @@ class PaperCommand(BaseCommand):
 		except Exception:
 			print(format_exc())
 			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /paper leaderboard".format(ctx.author.id))
-			self.unknown_error(ctx)
+			await self.unknown_error(ctx)
 
 	@paperGroup.command(name="reset", description="Reset paper trading balance.")
 	async def paper_reset(
@@ -441,7 +441,7 @@ class PaperCommand(BaseCommand):
 		except Exception:
 			print(format_exc())
 			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /paper reset".format(ctx.author.id))
-			self.unknown_error(ctx)
+			await self.unknown_error(ctx)
 
 	async def process_trade(self, paper, execAmount, execPrice, orderType, currentPlatform, request, payload):
 		outputTitle = None

@@ -86,7 +86,7 @@ class PriceCommand(BaseCommand):
 		except Exception:
 			print(format_exc())
 			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /p {}".format(ctx.author.id, " ".join(arguments)))
-			self.unknown_error(ctx)
+			await self.unknown_error(ctx)
 
 	@slash_command(name="price", description="Fetch stock, crypto and forex quotes.")
 	async def price(
@@ -115,4 +115,4 @@ class PriceCommand(BaseCommand):
 		except Exception:
 			print(format_exc())
 			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /price {} type:{} venue:{}".format(ctx.author.id, tickerId, assetType, venue))
-			self.unknown_error(ctx)
+			await self.unknown_error(ctx)

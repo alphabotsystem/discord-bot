@@ -92,4 +92,4 @@ class HeatmapCommand(BaseCommand):
 		except Exception:
 			print(format_exc())
 			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /hmap {} autodelete:{}".format(ctx.author.id, " ".join(arguments), autodelete))
-			self.unknown_error(ctx)
+			await self.unknown_error(ctx)
