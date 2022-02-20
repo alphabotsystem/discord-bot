@@ -128,4 +128,5 @@ class ActionsView(View):
 	@button(emoji=PartialEmoji.from_str("<:remove_response:929342678976565298>"), style=ButtonStyle.gray)
 	async def delete(self, button: Button, interaction: Interaction):
 		if self.userId != interaction.user.id and not interaction.permissions.manage_messages: return
-		await interaction.message.delete()
+		try: await interaction.message.delete()
+		except: return
