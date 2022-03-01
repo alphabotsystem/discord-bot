@@ -72,7 +72,7 @@ class HeatmapCommand(BaseCommand):
 				partArguments = part.lower().split()
 				if len(partArguments) == 0: continue
 
-				outputMessage, task = await Processor.process_heatmap_arguments(request, partArguments[1:], tickerId=partArguments[0].upper())
+				outputMessage, task = await Processor.process_heatmap_arguments(request, partArguments)
 
 				if outputMessage is not None:
 					embed = Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/heat-maps).", color=constants.colors["gray"])
