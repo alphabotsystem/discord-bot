@@ -379,67 +379,6 @@ async def on_message(message):
 				await database.document("discord/statistics").set({_snapshot: {"c": Increment(totalWeight)}}, merge=True)
 				await finish_request(message, messageRequest, totalWeight, sentMessages)
 
-			elif messageRequest.content.startswith("flow "):
-				embed = Embed(title="Flow command is being updated, and is currently unavailable.", description="An updated flow command is coming after slash commands are stable, which is the priority. All Alpha Pro subscribers using Alpha Flow during August and September will receive reimbursment in form of credit, or a refund if requested. No charges were made since then. All trials will also be reset.", color=constants.colors["gray"])
-				await message.channel.send(embed=embed)
-
-			elif messageRequest.content.startswith("hmap "):
-				requestSlices = split(", hmap | hmap |, ", messageRequest.content.split(" ", 1)[1])
-				totalWeight = len(requestSlices)
-				if totalWeight > messageRequest.get_limit() / 2:
-					await hold_up(message, messageRequest)
-					return
-				for requestSlice in requestSlices:
-					rateLimited[messageRequest.authorId] = rateLimited.get(messageRequest.authorId, 0) + 2
-
-					if rateLimited[messageRequest.authorId] >= messageRequest.get_limit():
-						await message.channel.send(content="<@!{}>".format(messageRequest.authorId), embed=Embed(title="You reached your limit of requests per minute. You can try again in a bit.", color=constants.colors["gray"]))
-						rateLimited[messageRequest.authorId] = messageRequest.get_limit()
-						totalWeight = messageRequest.get_limit()
-						break
-					else:
-						chartMessages, weight = await heatmap(message, messageRequest, requestSlice)
-						sentMessages += chartMessages
-						totalWeight += weight - 1
-
-						rateLimited[messageRequest.authorId] = rateLimited.get(messageRequest.authorId, 0) + weight - 2
-
-				await database.document("discord/statistics").set({_snapshot: {"hmap": Increment(totalWeight)}}, merge=True)
-				await finish_request(message, messageRequest, totalWeight, sentMessages)
-
-			elif messageRequest.content.startswith(("alert ", "alerts ")):
-				await deprecation_message(message, "alert", isGone=True)
-
-			elif messageRequest.content.startswith("p "):
-				requestSlices = split(", p | p |, ", messageRequest.content.split(" ", 1)[1])
-				totalWeight = len(requestSlices)
-				if totalWeight > messageRequest.get_limit() / 2:
-					await hold_up(message, messageRequest)
-					return
-				for requestSlice in requestSlices:
-					rateLimited[messageRequest.authorId] = rateLimited.get(messageRequest.authorId, 0) + 2
-
-					if rateLimited[messageRequest.authorId] >= messageRequest.get_limit():
-						await message.channel.send(content="<@!{}>".format(messageRequest.authorId), embed=Embed(title="You reached your limit of requests per minute. You can try again in a bit.", color=constants.colors["gray"]))
-						rateLimited[messageRequest.authorId] = messageRequest.get_limit()
-						totalWeight = messageRequest.get_limit()
-						break
-					else:
-						quoteMessages, weight = await price(message, messageRequest, requestSlice)
-						sentMessages += quoteMessages
-						totalWeight += weight - 1
-
-						rateLimited[messageRequest.authorId] = rateLimited.get(messageRequest.authorId, 0) + weight - 2
-
-				await database.document("discord/statistics").set({_snapshot: {"p": Increment(totalWeight)}}, merge=True)
-				await finish_request(message, messageRequest, totalWeight, sentMessages)
-
-			elif messageRequest.content.startswith("top"):
-				await deprecation_message(message, "lookup top", isGone=True)
-
-			elif messageRequest.content.startswith("mk "):
-				await deprecation_message(message, "lookup markets", isGone=True)
-
 			elif messageRequest.content.startswith("x "):
 				requestSlice = messageRequest.content.split(" ", 1)[1]
 				forceDelete = False
@@ -451,9 +390,6 @@ async def on_message(message):
 
 				await database.document("discord/statistics").set({_snapshot: {"x": Increment(1)}}, merge=True)
 				await finish_request(message, messageRequest, 0, [], force=forceDelete)
-			
-			elif messageRequest.content.startswith("/vote ") and messageRequest.authorId in [361916376069439490, 362371656267595778, 430223866993049620]:
-				await deprecation_message(message, "vote` as a `slash command", isGone=True)
 
 	except CancelledError: pass
 	except Exception:
@@ -509,91 +445,6 @@ async def chart(message, messageRequest, requestSlice):
 				else:
 					currentRequest = request.get(payload.get("platform"))
 					sentMessages.append(await message.channel.send(content=chartText, file=discord.File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, messageRequest.authorId, randint(1000, 9999)))))
-
-	except CancelledError: pass
-	except Exception:
-		print(format_exc())
-		if environ["PRODUCTION_MODE"]: logging.report_exception(user=f"{message.author.id}: {message.clean_content}")
-		await unknown_error(message, messageRequest.authorId)
-	return (sentMessages, len(sentMessages))
-
-async def heatmap(message, messageRequest, requestSlice):
-	sentMessages = []
-	try:
-		await deprecation_message(message, "hmap")
-
-		arguments = requestSlice.split(" ")
-
-		async with message.channel.typing():
-			outputMessage, request = await Processor.process_heatmap_arguments(messageRequest, arguments)
-		
-			if outputMessage is not None:
-				if not messageRequest.is_muted() and outputMessage != "":
-					embed = Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/heat-maps).", color=constants.colors["gray"])
-					embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
-					sentMessages.append(await message.channel.send(embed=embed))
-				return (sentMessages, len(sentMessages))
-
-			currentRequest = request.get(request.get("currentPlatform"))
-			timeframes = request.pop("timeframes")
-			for i in range(request.get("requestCount")):
-				for p, t in timeframes.items(): request[p]["currentTimeframe"] = t[i]
-				payload, chartText = await Processor.process_task("heatmap", messageRequest.authorId, request)
-
-				if payload is None:
-					errorMessage = "Requested heat map is not available." if chartText is None else chartText
-					embed = Embed(title=errorMessage, color=constants.colors["gray"])
-					embed.set_author(name="Heat map not available", icon_url=static_storage.icon_bw)
-					sentMessages.append(await message.channel.send(embed=embed))
-				else:
-					currentRequest = request.get(payload.get("platform"))
-					sentMessages.append(await message.channel.send(content=chartText, file=discord.File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, messageRequest.authorId, randint(1000, 9999)))))
-
-	except CancelledError: pass
-	except Exception:
-		print(format_exc())
-		if environ["PRODUCTION_MODE"]: logging.report_exception(user=f"{message.author.id}: {message.clean_content}")
-		await unknown_error(message, messageRequest.authorId)
-	return (sentMessages, len(sentMessages))
-
-async def price(message, messageRequest, requestSlice):
-	sentMessages = []
-	try:
-		await deprecation_message(message, "p")
-
-		arguments = requestSlice.split(" ")
-
-		async with message.channel.typing():
-			outputMessage, request = await Processor.process_quote_arguments(messageRequest, arguments[1:], tickerId=arguments[0].upper())
-
-			if outputMessage is not None:
-				if not messageRequest.is_muted() and outputMessage != "":
-					embed = Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/prices).", color=constants.colors["gray"])
-					embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
-					sentMessages.append(await message.channel.send(embed=embed))
-				return (sentMessages, len(sentMessages))
-
-			currentRequest = request.get(request.get("currentPlatform"))
-			payload, quoteText = await Processor.process_task("quote", messageRequest.authorId, request)
-
-			if payload is None or "quotePrice" not in payload:
-				errorMessage = "Requested price for `{}` is not available.".format(currentRequest.get("ticker").get("name")) if quoteText is None else quoteText
-				embed = Embed(title=errorMessage, color=constants.colors["gray"])
-				embed.set_author(name="Data not available", icon_url=static_storage.icon_bw)
-				quoteMessage = await message.channel.send(embed=embed)
-				sentMessages.append(quoteMessage)
-			else:
-				currentRequest = request.get(payload.get("platform"))
-				if payload.get("platform") in ["Alternative.me"]:
-					embed = Embed(title="{} *({})*".format(payload["quotePrice"], payload["change"]), description=payload.get("quoteConvertedPrice", discord.embeds.EmptyEmbed), color=constants.colors[payload["messageColor"]])
-					embed.set_author(name=payload["title"], icon_url=payload.get("thumbnailUrl"))
-					embed.set_footer(text=payload["sourceText"])
-					sentMessages.append(await message.channel.send(embed=embed))
-				else:
-					embed = Embed(title="{}{}".format(payload["quotePrice"], " *({})*".format(payload["change"]) if "change" in payload else ""), description=payload.get("quoteConvertedPrice", discord.embeds.EmptyEmbed), color=constants.colors[payload["messageColor"]])
-					embed.set_author(name=payload["title"], icon_url=payload.get("thumbnailUrl"))
-					embed.set_footer(text=payload["sourceText"])
-					sentMessages.append(await message.channel.send(embed=embed))
 
 	except CancelledError: pass
 	except Exception:
