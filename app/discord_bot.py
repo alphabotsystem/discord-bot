@@ -320,38 +320,10 @@ async def on_message(message):
 		if messageRequest.guildId != -1:
 			if isCommand:
 				if not hasPermissions:
-					p1 = _availablePermissions.embed_links
-					p2 = _availablePermissions.attach_files
-					p3 = _availablePermissions.add_reactions
-					p4 = _availablePermissions.use_external_emojis
-					p5 = _availablePermissions.manage_messages
-					errorText = "Alpha Bot is missing one or more critical permissions for traditional commands."
-					permissionsText = "Use slash commands or fix the permissions below:\nembed links: {}\nattach files: {}\nadd reactions: {}\nuse external emojis: {}\nmanage Messages: {}".format(":white_check_mark:" if p1 else ":x:", ":white_check_mark:" if p2 else ":x:", ":white_check_mark:" if p3 else ":x:", ":white_check_mark:" if p4 else ":x:", ":white_check_mark:" if p5 else ":x:")
-					embed = Embed(title=errorText, description=permissionsText, color=0x000000)
-					embed.set_image(url="https://firebasestorage.googleapis.com/v0/b/nlc-bot-36685.appspot.com/o/alpha%2Fassets%2Fdiscord%2Fslash-commands.gif?alt=media&token=32e05ba1-9b06-47b1-a037-d37036b382a6")
-					embed.add_field(name="Alpha Discord guild", value="[Join now](https://discord.gg/GQeDE85)", inline=False)
-					try:
-						await message.channel.send(embed=embed)
-					except:
-						try: await message.channel.send(content="{}\n{}".format(errorText, permissionsText))
-						except: pass
+					await deprecation_message(message, "c", True)
 					return
-				elif len(alphaSettings["tosWatchlist"]["nicknames"]["blacklist"]) != 0 and message.guild.name in alphaSettings["tosWatchlist"]["nicknames"]["blacklist"]:
-					embed = Embed(title="This Discord community guild was flagged for rebranding Alpha and is therefore violating the Terms of Service. Inability to comply will result in termination of all Alpha branded services.", color=0x000000)
-					embed.add_field(name="Terms of service", value="[Read now](https://www.alphabotsystem.com/terms-of-service)", inline=True)
-					embed.add_field(name="Alpha Discord guild", value="[Join now](https://discord.gg/GQeDE85)", inline=True)
-					await message.channel.send(embed=embed)
 				elif not messageRequest.guildProperties["settings"]["setup"]["completed"]:
-					forceFetch = await database.document("discord/properties/guilds/{}".format(messageRequest.guildId)).get()
-					forcedFetch = MessageRequest.create_guild_settings(forceFetch.to_dict())
-					if forcedFetch["settings"]["setup"]["completed"]:
-						messageRequest.guildProperties = forcedFetch
-					elif not message.author.bot and message.channel.permissions_for(message.author).administrator:
-						embed = Embed(title="Hello world!", description="Thanks for adding Alpha Bot to your Discord community, we're thrilled to have you onboard. We think you're going to love everything Alpha Bot can do. Before you start using it, you must complete a short setup process. Sign into your [Alpha Account](https://www.alphabotsystem.com/communities) and visit your [Communities Dashboard](https://www.alphabotsystem.com/communities) to begin.", color=constants.colors["pink"])
-						await message.channel.send(embed=embed)
-					else:
-						embed = Embed(title="Hello world!", description="This is Alpha Bot, the most advanced financial bot on Discord. A short setup process hasn't been completed in this Discord community yet. Ask administrators to complete it by signing into their [Alpha Account](https://www.alphabotsystem.com/communities) and visiting their [Communities Dashboard](https://www.alphabotsystem.com/communities).", color=constants.colors["pink"])
-						await message.channel.send(embed=embed)
+					await deprecation_message(message, "c", True)
 					return
 
 		if isCommand:
