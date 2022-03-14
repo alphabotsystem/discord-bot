@@ -64,6 +64,7 @@ intents.guilds = True
 intents.integrations = True
 intents.webhooks = True
 
+discord.http.API_VERSION = 9 # TEMP
 bot = AutoShardedBot(intents=intents, chunk_guilds_at_startup=False, status=Status.idle, activity=Activity(type=ActivityType.playing, name="a reboot, brb!"))
 
 
@@ -326,44 +327,43 @@ async def on_message(message):
 					await deprecation_message(message, "c", True)
 					return
 
-		if isCommand:
-			if messageRequest.content.startswith("c "):
-				await deprecation_message(message, "c")
+		if messageRequest.content.startswith("c "):
+			await deprecation_message(message, "c")
 
-				requestSlices = split(", c | c |, ", messageRequest.content.split(" ", 1)[1])
-				totalWeight = len(requestSlices)
-				if totalWeight > messageRequest.get_limit() / 2:
-					await hold_up(message, messageRequest)
-					return
-				for requestSlice in requestSlices:
-					rateLimited[messageRequest.authorId] = rateLimited.get(messageRequest.authorId, 0) + 2
+			requestSlices = split(", c | c |, ", messageRequest.content.split(" ", 1)[1])
+			totalWeight = len(requestSlices)
+			if totalWeight > messageRequest.get_limit() / 2:
+				await hold_up(message, messageRequest)
+				return
+			for requestSlice in requestSlices:
+				rateLimited[messageRequest.authorId] = rateLimited.get(messageRequest.authorId, 0) + 2
 
-					if rateLimited[messageRequest.authorId] >= messageRequest.get_limit():
-						await message.channel.send(content="<@!{}>".format(messageRequest.authorId), embed=Embed(title="You reached your limit of requests per minute. You can try again in a bit.", color=constants.colors["gray"]))
-						rateLimited[messageRequest.authorId] = messageRequest.get_limit()
-						totalWeight = messageRequest.get_limit()
-						break
-					else:
-						chartMessages, weight = await chart(message, messageRequest, requestSlice)
-						sentMessages += chartMessages
-						totalWeight += weight - 1
+				if rateLimited[messageRequest.authorId] >= messageRequest.get_limit():
+					await message.channel.send(content="<@!{}>".format(messageRequest.authorId), embed=Embed(title="You reached your limit of requests per minute. You can try again in a bit.", color=constants.colors["gray"]))
+					rateLimited[messageRequest.authorId] = messageRequest.get_limit()
+					totalWeight = messageRequest.get_limit()
+					break
+				else:
+					chartMessages, weight = await chart(message, messageRequest, requestSlice)
+					sentMessages += chartMessages
+					totalWeight += weight - 1
 
-						rateLimited[messageRequest.authorId] = rateLimited.get(messageRequest.authorId, 0) + weight - 2
+					rateLimited[messageRequest.authorId] = rateLimited.get(messageRequest.authorId, 0) + weight - 2
 
-				await database.document("discord/statistics").set({_snapshot: {"c": Increment(totalWeight)}}, merge=True)
-				await finish_request(message, messageRequest, totalWeight, sentMessages)
+			await database.document("discord/statistics").set({_snapshot: {"c": Increment(totalWeight)}}, merge=True)
+			await finish_request(message, messageRequest, totalWeight, sentMessages)
 
-			elif messageRequest.content.startswith("x "):
-				requestSlice = messageRequest.content.split(" ", 1)[1]
-				forceDelete = False
-				if messageRequest.content.startswith(("x ichibot", "x ichi", "x login")):
-					await deprecation_message(message, "ichibot login", isGone=True)
-				elif messageRequest.guildId == -1 or messageRequest.marketBias == "crypto" or len(messageRequest.accountProperties.get("apiKeys", {}).keys()) != 0:
-					await process_ichibot_command(message, messageRequest, requestSlice)
-					forceDelete = True
+		elif messageRequest.content.startswith("x "):
+			requestSlice = messageRequest.content.split(" ", 1)[1]
+			forceDelete = False
+			if messageRequest.content.startswith(("x ichibot", "x ichi", "x login")):
+				await deprecation_message(message, "ichibot login", isGone=True)
+			elif messageRequest.guildId == -1 or messageRequest.marketBias == "crypto" or len(messageRequest.accountProperties.get("apiKeys", {}).keys()) != 0:
+				await process_ichibot_command(message, messageRequest, requestSlice)
+				forceDelete = True
 
-				await database.document("discord/statistics").set({_snapshot: {"x": Increment(1)}}, merge=True)
-				await finish_request(message, messageRequest, 0, [], force=forceDelete)
+			await database.document("discord/statistics").set({_snapshot: {"x": Increment(1)}}, merge=True)
+			await finish_request(message, messageRequest, 0, [], force=forceDelete)
 
 	except CancelledError: pass
 	except Exception:
