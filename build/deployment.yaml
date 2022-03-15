@@ -25,8 +25,8 @@ spec:
             readOnly: true
         resources:
           requests:
-            memory: "950Mi"
-            cpu: "500m"
+            memory: "1200Mi"
+            cpu: "300m"
             ephemeral-storage: "5000Ki"
         env:
           - name: PRODUCTION_MODE
