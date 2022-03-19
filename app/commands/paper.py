@@ -102,6 +102,11 @@ class PaperCommand(BaseCommand):
 			if request is None: return
 
 			if request.is_registered():
+				if level is not None:
+					embed = Embed(title="Limit orders are temporarily unavailable.", color=constants.colors["gray"])
+					await ctx.interaction.edit_original_message(embed=embed)
+					return
+
 				arguments = [assetType]
 				outputMessage, task = await Processor.process_quote_arguments(request, arguments, tickerId=tickerId.upper(), isPaperTrade=True, excluded=["CoinGecko", "Serum", "LLD"])
 				if outputMessage is not None:

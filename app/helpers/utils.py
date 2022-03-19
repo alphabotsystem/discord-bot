@@ -10,10 +10,7 @@ class Utils(object):
 
 	@staticmethod
 	def shortcuts(raw):
-		if raw in ["hmap"]: raw = "hmap change"
-		elif raw in ["flow"]: raw = "flow options"
-		elif raw in ["c gindex", "c gi", "c findex", "c fi", "c fgindex", "c fgi", "c gfindex", "c gfi"]: raw = "c fgi am"
-
+		if raw in ["c gindex", "c gi", "c findex", "c fi", "c fgindex", "c fgi", "c gfindex", "c gfi"]: raw = "c fgi am"
 		return raw
 
 	@staticmethod
