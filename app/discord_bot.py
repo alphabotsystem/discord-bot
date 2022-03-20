@@ -565,7 +565,7 @@ async def deprecation_message(ctx, command, isGone=False):
 		try: await ctx.channel.send(embed=embed)
 		except: return
 	else:
-		embed = Embed(title=f"Alpha is transitioning to slash commands as is required by upcoming Discord changes. Use `/{command}` to avoid this warning. Old syntax will no longer work after depreciation <t:1649894400:R>.", color=constants.colors["red"])
+		embed = Embed(title=f"Alpha is transitioning to slash commands as is required by upcoming Discord changes. Use `/{command}` to avoid this warning. Old syntax will no longer work after deprecation <t:1649894400:R>.", color=constants.colors["red"])
 		# embed.set_image(url="https://firebasestorage.googleapis.com/v0/b/nlc-bot-36685.appspot.com/o/alpha%2Fassets%2Fdiscord%2Fslash-commands.gif?alt=media&token=32e05ba1-9b06-47b1-a037-d37036b382a6")
 		try: await ctx.channel.send(embed=embed)
 		except: return
