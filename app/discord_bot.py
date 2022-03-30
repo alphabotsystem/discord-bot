@@ -27,7 +27,7 @@ from TickerParser import TickerParser
 from Processor import Processor
 from DatabaseConnector import DatabaseConnector
 
-from MessageRequest import MessageRequest
+from CommandRequest import CommandRequest
 
 from commands.assistant import AlphaCommand
 from commands.alerts import AlertCommand
@@ -79,7 +79,7 @@ async def on_guild_join(guild):
 			await guild.leave()
 			return
 		properties = await guild_secure_fetch(guild.id)
-		properties = MessageRequest.create_guild_settings(properties)
+		properties = CommandRequest.create_guild_settings(properties)
 		await database.document("discord/properties/guilds/{}".format(guild.id)).set(properties)
 		await update_guild_count()
 	except Exception:
@@ -249,7 +249,7 @@ async def database_sanity_check():
 			if guildId not in guilds:
 				properties = await guild_secure_fetch(guildId)
 				if not properties:
-					await database.document("discord/properties/guilds/{}".format(guildId)).set(MessageRequest.create_guild_settings({}))
+					await database.document("discord/properties/guilds/{}".format(guildId)).set(CommandRequest.create_guild_settings({}))
 
 	except Exception:
 		print(format_exc())
@@ -281,89 +281,55 @@ async def on_message(message):
 		_accountId = None
 		_guildId = message.guild.id if message.guild is not None else -1
 		_channelId = message.channel.id if message.channel is not None else -1
-		if _authorId == 361916376069439490:
-			if " --user " in _messageContent:
-				_messageContent, _authorId = _messageContent.split(" --user ")[0], int(_messageContent.split(" --user ")[1])
-			if " --guild " in _messageContent:
-				_messageContent, _guildId = _messageContent.split(" --guild ")[0], int(_messageContent.split(" --guild ")[1])
 
-		# Ignore if user if locked in a prompt, or banned
+		# Ignore if user or server is banned
 		if _authorId in constants.blockedUsers or _guildId in constants.blockedGuilds: return
 
 		_accountProperties = {}
 		_guildProperties = await guildProperties.get(_guildId, {})
-		if not message.author.bot:
-			if message.webhook_id is None: _accountId = await accountProperties.match(_authorId)
-			if _accountId is None:
-				_accountProperties = await accountProperties.get(str(_authorId), {})
-			else:
-				_accountProperties = await accountProperties.get(_accountId, {})
 
-		messageRequest = MessageRequest(
+		commandRequest = CommandRequest(
 			raw=_rawMessage,
 			content=_messageContent,
 			accountId=_accountId,
 			authorId=_authorId,
 			channelId=_channelId,
 			guildId=_guildId,
-			accountProperties=_accountProperties,
 			guildProperties=_guildProperties
 		)
 		_snapshot = "{}-{:02d}".format(message.created_at.year, message.created_at.month)
-		sentMessages = []
 
-		_availablePermissions = None if messageRequest.guildId == -1 else message.channel.permissions_for(message.guild.me)
-		hasPermissions = True if messageRequest.guildId == -1 else (_availablePermissions.send_messages and _availablePermissions.embed_links and _availablePermissions.attach_files and _availablePermissions.add_reactions and _availablePermissions.use_external_emojis and _availablePermissions.manage_messages)
-
-		messageRequest.content = Utils.shortcuts(messageRequest.content)
-		isCommand = messageRequest.content.startswith(tuple(constants.commandWakephrases))
-
-		if messageRequest.guildId != -1:
-			if isCommand:
+		if commandRequest.content.startswith("c "):
+			if commandRequest.guildId != -1:
+				_availablePermissions = None if commandRequest.guildId == -1 else message.channel.permissions_for(message.guild.me)
+				hasPermissions = True if commandRequest.guildId == -1 else (_availablePermissions.send_messages and _availablePermissions.embed_links and _availablePermissions.attach_files and _availablePermissions.add_reactions and _availablePermissions.use_external_emojis and _availablePermissions.manage_messages)
 				if not hasPermissions:
 					await deprecation_message(message, "c", True)
 					return
-				elif not messageRequest.guildProperties["settings"]["setup"]["completed"]:
+				elif not commandRequest.guildProperties["settings"]["setup"]["completed"]:
 					await deprecation_message(message, "c", True)
 					return
 
-		if messageRequest.content.startswith("c "):
 			await deprecation_message(message, "c")
 
-			requestSlices = split(", c | c |, ", messageRequest.content.split(" ", 1)[1])
-			totalWeight = len(requestSlices)
-			if totalWeight > messageRequest.get_limit() / 2:
-				await hold_up(message, messageRequest)
+			requestSlices = split(", c | c |, ", commandRequest.content.split(" ", 1)[1])
+			if len(requestSlices) > 1:
+				embed = Embed(title="Chained requests are only supported by slash commands.", color=constants.colors["gray"])
+				embed.set_image(url="https://firebasestorage.googleapis.com/v0/b/nlc-bot-36685.appspot.com/o/alpha%2Fassets%2Fdiscord%2Fslash-commands.gif?alt=media&token=32e05ba1-9b06-47b1-a037-d37036b382a6")
+				await task.channel.send(embed=embed)
 				return
 			for requestSlice in requestSlices:
-				rateLimited[messageRequest.authorId] = rateLimited.get(messageRequest.authorId, 0) + 2
+				await chart(message, commandRequest, requestSlice)
 
-				if rateLimited[messageRequest.authorId] >= messageRequest.get_limit():
-					await message.channel.send(content="<@!{}>".format(messageRequest.authorId), embed=Embed(title="You reached your limit of requests per minute. You can try again in a bit.", color=constants.colors["gray"]))
-					rateLimited[messageRequest.authorId] = messageRequest.get_limit()
-					totalWeight = messageRequest.get_limit()
-					break
-				else:
-					chartMessages, weight = await chart(message, messageRequest, requestSlice)
-					sentMessages += chartMessages
-					totalWeight += weight - 1
+			await database.document("discord/statistics").set({_snapshot: {"c": Increment(1)}}, merge=True)
 
-					rateLimited[messageRequest.authorId] = rateLimited.get(messageRequest.authorId, 0) + weight - 2
-
-			await database.document("discord/statistics").set({_snapshot: {"c": Increment(totalWeight)}}, merge=True)
-			await finish_request(message, messageRequest, totalWeight, sentMessages)
-
-		elif messageRequest.content.startswith("x "):
-			requestSlice = messageRequest.content.split(" ", 1)[1]
-			forceDelete = False
-			if messageRequest.content.startswith(("x ichibot", "x ichi", "x login")):
+		elif commandRequest.content.startswith("x "):
+			if commandRequest.content.startswith(("x ichibot", "x ichi", "x login")):
 				await deprecation_message(message, "ichibot login", isGone=True)
-			elif messageRequest.guildId == -1 or messageRequest.marketBias == "crypto" or len(messageRequest.accountProperties.get("apiKeys", {}).keys()) != 0:
-				await process_ichibot_command(message, messageRequest, requestSlice)
-				forceDelete = True
-
-			await database.document("discord/statistics").set({_snapshot: {"x": Increment(1)}}, merge=True)
-			await finish_request(message, messageRequest, 0, [], force=forceDelete)
+				return
+			elif commandRequest.guildId == -1:
+				await process_ichibot_command(message, commandRequest, commandRequest.content.split(" ", 1)[1])
+				await database.document("discord/statistics").set({_snapshot: {"x": Increment(1)}}, merge=True)
 
 	except CancelledError: pass
 	except Exception:
@@ -372,34 +338,19 @@ async def on_message(message):
 
 
 # -------------------------
-# Message actions
-# -------------------------
-
-async def finish_request(message, messageRequest, weight, sentMessages, force=False):
-	await sleep(60)
-	if weight != 0 and messageRequest.authorId in rateLimited:
-		rateLimited[messageRequest.authorId] -= weight
-		if rateLimited[messageRequest.authorId] < 1: rateLimited.pop(messageRequest.authorId, None)
-
-	if (len(sentMessages) != 0 and messageRequest.autodelete) or force:
-		try: await message.delete()
-		except: pass
-
-
-# -------------------------
 # Legacy
 # -------------------------
 
-async def chart(message, messageRequest, requestSlice):
+async def chart(message, commandRequest, requestSlice):
 	sentMessages = []
 	try:
 		arguments = requestSlice.split(" ")
 
 		async with message.channel.typing():
-			outputMessage, request = await Processor.process_chart_arguments(messageRequest, arguments[1:], tickerId=arguments[0].upper())
+			outputMessage, request = await Processor.process_chart_arguments(commandRequest, arguments[1:], tickerId=arguments[0].upper())
 
 			if outputMessage is not None:
-				if not messageRequest.is_muted() and outputMessage != "":
+				if outputMessage != "":
 					embed = Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/charting).", color=constants.colors["gray"])
 					embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
 					sentMessages.append(await message.channel.send(embed=embed))
@@ -409,7 +360,7 @@ async def chart(message, messageRequest, requestSlice):
 			timeframes = request.pop("timeframes")
 			for i in range(request.get("requestCount")):
 				for p, t in timeframes.items(): request[p]["currentTimeframe"] = t[i]
-				payload, chartText = await Processor.process_task("chart", messageRequest.authorId, request)
+				payload, chartText = await Processor.process_task("chart", commandRequest.authorId, request)
 
 				if payload is None:
 					errorMessage = "Requested chart for `{}` is not available.".format(currentRequest.get("ticker").get("name")) if chartText is None else chartText
@@ -418,20 +369,20 @@ async def chart(message, messageRequest, requestSlice):
 					sentMessages.append(await message.channel.send(embed=embed))
 				else:
 					currentRequest = request.get(payload.get("platform"))
-					sentMessages.append(await message.channel.send(content=chartText, file=discord.File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, messageRequest.authorId, randint(1000, 9999)))))
+					sentMessages.append(await message.channel.send(content=chartText, file=discord.File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, commandRequest.authorId, randint(1000, 9999)))))
 
 	except CancelledError: pass
 	except Exception:
 		print(format_exc())
 		if environ["PRODUCTION_MODE"]: logging.report_exception(user=f"{message.author.id}: {message.clean_content}")
-		await unknown_error(message, messageRequest.authorId)
+		await unknown_error(message, commandRequest.authorId)
 	return (sentMessages, len(sentMessages))
 
 # -------------------------
 # Ichibot
 # -------------------------
 
-async def process_ichibot_command(message, messageRequest, requestSlice):
+async def process_ichibot_command(message, commandRequest, requestSlice):
 	sentMessages = []
 	try:
 		if requestSlice == "login":
@@ -439,12 +390,12 @@ async def process_ichibot_command(message, messageRequest, requestSlice):
 			embed.set_author(name="Ichibot", icon_url=static_storage.ichibot)
 			await message.channel.send(embed=embed)
 		
-		elif messageRequest.is_registered():
-			origin = "{}_{}_ichibot".format(messageRequest.accountId, messageRequest.authorId)
+		elif commandRequest.is_registered():
+			origin = "{}_{}_ichibot".format(commandRequest.accountId, commandRequest.authorId)
 
 			if origin in Ichibot.sockets:
 				socket = Ichibot.sockets.get(origin)
-				await socket.send_multipart([messageRequest.accountId.encode(), b"", messageRequest.raw.split(" ", 1)[1].encode()])
+				await socket.send_multipart([commandRequest.accountId.encode(), b"", commandRequest.raw.split(" ", 1)[1].encode()])
 				try: await message.add_reaction("✅")
 				except: pass
 
@@ -467,7 +418,7 @@ async def process_ichibot_command(message, messageRequest, requestSlice):
 	except Exception:
 		print(format_exc())
 		if environ["PRODUCTION_MODE"]: logging.report_exception(user=f"{message.author.id}: {message.clean_content}")
-		await unknown_error(message, messageRequest.authorId)
+		await unknown_error(message, commandRequest.authorId)
 	return (sentMessages, len(sentMessages))
 
 
@@ -495,7 +446,7 @@ async def create_request(ctx, autodelete=-1):
 		else:
 			_accountProperties = await accountProperties.get(_accountId, {})
 
-	request = MessageRequest(
+	request = CommandRequest(
 		accountId=_accountId,
 		authorId=_authorId,
 		channelId=_channelId,
@@ -514,7 +465,7 @@ async def create_request(ctx, autodelete=-1):
 			return None
 		elif not request.guildProperties["settings"]["setup"]["completed"]:
 			forceFetch = await database.document("discord/properties/guilds/{}".format(request.guildId)).get()
-			forcedFetch = MessageRequest.create_guild_settings(forceFetch.to_dict())
+			forcedFetch = CommandRequest.create_guild_settings(forceFetch.to_dict())
 			if forcedFetch["settings"]["setup"]["completed"]:
 				request.guildProperties = forcedFetch
 				return request
@@ -570,11 +521,6 @@ async def deprecation_message(ctx, command, isGone=False):
 		try: await ctx.channel.send(embed=embed)
 		except: return
 
-async def hold_up(task, request):
-	embed = Embed(title="Only up to {:d} requests are allowed per command.".format(int(request.get_limit() / 2)), color=constants.colors["gray"])
-	embed.set_author(name="Too many requests", icon_url=static_storage.icon_bw)
-	await task.channel.send(embed=embed)
-
 
 # -------------------------
 # Job queue
@@ -611,8 +557,6 @@ accountProperties = DatabaseConnector(mode="account")
 guildProperties = DatabaseConnector(mode="guild")
 Processor.clientId = b"discord_alpha"
 Ichibot.logging = logging
-
-rateLimited = {}
 
 discordSettingsLink = snapshots.document("discord/settings").on_snapshot(update_alpha_settings)
 discordMessagesLink = snapshots.collection("discord/properties/messages").on_snapshot(process_alpha_messages)

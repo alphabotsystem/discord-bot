@@ -9,11 +9,6 @@ class Utils(object):
 		return digits if wholePart == "0" else max(digits - len(wholePart), 0)
 
 	@staticmethod
-	def shortcuts(raw):
-		if raw in ["c gindex", "c gi", "c findex", "c fi", "c fgindex", "c fgi", "c gfindex", "c gfi"]: raw = "c fgi am"
-		return raw
-
-	@staticmethod
 	def seconds_until_cycle():
 		return (time() + 60) // 60 * 60 - time()
 
