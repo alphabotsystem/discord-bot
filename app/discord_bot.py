@@ -314,9 +314,9 @@ async def on_message(message):
 
 			requestSlices = split(", c | c |, ", commandRequest.content.split(" ", 1)[1])
 			if len(requestSlices) > 1:
-				embed = Embed(title="Chained requests are only supported by slash commands.", color=constants.colors["gray"])
+				embed = Embed(title="Chained requests are no longer supported by traditional commands due to imminent deprecation. Use slash commands instead.", color=constants.colors["gray"])
 				embed.set_image(url="https://firebasestorage.googleapis.com/v0/b/nlc-bot-36685.appspot.com/o/alpha%2Fassets%2Fdiscord%2Fslash-commands.gif?alt=media&token=32e05ba1-9b06-47b1-a037-d37036b382a6")
-				await task.channel.send(embed=embed)
+				await message.channel.send(embed=embed)
 				return
 			for requestSlice in requestSlices:
 				await chart(message, commandRequest, requestSlice)
