@@ -292,7 +292,6 @@ async def on_message(message):
 		commandRequest = CommandRequest(
 			raw=_rawMessage,
 			content=_messageContent,
-			accountId=_accountId,
 			authorId=_authorId,
 			channelId=_channelId,
 			guildId=_guildId,
@@ -329,6 +328,14 @@ async def on_message(message):
 				await deprecation_message(message, "ichibot login", isGone=True)
 				return
 			elif commandRequest.guildId == -1:
+				_accountId = await accountProperties.match(_authorId)
+				if _accountId is None:
+					_accountProperties = await accountProperties.get(str(_authorId), {})
+				else:
+					_accountProperties = await accountProperties.get(_accountId, {})
+				commandRequest.accountId = _accountId
+				commandRequest.accountProperties = _accountProperties
+
 				await process_ichibot_command(message, commandRequest, commandRequest.content.split(" ", 1)[1])
 				await database.document("discord/statistics").set({_snapshot: {"x": Increment(1)}}, merge=True)
 
