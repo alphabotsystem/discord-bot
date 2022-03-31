@@ -62,12 +62,12 @@ class FlowCommand(BaseCommand):
 			await ctx.interaction.edit_original_message(embed=embed)
 
 	async def flow_proxy(self, ctx, tickerId, autodelete):
+		request = await self.create_request(ctx, autodelete=autodelete)
+		if request is None: return
+
 		embed = Embed(title="Flow command is being updated, and is currently unavailable.", description="An updated flow command is coming after slash commands are stable, which is the priority. All Alpha Pro subscribers using Alpha Flow during August and September 2021 will receive reimbursment in form of credit, or a refund if requested. No charges were made since then. All trials will also be reset.", color=constants.colors["gray"])
 		await ctx.interaction.edit_original_message(embed=embed)
 		return
-
-		request = await self.create_request(ctx, autodelete=autodelete)
-		if request is None: return
 
 		arguments = []
 		outputMessage, task = await Processor.process_chart_arguments(request, arguments, tickerId=tickerId, platformQueue=["Alpha Flow"])
