@@ -107,7 +107,7 @@ class FlowCommand(BaseCommand):
 		autodelete: Option(float, "Bot response self destruct timer in minutes.", name="autodelete", required=False, default=None)
 	):
 		try:
-			await self.flow_proxy(ctx, tickerId.upper(), autodelte)
+			await self.flow_proxy(ctx, tickerId.upper(), autodelete)
 
 		except CancelledError: pass
 		except Exception:
