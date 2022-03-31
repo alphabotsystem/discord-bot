@@ -61,7 +61,7 @@ class FlowCommand(BaseCommand):
 			embed.set_image(url="https://www.alphabotsystem.com/files/uploads/pro-hero.jpg")
 			await ctx.interaction.edit_original_message(embed=embed)
 
-	async def flow_proxy(self, ctx, tickerId, autodelte):
+	async def flow_proxy(self, ctx, tickerId, autodelete):
 		embed = Embed(title="Flow command is being updated, and is currently unavailable.", description="An updated flow command is coming after slash commands are stable, which is the priority. All Alpha Pro subscribers using Alpha Flow during August and September 2021 will receive reimbursment in form of credit, or a refund if requested. No charges were made since then. All trials will also be reset.", color=constants.colors["gray"])
 		await ctx.interaction.edit_original_message(embed=embed)
 		return
@@ -91,12 +91,12 @@ class FlowCommand(BaseCommand):
 		autodelete: Option(float, "Bot response self destruct timer in minutes.", name="autodelete", required=False, default=None)
 	):
 		try:
-			await self.flow_proxy(ctx, "options", autodelte)
+			await self.flow_proxy(ctx, "options", autodelete)
 
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /flow overview autodelete:{}".format(ctx.author.id, tickerId, autodelete))
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /flow overview autodelete:{}".format(ctx.author.id, autodelete))
 			await self.unknown_error(ctx)
 
 	@flowGroup.command(name="search", description="Pull aggregated orderflow of a single stock.")
