@@ -192,7 +192,7 @@ class PaperCommand(BaseCommand):
 						valueText = "No conversion"
 
 						balanceText = "{:,.4f} {}".format(holding, asset)
-						payload, quoteText = await Processor.process_conversion(request, asset, "USD", holding)
+						payload, quoteText = await Processor.process_conversion(request, asset, "USD", holding, [platform])
 						convertedValue = payload["raw"]["quotePrice"][0] if payload is not None else 0
 						valueText = "≈ {:,.4f} {}".format(convertedValue, "USD") if payload is not None else "Unavailable"
 						totalValue += convertedValue
@@ -216,8 +216,8 @@ class PaperCommand(BaseCommand):
 					if order["orderType"] in ["buy", "sell"]:
 						currentPlatform = order["request"].get("currentPlatform")
 						task = order["request"].get(currentPlatform)
-						ticker = task.get("ticker")
-						payload, quoteText = await Processor.process_conversion(request, ticker.get("quote") if order["orderType"] == "buy" else ticker.get("base"), "USD", order["amount"] * (order["price"] if order["orderType"] == "buy" else 1), platforms=["CoinGecko", "LLD"])
+						ticker = task.get("ticker").get("quote") if order["orderType"] == "buy" else task.get("ticker").get("base")
+						payload, quoteText = await Processor.process_conversion(request, ticker, "USD", order["amount"] * (order["price"] if order["orderType"] == "buy" else 1), [currentPlatform])
 						openOrdersValue += payload["raw"]["quotePrice"][0] if quoteText is None else 0
 						holdingAssets.add(currentPlatform + "_" + ticker.get("base"))
 
@@ -349,7 +349,7 @@ class PaperCommand(BaseCommand):
 					if platform == "USD": continue
 					for asset, holding in balances.items():
 						if holding == 0: continue
-						payload, quoteText = await Processor.process_conversion(request, asset, "USD", holding, platforms=["CCXT", "IEXC"])
+						payload, quoteText = await Processor.process_conversion(request, asset, "USD", holding, [platform])
 						totalValue += payload["raw"]["quotePrice"][0] if quoteText is None else 0
 
 				paperOrders = await self.database.collection("details/openPaperOrders/{}".format(account.id)).get()
@@ -358,8 +358,8 @@ class PaperCommand(BaseCommand):
 					if order["orderType"] in ["buy", "sell"]:
 						currentPlatform = order["request"].get("currentPlatform")
 						task = order["request"].get(currentPlatform)
-						ticker = task.get("ticker")
-						payload, quoteText = await Processor.process_conversion(request, ticker.get("quote") if order["orderType"] == "buy" else ticker.get("base"), "USD", order["amount"] * (order["price"] if order["orderType"] == "buy" else 1), platforms=["CCXT", "IEXC"])
+						ticker = task.get("ticker").get("quote") if order["orderType"] == "buy" else task.get("ticker").get("base")
+						payload, quoteText = await Processor.process_conversion(request, ticker, "USD", order["amount"] * (order["price"] if order["orderType"] == "buy" else 1), [currentPlatform])
 						totalValue += payload["raw"]["quotePrice"][0] if quoteText is None else 0
 
 				topBalances.append((totalValue, properties["paperTrader"]["globalLastReset"], properties["oauth"]["discord"]["userId"]))
