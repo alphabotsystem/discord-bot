@@ -36,33 +36,6 @@ class DepthCommand(BaseCommand):
 
 		await self.database.document("discord/statistics").set({request.snapshot: {"d": Increment(1)}}, merge=True)
 
-	@slash_command(name="d", description="Pull orderbook visualization snapshots of stocks and cryptocurrencies. Command for power users.")
-	async def d(
-		self,
-		ctx,
-		arguments: Option(str, "Request arguments starting with ticker id.", name="arguments")
-	):
-		try:
-			request = await self.create_request(ctx)
-			if request is None: return
-
-			arguments = arguments.lower().split()
-			outputMessage, task = await Processor.process_quote_arguments(request, arguments[1:], tickerId=arguments[0].upper(), excluded=["CoinGecko", "LLD"])
-
-			if outputMessage is not None:
-				embed = Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/orderbook-visualizations).", color=constants.colors["gray"])
-				embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
-				await ctx.interaction.edit_original_message(embed=embed)
-				return
-
-			await self.respond(ctx, request, task)
-
-		except CancelledError: pass
-		except Exception:
-			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /d {}".format(ctx.author.id, " ".join(arguments)))
-			await self.unknown_error(ctx)
-
 	@slash_command(name="depth", description="Pull orderbook visualization snapshots of stocks and cryptocurrencies.")
 	async def depth(
 		self,
@@ -75,8 +48,12 @@ class DepthCommand(BaseCommand):
 			request = await self.create_request(ctx)
 			if request is None: return
 
+			defaultPlatforms = request.get_platform_order_for("d", assetType=assetType)
+			preferredPlatforms = BaseCommand.sources["d"].get(assetType)
+			platforms = [e for e in defaultPlatforms if preferredPlatforms is None or e in preferredPlatforms]
+
 			arguments = [venue]
-			outputMessage, task = await Processor.process_quote_arguments(request, arguments, tickerId=tickerId.upper())
+			outputMessage, task = await Processor.process_quote_arguments(request, arguments, platforms, tickerId=tickerId.upper())
 
 			if outputMessage is not None:
 				embed = Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/orderbook-visualizations).", color=constants.colors["gray"])

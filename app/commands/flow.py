@@ -70,7 +70,7 @@ class FlowCommand(BaseCommand):
 		return
 
 		arguments = []
-		outputMessage, task = await Processor.process_chart_arguments(request, arguments, tickerId=tickerId, platformQueue=["Alpha Flow"])
+		outputMessage, task = await Processor.process_chart_arguments(request, arguments, ["Alpha Flow"], tickerId=tickerId)
 
 		if outputMessage is not None:
 			embed = discord.Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/pro/flow).", color=constants.colors["gray"])
@@ -100,7 +100,7 @@ class FlowCommand(BaseCommand):
 			await self.unknown_error(ctx)
 
 	@flowGroup.command(name="search", description="Pull aggregated orderflow of a single stock.")
-	async def flow_(
+	async def flow_search(
 		self,
 		ctx,
 		tickerId: Option(str, "Ticker id of an asset.", name="ticker"),

@@ -1,5 +1,5 @@
 from os import environ
-from asyncio import CancelledError
+from asyncio import CancelledError, sleep
 from traceback import format_exc
 
 from discord import Embed, ButtonStyle, Interaction
@@ -40,11 +40,11 @@ class CopeVoteCommand(BaseCommand):
 				await ctx.interaction.edit_original_message(embed=embed)
 
 			else:
-				if votePeriod > 60 or votePeriod < 1:
-					ctx.interaction.edit_original_message(embed=Embed(title="Vote can only be held anywhere from a minute up to an hour.", color=constants.colors["gray"]))
+				if votePeriod > 15 or votePeriod < 1:
+					ctx.interaction.edit_original_message(embed=Embed(title="Vote can only be held anywhere from a minute up to 15 minutes.", color=constants.colors["gray"]))
 					return
 
-				outputMessage, task = await Processor.process_quote_arguments(request, ["ftx"], tickerId=tickerId.upper(), platformQueue=["Ichibot"])
+				outputMessage, task = await Processor.process_quote_arguments(request, ["ftx"], ["Ichibot"], tickerId=tickerId.upper())
 
 				if outputMessage is not None:
 					embed = Embed(title=outputMessage, description="If the issue persists, please contact support.", color=constants.colors["gray"])
@@ -68,7 +68,7 @@ class CopeVoteCommand(BaseCommand):
 				else:
 					socket = Processor.get_direct_ichibot_socket(origin)
 					Ichibot.sockets[origin] = socket
-					bot.loop.create_task(Ichibot.process_ichibot_messages(origin, message.author))
+					self.bot.loop.create_task(Ichibot.process_ichibot_messages(origin, ctx.author))
 
 				await socket.send_multipart([copePoolAccountId.encode(), b"ftx", b"init"])
 
@@ -81,6 +81,8 @@ class CopeVoteCommand(BaseCommand):
 				allowedVoters = request.guildProperties["settings"]["cope"].get("voting", [])
 				logChannelId = request.guildProperties["settings"]["channels"].get("private")
 				logChannel = None if logChannelId is None else bot.get_channel(int(logChannelId))
+
+				await sleep(2)
 
 				confirmation = Confirm(userId=request.authorId)
 				confirmationText = "Participants will be voting for {} minutes on a directional bet on {}. A consensus will be reached if {:,.1f} % of votes agree and at least {} votes are cast.".format(votePeriod, ticker.get("id"), voteMajority, voteMinimum)
@@ -99,9 +101,9 @@ class CopeVoteCommand(BaseCommand):
 
 					poll = VotingActions(log=logChannel)
 					embed = Embed(title="Vote on the next trade for {} ({})".format(ticker.get("id"), ticker.get("exchange").get("name")), description="No votes have been received yet.", color=constants.colors["light blue"])
-					embed.add_field(name="Vote concludes in {:,.1f} minutes. Reaction is removed when your vote is received.".format(votePeriod / 60), value="If consensus is reached, `{}` or `{}` will be executed via Ichibot to long or short respectively. ".format(longCommand, shortCommand), inline=False)
+					embed.add_field(name="Vote concludes in {:,.1f} minutes.".format(votePeriod), value="If consensus is reached, `{}` or `{}` will be executed via Ichibot to long or short respectively. ".format(longCommand, shortCommand), inline=False)
 					embed.set_author(name="Cope consensus trading", icon_url=static_storage.cope)
-					voteMessage = await ctx.interaction.edit_original_message(embed=embed, view=poll)
+					await ctx.interaction.edit_original_message(embed=embed, view=poll)
 					await sleep(votePeriod * 60.0)
 
 					try:
@@ -118,25 +120,25 @@ class CopeVoteCommand(BaseCommand):
 					if totalVotes == 0:
 						embed = Embed(title="No consensus has been reached.", description="There were no participants in the vote. No command has been executed via Ichibot.".format(totalVotes, totalLong / totalVotes * 100, totalShort / totalVotes * 100, totalSkip / totalVotes * 100), color=constants.colors["deep purple"])
 						embed.set_author(name="Cope consensus trading", icon_url=static_storage.cope)
-						await ctx.interaction.edit_original_message(embed=embed)
+						await ctx.interaction.edit_original_message(embed=embed, view=None)
 					elif totalVotes >= voteMinimum and totalLong / totalVotes >= voteMajority / 100.0:
 						await socket.send_multipart([copePoolAccountId.encode(), b"", longCommand.encode()])
 						embed = Embed(title="Consensus has been reached, community voted to go long on {}!".format(ticker.get("id")), description="{:,.1f} % out of {} participants voted to go long. `{}` is being executed via Ichibot.".format(totalLong / totalVotes * 100, totalVotes, longCommand), color=constants.colors["deep purple"])
 						embed.set_author(name="Cope consensus trading", icon_url=static_storage.cope)
-						await ctx.interaction.edit_original_message(embed=embed)
+						await ctx.interaction.edit_original_message(embed=embed, view=None)
 					elif totalVotes >= voteMinimum and totalShort / totalVotes >= voteMajority / 100.0:
 						await socket.send_multipart([copePoolAccountId.encode(), b"", shortCommand.encode()])
 						embed = Embed(title="Consensus has been reached, community voted to go short on {}!".format(ticker.get("id")), description="{:,.1f} % out of {} participants voted to go short. `{}` is being executed via Ichibot.".format(totalShort / totalVotes * 100, totalVotes, shortCommand), color=constants.colors["deep purple"])
 						embed.set_author(name="Cope consensus trading", icon_url=static_storage.cope)
-						await ctx.interaction.edit_original_message(embed=embed)
+						await ctx.interaction.edit_original_message(embed=embed, view=None)
 					elif totalVotes >= voteMinimum and totalSkip / totalVotes >= voteMajority / 100.0:
 						embed = Embed(title="Consensus has been reached, community voted to skip this trade on {}!".format(ticker.get("id")), description="{:,.1f} % out of {} participants voted to skip. No command has been executed via Ichibot.".format(len(totalSkip) / totalVotes * 100, totalVotes), color=constants.colors["deep purple"])
 						embed.set_author(name="Cope consensus trading", icon_url=static_storage.cope)
-						await ctx.interaction.edit_original_message(embed=embed)
+						await ctx.interaction.edit_original_message(embed=embed, view=None)
 					else:
 						embed = Embed(title="No consensus has been reached.", description="{} participants voted, {:,.1f} % of which to go long, {:,.1f} % to go short and {:,.1f} % to skip. No command has been executed via Ichibot.".format(totalVotes, totalLong / totalVotes * 100, totalShort / totalVotes * 100, totalSkip / totalVotes * 100), color=constants.colors["deep purple"])
 						embed.set_author(name="Cope consensus trading", icon_url=static_storage.cope)
-						await ctx.interaction.edit_original_message(embed=embed)
+						await ctx.interaction.edit_original_message(embed=embed, view=None)
 
 					try:
 						await logChannel.send(content="Voted to long: {}".format(", ".join(poll.longVoters)))
@@ -162,13 +164,13 @@ class VotingActions(View):
 		self.skipVoters = []
 		self.logChannel = log
 
-	@button(label="Long", style=ButtonStyle.green)
-	async def confirm(self, button: Button, interaction: Interaction):
+	@button(label="Vote long", style=ButtonStyle.green)
+	async def longVote(self, button: Button, interaction: Interaction):
 		if interaction.user not in self.allVotes:
 			self.allVotes.append(interaction.user)
-			await send_vote_confirmation(user, "long", True)
+			await self.send_vote_confirmation(interaction, "long", True)
 		elif interaction.user not in self.longVoters:
-			await send_vote_confirmation(user, "long", False)
+			await self.send_vote_confirmation(interaction, "long", False)
 
 		if interaction.user not in self.longVoters: self.longVoters.append(interaction.user)
 		if interaction.user in self.shortVoters: self.shortVoters.remove(interaction.user)
@@ -176,15 +178,15 @@ class VotingActions(View):
 
 		embed = Embed(description="Your vote has been saved.", color=constants.colors["gray"])
 		embed.set_author(name="Cope consensus trading", icon_url=static_storage.cope)
-		await interaction.response.send_message(embed=embed)
+		await interaction.response.send_message(embed=embed, ephemeral=True)
 
-	@button(label="Short", style=ButtonStyle.red)
-	async def cancel(self, button: Button, interaction: Interaction):
+	@button(label="Vote short", style=ButtonStyle.red)
+	async def shortVote(self, button: Button, interaction: Interaction):
 		if interaction.user not in self.allVotes:
 			self.allVotes.append(interaction.user)
-			await send_vote_confirmation(user, "short", True)
+			await self.send_vote_confirmation(interaction, "short", True)
 		elif interaction.user not in self.shortVoters:
-			await send_vote_confirmation(user, "short", False)
+			await self.send_vote_confirmation(interaction, "short", False)
 
 		if interaction.user in self.longVoters: self.longVoters.remove(interaction.user)
 		if interaction.user not in self.shortVoters: self.shortVoters.append(interaction.user)
@@ -192,15 +194,15 @@ class VotingActions(View):
 
 		embed = Embed(description="Your vote has been saved.", color=constants.colors["gray"])
 		embed.set_author(name="Cope consensus trading", icon_url=static_storage.cope)
-		await interaction.response.send_message(embed=embed)
+		await interaction.response.send_message(embed=embed, ephemeral=True)
 
-	@button(label="Skip", style=ButtonStyle.gray)
-	async def cancel(self, button: Button, interaction: Interaction):
+	@button(label="Vote skip", style=ButtonStyle.gray)
+	async def skipVote(self, button: Button, interaction: Interaction):
 		if interaction.user not in self.allVotes:
 			self.allVotes.append(interaction.user)
-			await send_vote_confirmation(user, "skip", True)
+			await self.send_vote_confirmation(interaction, "skip", True)
 		elif interaction.user not in self.skipVoters:
-			await send_vote_confirmation(user, "skip", False)
+			await self.send_vote_confirmation(interaction, "skip", False)
 
 		if interaction.user in self.longVoters: self.longVoters.remove(interaction.user)
 		if interaction.user in self.shortVoters: self.shortVoters.remove(interaction.user)
@@ -208,12 +210,13 @@ class VotingActions(View):
 
 		embed = Embed(description="Your vote has been saved.", color=constants.colors["gray"])
 		embed.set_author(name="Cope consensus trading", icon_url=static_storage.cope)
-		await interaction.response.send_message(embed=embed)
+		await interaction.response.send_message(embed=embed, ephemeral=True)
 
-	async def send_vote_confirmation(_user, _side, isChange):
-		if isChange:
+	async def send_vote_confirmation(self, interaction, side, isInitialVote):
+		if isInitialVote:
+			allVotes = [e.mention for e in self.allVotes]
 			if self.logChannel is not None:
-				try: await self.logChannel.send(content="{} voted to {}".format(_user.mention, _side))
+				try: await self.logChannel.send(content="{} voted to {}".format(interaction.user.mention, side))
 				except: pass
 			votesSummaryText = ", ".join(allVotes[-20:])
 			if len(allVotes) == 21:
@@ -221,10 +224,13 @@ class VotingActions(View):
 			elif len(allVotes) > 21:
 				votesSummaryText += " and {} others".format(len(allVotes) - 20)
 			votesSummaryText += " voted so far."
+			embed = interaction.message.embeds[0]
 			embed.description = votesSummaryText
-			try: await voteMessage.edit(embed=embed)
+			await interaction.message.edit(embed=embed)
+			# await interaction.edit_original_message(embed=embed)
+			try: pass
 			except: pass
 		else:
 			if self.logChannel is not None:
-				try: await self.logChannel.send(content="{} changed their vote to {}".format(_user.mention, _side))
+				try: await self.logChannel.send(content="{} changed their vote to {}".format(interaction.user.mention, side))
 				except: pass

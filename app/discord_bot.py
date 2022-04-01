@@ -299,6 +299,11 @@ async def on_message(message):
 		)
 		_snapshot = "{}-{:02d}".format(message.created_at.year, message.created_at.month)
 
+		if commandRequest.content.startswith("/c "):
+			embed = Embed(title="Plain text commands will not work. To use slash commands, type `/c`, and select the command from the popup above the chat box.", color=constants.colors["red"])
+			embed.set_image(url="https://firebasestorage.googleapis.com/v0/b/nlc-bot-36685.appspot.com/o/alpha%2Fassets%2Fdiscord%2Fslash-commands.gif?alt=media&token=32e05ba1-9b06-47b1-a037-d37036b382a6")
+			await message.channel.send(embed=embed)
+
 		if commandRequest.content.startswith("c "):
 			if commandRequest.guildId != -1:
 				_availablePermissions = None if commandRequest.guildId == -1 else message.channel.permissions_for(message.guild.me)
@@ -349,13 +354,13 @@ async def on_message(message):
 # Legacy
 # -------------------------
 
-async def chart(message, commandRequest, requestSlice):
+async def chart(message, request, requestSlice):
 	sentMessages = []
 	try:
 		arguments = requestSlice.split(" ")
 
 		async with message.channel.typing():
-			outputMessage, request = await Processor.process_chart_arguments(commandRequest, arguments[1:], tickerId=arguments[0].upper())
+			outputMessage, task = await Processor.process_chart_arguments(request, arguments[1:], request.get_platform_order_for("c"), tickerId=arguments[0].upper())
 
 			if outputMessage is not None:
 				if outputMessage != "":
@@ -364,26 +369,26 @@ async def chart(message, commandRequest, requestSlice):
 					sentMessages.append(await message.channel.send(embed=embed))
 				return (sentMessages, len(sentMessages))
 
-			currentRequest = request.get(request.get("currentPlatform"))
-			timeframes = request.pop("timeframes")
-			for i in range(request.get("requestCount")):
-				for p, t in timeframes.items(): request[p]["currentTimeframe"] = t[i]
-				payload, chartText = await Processor.process_task("chart", commandRequest.authorId, request)
+			currentTask = task.get(task.get("currentPlatform"))
+			timeframes = task.pop("timeframes")
+			for i in range(task.get("requestCount")):
+				for p, t in timeframes.items(): task[p]["currentTimeframe"] = t[i]
+				payload, chartText = await Processor.process_task("chart", request.authorId, task)
 
 				if payload is None:
-					errorMessage = "Requested chart for `{}` is not available.".format(currentRequest.get("ticker").get("name")) if chartText is None else chartText
+					errorMessage = "Requested chart for `{}` is not available.".format(currentTask.get("ticker").get("name")) if chartText is None else chartText
 					embed = Embed(title=errorMessage, color=constants.colors["gray"])
 					embed.set_author(name="Chart not available", icon_url=static_storage.icon_bw)
 					sentMessages.append(await message.channel.send(embed=embed))
 				else:
-					currentRequest = request.get(payload.get("platform"))
-					sentMessages.append(await message.channel.send(content=chartText, file=discord.File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, commandRequest.authorId, randint(1000, 9999)))))
+					currentTask = task.get(payload.get("platform"))
+					sentMessages.append(await message.channel.send(content=chartText, file=discord.File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, request.authorId, randint(1000, 9999)))))
 
 	except CancelledError: pass
 	except Exception:
 		print(format_exc())
 		if environ["PRODUCTION_MODE"]: logging.report_exception(user=f"{message.author.id}: {message.clean_content}")
-		await unknown_error(message, commandRequest.authorId)
+		await unknown_error(message, request.authorId)
 	return (sentMessages, len(sentMessages))
 
 # -------------------------
@@ -525,7 +530,7 @@ async def deprecation_message(ctx, command, isGone=False):
 		try: await ctx.channel.send(embed=embed)
 		except: return
 	else:
-		embed = Embed(title=f"Alpha is transitioning to slash commands as is required by upcoming Discord changes. Use `/{command}` to avoid this warning. Old syntax will no longer work after deprecation <t:1649894400:R>.", color=constants.colors["red"])
+		embed = Embed(title=f"Alpha is transitioning to slash commands as is required by upcoming Discord changes. Use `/{command}` to avoid this warning. Old syntax will no longer work after deprecation <t:1656676800:R>.", color=constants.colors["red"])
 		# embed.set_image(url="https://firebasestorage.googleapis.com/v0/b/nlc-bot-36685.appspot.com/o/alpha%2Fassets%2Fdiscord%2Fslash-commands.gif?alt=media&token=32e05ba1-9b06-47b1-a037-d37036b382a6")
 		try: await ctx.channel.send(embed=embed)
 		except: return

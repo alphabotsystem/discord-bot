@@ -27,7 +27,9 @@ class ConvertCommand(BaseCommand):
 			request = await self.create_request(ctx)
 			if request is None: return
 
-			payload, quoteText = await Processor.process_conversion(request, fromTicker.upper(), toTicker.upper(), amount)
+			defaultPlatforms = request.get_platform_order_for("convert")
+
+			payload, quoteText = await Processor.process_conversion(request, fromTicker.upper(), toTicker.upper(), amount, defaultPlatforms)
 
 			if payload is None:
 				errorMessage = "Requested conversion is not available." if quoteText is None else quoteText

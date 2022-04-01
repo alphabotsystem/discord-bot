@@ -2,7 +2,7 @@ from os import environ
 from time import time
 from uuid import uuid4
 from aiohttp import ClientSession
-from asyncio import CancelledError
+from asyncio import CancelledError, sleep
 from traceback import format_exc
 
 from discord import Embed, ButtonStyle, Interaction
@@ -39,7 +39,7 @@ class LookupCommand(BaseCommand):
 			request = await self.create_request(ctx)
 			if request is None: return
 
-			outputMessage, task = await Processor.process_quote_arguments(request, [], tickerId=tickerId.upper(), platformQueue=["CCXT"])
+			outputMessage, task = await Processor.process_quote_arguments(request, [], ["CCXT"], tickerId=tickerId.upper())
 
 			if outputMessage is not None:
 				embed = Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide).", color=constants.colors["gray"])
@@ -74,16 +74,27 @@ class LookupCommand(BaseCommand):
 	async def markets(
 		self,
 		ctx,
-		category: Option(str, "Ranking type.", name="category", autocomplete=get_categories)
+		category: Option(str, "Ranking type.", name="category", autocomplete=get_categories),
+		limit: Option(int, "Asset count limit. Defaults to top 250 by market cap, maximum is 1000.", name="limit", required=False, default=250)
 	):
 		try:
 			request = await self.create_request(ctx)
 			if request is None: return
 
 			if category.lower() in ["gainers", "gain", "gains"]:
-				rawData = CoinGeckoAPI().get_coins_markets(vs_currency="usd", order="market_cap_desc", per_page=250, price_change_percentage="24h")
+				rawData = []
+				cg = CoinGeckoAPI()
+				page = 1
+				while True:
+					try:
+						rawData += cg.get_coins_markets(vs_currency="usd", order="market_cap_desc", per_page=250, page=page, price_change_percentage="24h")
+						page += 1
+						if page > 4: break
+						await sleep(0.6)
+					except: await sleep(5)
+
 				response = []
-				for e in rawData:
+				for e in rawData[:max(10, limit)]:
 					if e.get("price_change_percentage_24h_in_currency", None) is not None:
 						response.append({"symbol": e["symbol"].upper(), "change": e["price_change_percentage_24h_in_currency"]})
 				response = sorted(response, key=lambda k: k["change"], reverse=True)[:10]
@@ -94,9 +105,19 @@ class LookupCommand(BaseCommand):
 				await ctx.interaction.edit_original_message(embed=embed)
 
 			elif category.lower() in ["losers", "loosers", "loss", "losses"]:
-				rawData = CoinGeckoAPI().get_coins_markets(vs_currency="usd", order="market_cap_desc", per_page=250, price_change_percentage="24h")
+				rawData = []
+				cg = CoinGeckoAPI()
+				page = 1
+				while True:
+					try:
+						rawData += cg.get_coins_markets(vs_currency="usd", order="market_cap_desc", per_page=250, page=page, price_change_percentage="24h")
+						page += 1
+						if page > 4: break
+						await sleep(0.6)
+					except: await sleep(5)
+
 				response = []
-				for e in rawData:
+				for e in rawData[:max(10, limit)]:
 					if e.get("price_change_percentage_24h_in_currency", None) is not None:
 						response.append({"symbol": e["symbol"].upper(), "change": e["price_change_percentage_24h_in_currency"]})
 				response = sorted(response, key=lambda k: k["change"])[:10]

@@ -84,7 +84,7 @@ class IchibotCommand(BaseCommand):
 
 			if request.is_registered():
 				if exchangeId not in SUPPORTED_EXCHANGES:
-					embed = Embed(title="`{}` is not a valid argument".format(exchange), description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/ichibot).", color=constants.colors["gray"])
+					embed = Embed(title="`{}` is not a valid argument".format(exchange[:229]), description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/ichibot).", color=constants.colors["gray"])
 					embed.set_author(name="Invalid argument", icon_url=static_storage.ichibot)
 					await ctx.interaction.edit_original_message(embed=embed)
 					return
@@ -104,11 +104,6 @@ class IchibotCommand(BaseCommand):
 					embed = Embed(title="Ichibot connection is being initiated.", color=constants.colors["deep purple"])
 					embed.set_author(name="Ichibot", icon_url=static_storage.ichibot)
 					await ctx.interaction.edit_original_message(embed=embed)
-
-					if not isinstance(ctx.channel, DMChannel):
-						await ctx.author.send(embed=embed)
-
-
 				except Forbidden:
 					embed = Embed(title="Ichibot connection is being initiated, however the bot cannot DM you.", description="A common reason for this is that the bot is blocked, or that your DMs are disabled. Before you can start trading you must enable open your Direct Messages with Alpha Bot.", color=constants.colors["deep purple"])
 					embed.set_author(name="Ichibot", icon_url=static_storage.ichibot)

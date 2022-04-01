@@ -36,9 +36,13 @@ class AlertCommand(BaseCommand):
 			request = await self.create_request(ctx)
 			if request is None: return
 
+			defaultPlatforms = request.get_platform_order_for("alert", assetType=assetType)
+			preferredPlatforms = BaseCommand.sources["alert"].get(assetType)
+			platforms = [e for e in defaultPlatforms if preferredPlatforms is None or e in preferredPlatforms]
+
 			if request.price_alerts_available():
 				arguments = [venue]
-				outputMessage, task = await Processor.process_quote_arguments(request, arguments, tickerId=tickerId.upper(), excluded=["CoinGecko", "LLD"])
+				outputMessage, task = await Processor.process_quote_arguments(request, arguments, platforms, tickerId=tickerId.upper())
 
 				if outputMessage is not None:
 					embed = Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/pro/price-alerts).", color=constants.colors["gray"])

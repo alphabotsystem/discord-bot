@@ -101,14 +101,17 @@ class PaperCommand(BaseCommand):
 			request = await self.create_request(ctx)
 			if request is None: return
 
+			defaultPlatforms = request.get_platform_order_for("paper", assetType=assetType)
+			preferredPlatforms = BaseCommand.sources["paper"].get(assetType)
+			platforms = [e for e in defaultPlatforms if preferredPlatforms is None or e in preferredPlatforms]
+
 			if request.is_registered():
 				if level is not None:
 					embed = Embed(title="Limit orders are temporarily unavailable.", color=constants.colors["gray"])
 					await ctx.interaction.edit_original_message(embed=embed)
 					return
 
-				arguments = [assetType]
-				outputMessage, task = await Processor.process_quote_arguments(request, arguments, tickerId=tickerId.upper(), isPaperTrade=True, excluded=["CoinGecko", "Serum", "LLD"])
+				outputMessage, task = await Processor.process_quote_arguments(request, [], platforms, tickerId=tickerId.upper())
 				if outputMessage is not None:
 					embed = Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/paper-trader).", color=constants.colors["gray"])
 					embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
@@ -189,7 +192,7 @@ class PaperCommand(BaseCommand):
 						valueText = "No conversion"
 
 						balanceText = "{:,.4f} {}".format(holding, asset)
-						payload, quoteText = await Processor.process_conversion(request, asset, "USD", holding, excluded=["CoinGecko", "LLD"])
+						payload, quoteText = await Processor.process_conversion(request, asset, "USD", holding)
 						convertedValue = payload["raw"]["quotePrice"][0] if payload is not None else 0
 						valueText = "≈ {:,.4f} {}".format(convertedValue, "USD") if payload is not None else "Unavailable"
 						totalValue += convertedValue
@@ -214,7 +217,7 @@ class PaperCommand(BaseCommand):
 						currentPlatform = order["request"].get("currentPlatform")
 						task = order["request"].get(currentPlatform)
 						ticker = task.get("ticker")
-						payload, quoteText = await Processor.process_conversion(request, ticker.get("quote") if order["orderType"] == "buy" else ticker.get("base"), "USD", order["amount"] * (order["price"] if order["orderType"] == "buy" else 1), excluded=["CoinGecko", "LLD"])
+						payload, quoteText = await Processor.process_conversion(request, ticker.get("quote") if order["orderType"] == "buy" else ticker.get("base"), "USD", order["amount"] * (order["price"] if order["orderType"] == "buy" else 1), platforms=["CoinGecko", "LLD"])
 						openOrdersValue += payload["raw"]["quotePrice"][0] if quoteText is None else 0
 						holdingAssets.add(currentPlatform + "_" + ticker.get("base"))
 
@@ -346,7 +349,7 @@ class PaperCommand(BaseCommand):
 					if platform == "USD": continue
 					for asset, holding in balances.items():
 						if holding == 0: continue
-						payload, quoteText = await Processor.process_conversion(request, asset, "USD", holding, excluded=["CoinGecko", "LLD"])
+						payload, quoteText = await Processor.process_conversion(request, asset, "USD", holding, platforms=["CCXT", "IEXC"])
 						totalValue += payload["raw"]["quotePrice"][0] if quoteText is None else 0
 
 				paperOrders = await self.database.collection("details/openPaperOrders/{}".format(account.id)).get()
@@ -356,7 +359,7 @@ class PaperCommand(BaseCommand):
 						currentPlatform = order["request"].get("currentPlatform")
 						task = order["request"].get(currentPlatform)
 						ticker = task.get("ticker")
-						payload, quoteText = await Processor.process_conversion(request, ticker.get("quote") if order["orderType"] == "buy" else ticker.get("base"), "USD", order["amount"] * (order["price"] if order["orderType"] == "buy" else 1), excluded=["CoinGecko", "LLD"])
+						payload, quoteText = await Processor.process_conversion(request, ticker.get("quote") if order["orderType"] == "buy" else ticker.get("base"), "USD", order["amount"] * (order["price"] if order["orderType"] == "buy" else 1), platforms=["CCXT", "IEXC"])
 						totalValue += payload["raw"]["quotePrice"][0] if quoteText is None else 0
 
 				topBalances.append((totalValue, properties["paperTrader"]["globalLastReset"], properties["oauth"]["discord"]["userId"]))

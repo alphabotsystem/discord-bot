@@ -1,4 +1,5 @@
 from asyncio import sleep
+from re import sub
 
 from discord import Embed, ButtonStyle, Interaction, PartialEmoji
 from discord.ext.commands import Cog
@@ -9,9 +10,12 @@ from assets import static_storage
 from Processor import Processor
 from TickerParser import TickerParser
 
+from DataRequest import ChartParameters
+
 
 class BaseCommand(Cog):
 	commandMap = {
+		"chart": "c",
 		"price": "p",
 		"volume": "v",
 		"depth": "d"
@@ -27,6 +31,9 @@ class BaseCommand(Cog):
 			"forex": ["TradingView", "Finviz"],
 			"other": ["TradingView", "Finviz"],
 			"crypto": ["TradingView", "TradingLite", "GoCharting", "Bookmap"]
+		},
+		"flow": {
+			"stocks": ["Alpha Flow"]
 		},
 		"p": {
 			"stocks": ["IEXC"],
@@ -102,6 +109,51 @@ class BaseCommand(Cog):
 
 		return sorted([v for v in venues if v.lower().startswith(venue)])
 
+	async def get_platforms(cls, ctx):
+		if ctx.options.get("ticker", "") is None: return []
+		_commandName = ctx.command.name if ctx.command.parent is None else ctx.command.parent.name
+		command = cls.commandMap.get(_commandName, _commandName)
+		assetType = " ".join(ctx.options.get("type", "").lower().split())
+		platform = " ".join(ctx.options.get("platform", "").lower().split())
+
+		platforms = set()
+		for t, p in BaseCommand.sources.get(command).items():
+			if assetType != "" and assetType != t: continue
+			if platform == "": platforms.update(p)
+			else: platforms.update([e for e in p if e.lower().startswith(platform)])
+
+		return sorted(list(platforms))
+
+	async def get_timeframes(cls, ctx):
+		platform = ctx.options.get("platform", "")
+
+		timeframes = []
+		for t in ChartParameters["timeframes"]:
+			if platform == "" or t.supports(platform):
+				timeframes.append(t.name)
+
+		return timeframes
+
+	async def get_indicators(cls, ctx):
+		platform = ctx.options.get("platform", "")
+		indicators = sub(" +", " ", ctx.options.get("indicators", "").replace(",", ", ").strip())
+
+		existing = indicators.split(", ")
+		added = ", ".join(existing[:-1])
+
+		indicatorList = []
+		for t in ChartParameters["indicators"]:
+			if (platform == "" or t.supports(platform)) and t.name.lower() not in indicators.lower() and all([p not in indicators.lower() for p in t.parsablePhrases]):
+				if indicators.endswith(","):
+					newSuggestion = indicators + " " + t.name + ", "
+					if len(newSuggestion) <= 100:
+						indicatorList.append(newSuggestion)
+				elif t.name.lower().startswith(existing[-1].lower()):
+					newSuggestion = added + " " + t.name + ", "
+					if len(newSuggestion) <= 100:
+						indicatorList.append(newSuggestion)
+
+		return indicatorList
 
 class Confirm(View):
 	def __init__(self, userId=None):

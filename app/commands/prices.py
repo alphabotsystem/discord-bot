@@ -57,6 +57,8 @@ class PriceCommand(BaseCommand):
 			request = await self.create_request(ctx)
 			if request is None: return
 
+			defaultPlatforms = request.get_platform_order_for("p")
+
 			parts = arguments.split(",")
 			tasks = []
 
@@ -70,7 +72,7 @@ class PriceCommand(BaseCommand):
 				partArguments = part.lower().split()
 				if len(partArguments) == 0: continue
 
-				outputMessage, task = await Processor.process_quote_arguments(request, partArguments[1:], tickerId=partArguments[0].upper())
+				outputMessage, task = await Processor.process_quote_arguments(request, partArguments[1:], defaultPlatforms, tickerId=partArguments[0].upper())
 
 				if outputMessage is not None:
 					embed = Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/prices).", color=constants.colors["gray"])
@@ -100,8 +102,12 @@ class PriceCommand(BaseCommand):
 			request = await self.create_request(ctx)
 			if request is None: return
 
+			defaultPlatforms = request.get_platform_order_for("p", assetType=assetType)
+			preferredPlatforms = BaseCommand.sources["p"].get(assetType)
+			platforms = [e for e in defaultPlatforms if preferredPlatforms is None or e in preferredPlatforms]
+
 			arguments = [venue]
-			outputMessage, task = await Processor.process_quote_arguments(request, arguments, tickerId=tickerId.upper())
+			outputMessage, task = await Processor.process_quote_arguments(request, arguments, platforms, tickerId=tickerId.upper())
 
 			if outputMessage is not None:
 				embed = Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/prices).", color=constants.colors["gray"])

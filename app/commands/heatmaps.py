@@ -59,6 +59,8 @@ class HeatmapCommand(BaseCommand):
 			request = await self.create_request(ctx, autodelete=autodelete)
 			if request is None: return
 
+			defaultPlatforms = request.get_platform_order_for("hmap")
+
 			parts = arguments.split(",")
 			tasks = []
 
@@ -72,7 +74,7 @@ class HeatmapCommand(BaseCommand):
 				partArguments = part.lower().split()
 				if len(partArguments) == 0: continue
 
-				outputMessage, task = await Processor.process_heatmap_arguments(request, partArguments)
+				outputMessage, task = await Processor.process_heatmap_arguments(request, partArguments, defaultPlatforms)
 
 				if outputMessage is not None:
 					embed = Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/heat-maps).", color=constants.colors["gray"])
