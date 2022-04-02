@@ -25,7 +25,7 @@ spec:
             readOnly: true
         resources:
           requests:
-            memory: "1200Mi"
+            memory: "1300Mi"
             cpu: "300m"
             ephemeral-storage: "5000Ki"
         env:
