@@ -14,7 +14,7 @@ from helpers import constants
 from assets import static_storage
 from Processor import Processor
 
-from commands.base import BaseCommand
+from commands.base import BaseCommand, ActionsView
 from commands.ichibot import Ichibot
 
 
@@ -35,20 +35,20 @@ class FlowCommand(BaseCommand):
 				payload, chartText = await Processor.process_task("chart", request.authorId, task)
 
 				if payload is None:
-					errorMessage = "Requested orderflow data for `{}` is not available.".format(currentTask.get("ticker").get("name")) if chartText is None else chartText
+					errorMessage = f"Requested orderflow data for `{currentTask.get('ticker').get('name')}` is not available." if chartText is None else chartText
 					embed = discord.Embed(title=errorMessage, color=constants.colors["gray"])
 					embed.set_author(name="Data not available", icon_url=static_storage.icon_bw)
 					await ctx.interaction.edit_original_message(embed=embed)
 				else:
 					currentTask = task.get(payload.get("platform"))
-					actions = ActionsView(userId=request.authorId)
+					actions = ActionsView(user=ctx.author)
 					await ctx.interaction.edit_original_message(content=chartText, file=discord.File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, request.authorId, randint(1000, 9999))), view=actions)
 
 			await self.database.document("discord/statistics").set({request.snapshot: {"flow": Increment(1)}}, merge=True)
 			await self.cleanup(ctx, request, removeView=True)
 		elif request.is_pro():
 			if not message.author.bot and message.channel.permissions_for(message.author).administrator:
-				embed = discord.Embed(title=":microscope: Alpha Flow is disabled.", description="You can enable Alpha Flow feature for your account in [Discord Preferences](https://www.alphabotsystem.com/account/discord) or for the entire community in your [Communities Dashboard](https://www.alphabotsystem.com/communities/manage?id={}).".format(request.guildId), color=constants.colors["gray"])
+				embed = discord.Embed(title=":microscope: Alpha Flow is disabled.", description=f"You can enable Alpha Flow feature for your account in [Discord Preferences](https://www.alphabotsystem.com/account/discord) or for the entire community in your [Communities Dashboard](https://www.alphabotsystem.com/communities/manage?id={request.guildId}).", color=constants.colors["gray"])
 				embed.set_author(name="Alpha Flow", icon_url=static_storage.icon_bw)
 				await ctx.interaction.edit_original_message(embed=embed)
 			else:
@@ -96,7 +96,7 @@ class FlowCommand(BaseCommand):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /flow overview autodelete:{}".format(ctx.author.id, autodelete))
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /flow overview autodelete:{autodelete}")
 			await self.unknown_error(ctx)
 
 	@flowGroup.command(name="search", description="Pull aggregated orderflow of a single stock.")
@@ -112,16 +112,5 @@ class FlowCommand(BaseCommand):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /flow seearch {} autodelete:{}".format(ctx.author.id, tickerId, autodelete))
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /flow seearch {tickerId} autodelete:{autodelete}")
 			await self.unknown_error(ctx)
-
-
-class ActionsView(View):
-	def __init__(self, userId=None):
-		super().__init__(timeout=None)
-		self.userId = userId
-
-	@button(emoji=PartialEmoji.from_str("<:remove_response:929342678976565298>"), style=ButtonStyle.gray)
-	async def delete(self, button: Button, interaction: Interaction):
-		if self.userId != interaction.user.id: return
-		await interaction.message.delete()

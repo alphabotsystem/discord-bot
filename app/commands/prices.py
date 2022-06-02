@@ -28,17 +28,17 @@ class PriceCommand(BaseCommand):
 			payload, quoteText = await Processor.process_task("quote", request.authorId, task)
 
 			if payload is None or "quotePrice" not in payload:
-				errorMessage = "Requested price for `{}` is not available.".format(currentTask.get("ticker").get("name")) if quoteText is None else quoteText
+				errorMessage = f"Requested price for `{currentTask.get('ticker').get('name')}` is not available." if quoteText is None else quoteText
 				embed = Embed(title=errorMessage, color=constants.colors["gray"])
 				embed.set_author(name="Data not available", icon_url=static_storage.icon_bw)
 			else:
 				currentTask = task.get(payload.get("platform"))
 				if payload.get("platform") in ["Alternative.me"]:
-					embed = Embed(title="{} *({})*".format(payload["quotePrice"], payload["change"]), description=payload.get("quoteConvertedPrice", EmptyEmbed), color=constants.colors[payload["messageColor"]])
+					embed = Embed(title=f"{payload['quotePrice']} *({payload['change']})*", description=payload.get("quoteConvertedPrice", EmptyEmbed), color=constants.colors[payload["messageColor"]])
 					embed.set_author(name=payload["title"], icon_url=payload.get("thumbnailUrl"))
 					embed.set_footer(text=payload["sourceText"])
 				else:
-					embed = Embed(title="{}{}".format(payload["quotePrice"], " *({})*".format(payload["change"]) if "change" in payload else ""), description=payload.get("quoteConvertedPrice", EmptyEmbed), color=constants.colors[payload["messageColor"]])
+					embed = Embed(title="{}{}".format(payload["quotePrice"], f" *({payload['change']})*" if "change" in payload else ""), description=payload.get("quoteConvertedPrice", EmptyEmbed), color=constants.colors[payload["messageColor"]])
 					embed.set_author(name=payload["title"], icon_url=payload.get("thumbnailUrl"))
 					embed.set_footer(text=payload["sourceText"])
 
@@ -87,7 +87,7 @@ class PriceCommand(BaseCommand):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /p {}".format(ctx.author.id, " ".join(arguments)))
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /p {' '.join(arguments)}")
 			await self.unknown_error(ctx)
 
 	@slash_command(name="price", description="Fetch stock, crypto and forex quotes.")
@@ -120,5 +120,5 @@ class PriceCommand(BaseCommand):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /price {} type:{} venue:{}".format(ctx.author.id, tickerId, assetType, venue))
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /price {tickerId} type:{assetType} venue:{venue}")
 			await self.unknown_error(ctx)

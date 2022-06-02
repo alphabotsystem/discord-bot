@@ -52,7 +52,7 @@ class AlphaCommand(BaseCommand):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /alpha {}".format(ctx.author.id, question))
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /alpha {question}")
 			await self.unknown_error(ctx)
 
 	def process_reply(self, question, hasPermissions):
@@ -67,7 +67,7 @@ class AlphaCommand(BaseCommand):
 					return "You can learn more about Alpha at https://www.alphabotsystem.com"
 				elif any(trigger in response for trigger in constants.badPunTrigger):
 					with open("app/assets/jokes.json") as json_data:
-						return "Here's a pun that might make you laugh :smile:\n{}".format(choice(load(json_data)))
+						return f"Here's a pun that might make you laugh :smile:\n{choice(load(json_data))}"
 				else:
 					for override in constants.messageOverrides:
 						for trigger in constants.messageOverrides[override]:

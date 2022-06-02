@@ -84,12 +84,12 @@ class IchibotCommand(BaseCommand):
 
 			if request.is_registered():
 				if exchangeId not in SUPPORTED_EXCHANGES:
-					embed = Embed(title="`{}` is not a valid argument".format(exchange[:229]), description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/ichibot).", color=constants.colors["gray"])
+					embed = Embed(title=f"`{exchange[:229]}` is not a valid argument", description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/ichibot).", color=constants.colors["gray"])
 					embed.set_author(name="Invalid argument", icon_url=static_storage.ichibot)
 					await ctx.interaction.edit_original_message(embed=embed)
 					return
 
-				origin = "{}_{}_ichibot".format(request.accountId, request.authorId)
+				origin = f"{request.accountId}_{request.authorId}_ichibot"
 
 				if origin in Ichibot.sockets:
 					socket = Ichibot.sockets.get(origin)
@@ -117,5 +117,5 @@ class IchibotCommand(BaseCommand):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /ichibot login {}".format(ctx.author.id, exchange))
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /ichibot login {exchange}")
 			await self.unknown_error(ctx)

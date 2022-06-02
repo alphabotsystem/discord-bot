@@ -30,7 +30,8 @@ class AlertCommand(BaseCommand):
 		assetType: Option(str, "Asset class of the ticker.", name="type", autocomplete=BaseCommand.get_types, required=False, default=""),
 		venue: Option(str, "Venue to pull the data from.", name="venue", autocomplete=BaseCommand.get_venues, required=False, default=""),
 		message: Option(str, "Public message to display on trigger.", name="message", required=False, default=None),
-		channel: Option(TextChannel, "Channel to display the alert in.", name="channel", required=False, default=None)
+		channel: Option(TextChannel, "Channel to display the alert in.", name="channel", required=False, default=None),
+		role: Option(TextChannel, "Channel to display the alert in.", name="role", required=False, default=None)
 	):
 		try:
 			request = await self.create_request(ctx)
@@ -55,8 +56,8 @@ class AlertCommand(BaseCommand):
 
 				response1, response2 = [], []
 				if request.is_registered():
-					response1 = await self.database.collection("details/marketAlerts/{}".format(request.accountId)).get()
-				response2 = await self.database.collection("details/marketAlerts/{}".format(request.authorId)).get()
+					response1 = await self.database.collection(f"details/marketAlerts/{request.accountId}").get()
+				response2 = await self.database.collection(f"details/marketAlerts/{request.authorId}").get()
 				marketAlerts = [e.to_dict() for e in response1] + [e.to_dict() for e in response2]
 
 				if len(marketAlerts) >= 50:
@@ -67,15 +68,21 @@ class AlertCommand(BaseCommand):
 				payload, quoteText = await Processor.process_task("candle", request.authorId, task)
 
 				if payload is None or len(payload.get("candles", [])) == 0:
-					errorMessage = "Requested price alert for `{}` is not available.".format(currentTask.get("ticker").get("name")) if quoteText is None else quoteText
+					errorMessage = f"Requested price alert for `{currentTask.get('ticker').get('name')}` is not available." if quoteText is None else quoteText
 					embed = Embed(title=errorMessage, color=constants.colors["gray"])
 					embed.set_author(name="Data not available", icon_url=static_storage.icon_bw)
+					await ctx.interaction.edit_original_message(embed=embed)
+				elif not channel.permissions_for(ctx.author).send_messages:
+					embed = Embed(title="You do not have permission to send messages in this channel.", color=constants.colors["gray"])
+					embed.set_author(name="Permission denied", icon_url=static_storage.icon_bw)
 					await ctx.interaction.edit_original_message(embed=embed)
 				else:
 					currentPlatform = payload.get("platform")
 					currentTask = task.get(currentPlatform)
 					ticker = currentTask.get("ticker")
 					exchange = ticker.get("exchange")
+					exchangeName = f" ({exchange.get('name')})" if exchange else ""
+					pairQuoteName = " " + ticker.get("quote") if ticker.get("quote") else ""
 
 					levelText = "{:,.10f}".format(level).rstrip('0').rstrip('.')
 
@@ -88,7 +95,8 @@ class AlertCommand(BaseCommand):
 						"level": level,
 						"levelText": levelText,
 						"version": 4,
-						"triggerMessage": message
+						"triggerMessage": message,
+						"triggerTag": None if role is None else role.id,
 					}
 					alertId = str(uuid4())
 					hashName = hash(dumps(ticker, option=OPT_SORT_KEYS))
@@ -100,7 +108,8 @@ class AlertCommand(BaseCommand):
 
 						if currentAlertPlatform == currentPlatform and hash(dumps(alertTicker, option=OPT_SORT_KEYS)) == hashName:
 							if alert["level"] == newAlert["level"]:
-								embed = Embed(title="Price alert for {}{} at {}{} already exists.".format(ticker.get("name"), "" if not bool(exchange) else " ({})".format(exchange.get("name")), levelText, "" if ticker.get("quote") is None else " " + ticker.get("quote")), color=constants.colors["gray"])
+								
+								embed = Embed(title=f"Price alert for {ticker.get('name')}{exchangeName} at {levelText}{pairQuoteName} already exists.", color=constants.colors["gray"])
 								embed.set_author(name="Alert already exists", icon_url=static_storage.icon_bw)
 								await ctx.interaction.edit_original_message(embed=embed)
 								return
@@ -112,8 +121,8 @@ class AlertCommand(BaseCommand):
 
 					currentLevel = payload["candles"][-1][4]
 					currentLevelText = "{:,.10f}".format(currentLevel).rstrip('0').rstrip('.')
-					if currentLevel * 0.5 > newAlert["level"] or currentLevel * 2 < newAlert["level"]:
-						embed = Embed(title="Your desired alert trigger level at {} {} is too far from the current price of {} {}.".format(levelText, ticker.get("quote"), currentLevelText, ticker.get("quote")), color=constants.colors["gray"])
+					if currentLevel * 0.2 > newAlert["level"] or currentLevel * 5 < newAlert["level"]:
+						embed = Embed(title=f"Your desired alert trigger level at {levelText} {ticker.get('quote')} is too far from the current price of {currentLevelText} {ticker.get('quote')}.", color=constants.colors["gray"])
 						embed.set_author(name="Price Alerts", icon_url=static_storage.icon_bw)
 						embed.set_footer(text=payload.get("sourceText"))
 						await ctx.interaction.edit_original_message(embed=embed)
@@ -121,24 +130,24 @@ class AlertCommand(BaseCommand):
 
 					newAlert["placement"] = "above" if newAlert["level"] > currentLevel else "below"
 
-					embed = Embed(title="Price alert set for {}{} at {}{}.".format(ticker.get("name"), "" if not bool(exchange) else " ({})".format(exchange.get("name")), levelText, "" if ticker.get("quote") is None else " " + ticker.get("quote")), color=constants.colors["deep purple"])
+					embed = Embed(title=f"Price alert set for {ticker.get('name')}{exchangeName} at {levelText}{pairQuoteName}.", color=constants.colors["deep purple"])
 					if currentPlatform in ["IEXC"]: embed.description = "The alert might trigger with up to 15-minute delay due to data licencing requirements on different exchanges."
 					embed.set_author(name="Alert successfully set", icon_url=static_storage.icon)
 					await ctx.interaction.edit_original_message(embed=embed)
 
 					if not request.is_registered():
-						await self.database.document("details/marketAlerts/{}/{}".format(request.authorId, alertId)).set(newAlert)
+						await self.database.document(f"details/marketAlerts/{request.authorId}/{alertId}").set(newAlert)
 					elif request.serverwide_price_alerts_available():
-						await self.database.document("details/marketAlerts/{}/{}".format(request.accountId, alertId)).set(newAlert)
+						await self.database.document(f"details/marketAlerts/{request.accountId}/{alertId}").set(newAlert)
 					elif request.personal_price_alerts_available():
-						await self.database.document("details/marketAlerts/{}/{}".format(request.accountId, alertId)).set(newAlert)
-						await self.database.document("accounts/{}".format(request.accountId)).set({"customer": {"addons": {"marketAlerts": 1}}}, merge=True)
+						await self.database.document(f"details/marketAlerts/{request.accountId}/{alertId}").set(newAlert)
+						await self.database.document(f"accounts/{request.accountId}").set({"customer": {"addons": {"marketAlerts": 1}}}, merge=True)
 
 					await self.database.document("discord/statistics").set({request.snapshot: {"alert": Increment(1)}}, merge=True)
 					await self.cleanup(ctx, request)
 
 			elif request.is_pro():
-				embed = Embed(title=":bell: Price Alerts are disabled.", description="You can enable Price Alerts feature for your account in [Discord Preferences](https://www.alphabotsystem.com/account/discord) or for the entire community in your [Communities Dashboard](https://www.alphabotsystem.com/communities/manage?id={}).".format(request.guildId), color=constants.colors["gray"])
+				embed = Embed(title=":bell: Price Alerts are disabled.", description=f"You can enable Price Alerts feature for your account in [Discord Preferences](https://www.alphabotsystem.com/account/discord) or for the entire community in your [Communities Dashboard](https://www.alphabotsystem.com/communities/manage?id={request.guildId}).", color=constants.colors["gray"])
 				embed.set_author(name="Price Alerts", icon_url=static_storage.icon_bw)
 				await ctx.interaction.edit_original_message(embed=embed)
 
@@ -150,7 +159,7 @@ class AlertCommand(BaseCommand):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /alert set {} {} {} {} {} {}".format(ctx.author.id, tickerId, level, assetType, venue, message, channel))
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /alert set {tickerId} {level} {assetType} {venue} {message} {channel}")
 			await self.unknown_error(ctx)
 
 	@alertGroup.command(name="list", description="List all price alerts.")
@@ -164,8 +173,8 @@ class AlertCommand(BaseCommand):
 
 			response1, response2 = [], []
 			if request.is_registered():
-				response1 = await self.database.collection("details/marketAlerts/{}".format(request.accountId)).get()
-			response2 = await self.database.collection("details/marketAlerts/{}".format(request.authorId)).get()
+				response1 = await self.database.collection(f"details/marketAlerts/{request.accountId}").get()
+			response2 = await self.database.collection(f"details/marketAlerts/{request.authorId}").get()
 			marketAlerts = [(e.id, e.to_dict(), request.accountId) for e in response1] + [(e.id, e.to_dict(), request.authorId) for e in response2]
 			totalAlertCount = len(marketAlerts)
 
@@ -175,21 +184,23 @@ class AlertCommand(BaseCommand):
 				await ctx.interaction.edit_original_message(embed=embed)
 
 			else:
-				embed = Embed(title="You've scheduled {} price alert{}.".format(totalAlertCount, "" if totalAlertCount == 1 else "s"), color=constants.colors["light blue"])
+				embed = Embed(title=f"You've scheduled {totalAlertCount} price alert{'' if totalAlertCount == 1 else 's'}.", color=constants.colors["light blue"])
 				await ctx.interaction.edit_original_message(embed=embed)
 
 				for key, alert, matchedId in marketAlerts:
 					currentPlatform = alert["request"].get("currentPlatform")
 					currentTask = alert["request"].get(currentPlatform)
 					ticker = currentTask.get("ticker")
+					exchangeName = f" ({ticker.get('exchange').get('name')})" if ticker.get("exchange") else ""
+					pairQuoteName = " " + ticker.get("quote") if ticker.get("quote") else ""
 
-					embed = Embed(title="{}{} price alert at {}{}.".format(ticker.get("name"), " ({})".format(ticker.get("exchange").get("name")) if ticker.get("exchange") else "", alert.get("levelText", alert["level"]), "" if ticker.get("quote") is None else " " + ticker.get("quote")), color=constants.colors["deep purple"])
+					embed = Embed(title=f"{ticker.get('name')}{exchangeName} price alert at {alert.get('levelText', alert['level'])}{pairQuoteName}.", color=constants.colors["deep purple"])
 					await ctx.followup.send(embed=embed, view=DeleteView(database=self.database, pathId=matchedId, alertId=key, userId=request.authorId), ephemeral=True)
 
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /alert list".format(ctx.author.id))
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /alert list")
 
 
 class DeleteView(View):
@@ -203,6 +214,6 @@ class DeleteView(View):
 	@button(label="Delete", style=ButtonStyle.danger)
 	async def delete(self, button: Button, interaction: Interaction):
 		if self.userId != interaction.user.id: return
-		await self.database.document("details/marketAlerts/{}/{}".format(self.pathId, self.alertId)).delete()
+		await self.database.document(f"details/marketAlerts/{self.pathId}/{self.alertId}").delete()
 		embed = Embed(title="Alert deleted", color=constants.colors["gray"])
 		await interaction.response.edit_message(embed=embed, view=None)

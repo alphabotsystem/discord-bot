@@ -26,7 +26,7 @@ class VolumeCommand(BaseCommand):
 		payload, quoteText = await Processor.process_task("quote", request.authorId, task)
 
 		if payload is None or "quoteVolume" not in payload:
-			errorMessage = "Requested volume for `{}` is not available.".format(currentTask.get("ticker").get("name")) if quoteText is None else quoteText
+			errorMessage = f"Requested volume for `{currentTask.get('ticker').get('name')}` is not available." if quoteText is None else quoteText
 			embed = Embed(title=errorMessage, color=constants.colors["gray"])
 			embed.set_author(name="Data not available", icon_url=static_storage.icon_bw)
 			await ctx.interaction.edit_original_message(embed=embed)
@@ -69,5 +69,5 @@ class VolumeCommand(BaseCommand):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /volume {} type:{} venue:{}".format(ctx.author.id, tickerId, assetType, venue))
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /volume {tickerId} type:{assetType} venue:{venue}")
 			await self.unknown_error(ctx)

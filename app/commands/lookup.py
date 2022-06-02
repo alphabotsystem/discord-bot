@@ -53,12 +53,12 @@ class LookupCommand(BaseCommand):
 
 			if total != 0:
 				embed = Embed(color=constants.colors["deep purple"])
-				embed.set_author(name="{} listings".format(ticker.get("base")))
+				embed.set_author(name=f"{ticker.get('base')} listings")
 				for quote, exchanges in listings:
-					embed.add_field(name="{} pair found on {} exchanges".format(quote, len(exchanges)), value="{}".format(", ".join(exchanges)), inline=False)
+					embed.add_field(name=f"{quote} pair found on {len(exchanges)} exchanges", value=", ".join(exchanges), inline=False)
 				await ctx.interaction.edit_original_message(embed=embed)
 			else:
-				embed = Embed(title="`{}` is not listed on any crypto exchange.".format(currentTask.get("ticker").get("name")), color=constants.colors["gray"])
+				embed = Embed(title=f"`{currentTask.get('ticker').get('name')}` is not listed on any crypto exchange.", color=constants.colors["gray"])
 				embed.set_author(name="No listings", icon_url=static_storage.icon_bw)
 				await ctx.interaction.edit_original_message(embed=embed)
 
@@ -67,7 +67,7 @@ class LookupCommand(BaseCommand):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /lookup markets {}".format(ctx.author.id, tickerId))
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /lookup markets {tickerId}")
 			await self.unknown_error(ctx)
 
 	@lookupGroup.command(name="top", description="Lookup top ganers and losers in the crypto space.")
@@ -132,5 +132,5 @@ class LookupCommand(BaseCommand):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /lookup top {}".format(ctx.author.id, category))
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /lookup top {category} limit: {limit}")
 			await self.unknown_error(ctx)

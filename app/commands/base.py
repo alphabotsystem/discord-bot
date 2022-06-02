@@ -156,31 +156,34 @@ class BaseCommand(Cog):
 		return indicatorList
 
 class Confirm(View):
-	def __init__(self, userId=None):
+	def __init__(self, user=None):
 		super().__init__(timeout=None)
-		self.userId = userId
+		self.user.id = user
 		self.value = None
 
 	@button(label="Confirm", style=ButtonStyle.primary)
 	async def confirm(self, button: Button, interaction: Interaction):
-		if self.userId != interaction.user.id: return
+		if self.user.id != interaction.user.id: return
 		self.value = True
 		self.stop()
 
 	@button(label="Cancel", style=ButtonStyle.secondary)
 	async def cancel(self, button: Button, interaction: Interaction):
-		if self.userId != interaction.user.id: return
+		if self.user.id != interaction.user.id: return
 		self.value = False
 		self.stop()
 
 
 class ActionsView(View):
-	def __init__(self, userId=None):
+	def __init__(self, user=None):
 		super().__init__(timeout=None)
-		self.userId = userId
+		self.user = user
 
 	@button(emoji=PartialEmoji.from_str("<:remove_response:929342678976565298>"), style=ButtonStyle.gray)
 	async def delete(self, button: Button, interaction: Interaction):
-		if self.userId != interaction.user.id and not interaction.permissions.manage_messages: return
+		if self.user.id != interaction.user.id:
+			if not interaction.permissions.manage_messages: return
+			embed = Embed(title="Chart has been removed by a moderator.", description=f"{interaction.user.mention} has removed the chart requested by {self.user.mention}.", color=constants.colors["pink"])
+			await interaction.response.send_message(embed=embed)
 		try: await interaction.message.delete()
 		except: return

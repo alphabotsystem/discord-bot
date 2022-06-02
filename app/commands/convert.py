@@ -37,7 +37,7 @@ class ConvertCommand(BaseCommand):
 				embed.set_author(name="Conversion not available", icon_url=static_storage.icon_bw)
 				await ctx.interaction.edit_original_message(embed=embed)
 			else:
-				embed = Embed(title="{} ≈ {}".format(payload["quotePrice"], payload["quoteConvertedPrice"]), color=constants.colors[payload["messageColor"]])
+				embed = Embed(title=f"{payload['quotePrice']} ≈ {payload['quoteConvertedPrice']}", color=constants.colors[payload["messageColor"]])
 				embed.set_author(name="Conversion", icon_url=static_storage.icon)
 				await ctx.interaction.edit_original_message(embed=embed)
 
@@ -46,5 +46,5 @@ class ConvertCommand(BaseCommand):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /convert {} {} {}".format(ctx.author.id, fromTicker, toTicker, amount))
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /convert {fromTicker} {toTicker} {amount}")
 			await self.unknown_error(ctx)

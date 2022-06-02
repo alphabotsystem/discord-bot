@@ -41,7 +41,7 @@ class HeatmapCommand(BaseCommand):
 		
 		actions = None
 		if len(files) != 0:
-			actions = ActionsView(userId=request.authorId)
+			actions = ActionsView(user=ctx.author)
 
 		await ctx.interaction.edit_original_message(embeds=embeds, files=files, view=actions)
 
@@ -93,5 +93,5 @@ class HeatmapCommand(BaseCommand):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /hmap {} autodelete:{}".format(ctx.author.id, " ".join(arguments), autodelete))
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /hmap {' '.join(arguments)} autodelete:{autodelete}")
 			await self.unknown_error(ctx)

@@ -27,7 +27,7 @@ class DetailsCommand(BaseCommand):
 		payload, detailText = await Processor.process_task("detail", request.authorId, task)
 
 		if payload is None:
-			errorMessage = "Requested details for `{}` are not available.".format(currentTask.get("ticker").get("name")) if detailText is None else detailText
+			errorMessage = f"Requested details for `{currentTask.get('ticker').get('name')}` are not available." if detailText is None else detailText
 			embed = Embed(title=errorMessage, color=constants.colors["gray"])
 			embed.set_author(name="Data not available", icon_url=static_storage.icon_bw)
 			await ctx.interaction.edit_original_message(embed=embed)
@@ -48,12 +48,12 @@ class DetailsCommand(BaseCommand):
 			if payload.get("volume") is not None:
 				assetFundementals += "\nTotal volume: {:,.0f} {}".format(payload["volume"], "USD")
 			if payload.get("industry") is not None:
-				assetFundementals += "\nIndustry: {}".format(payload["industry"])
+				assetFundementals += f"\nIndustry: {payload['industry']}"
 			if payload.get("info") is not None:
 				if payload["info"].get("location") is not None:
-					assetInfo += "\nLocation: {}".format(payload["info"]["location"])
+					assetInfo += f"\nLocation: {payload['info']['location']}"
 				if payload["info"].get("employees") is not None:
-					assetInfo += "\nEmployees: {}".format(payload["info"]["employees"])
+					assetInfo += f"\nEmployees: {payload['info']['employees']}"
 			if payload.get("supply") is not None:
 				if payload["supply"].get("total") is not None:
 					assetSupply += "\nTotal supply: {:,.0f} {}".format(payload["supply"]["total"], ticker.get("base"))
@@ -134,5 +134,5 @@ class DetailsCommand(BaseCommand):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /info {} type:{} venue:{}".format(ctx.author.id, tickerId, assetType, venue))
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /info {tickerId} type:{assetType} venue:{venue}")
 			await self.unknown_error(ctx)

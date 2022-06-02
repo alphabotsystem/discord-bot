@@ -48,15 +48,15 @@ class PaperCommand(BaseCommand):
 			await ctx.interaction.edit_original_message(embed=embed)
 			return
 
-		confirmation = Confirm(userId=request.authorId)
-		confirmationText = "Do you want to place a paper {} order of {} {} at {}?".format(orderType.replace("-", " "), pendingOrder.amountText, ticker.get("base"), pendingOrder.priceText)
+		confirmation = Confirm(user=ctx.author)
+		confirmationText = f"Do you want to place a paper {orderType} order of {pendingOrder.amountText} {ticker.get('base')} at {pendingOrder.priceText}?"
 		embed = Embed(title=confirmationText, description=pendingOrder.conversionText, color=constants.colors["pink"])
 		embed.set_author(name="Paper order confirmation", icon_url=pendingOrder.parameters.get("thumbnailUrl"))
 		await ctx.interaction.edit_original_message(embed=embed, view=confirmation)
 		await confirmation.wait()
 
 		if confirmation.value is None or not confirmation.value:
-			embed = Embed(title="Paper order has been canceled.", description="~~{}~~".format(confirmationText), color=constants.colors["gray"])
+			embed = Embed(title="Paper order has been canceled.", description=f"~~{confirmationText}~~", color=constants.colors["gray"])
 			embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon_bw)
 			await ctx.interaction.edit_original_message(embed=embed, view=None)
 
@@ -69,19 +69,19 @@ class PaperCommand(BaseCommand):
 
 			pendingOrder.parameters["request"] = task
 			if paper["globalLastReset"] == 0: paper["globalLastReset"] = int(time())
-			await self.database.document("accounts/{}".format(request.accountId)).set({"paperTrader": paper}, merge=True)
+			await self.database.document(f"accounts/{request.accountId}").set({"paperTrader": paper}, merge=True)
 			if pendingOrder.parameters["isLimit"]:
-				openOrders = await self.database.collection("details/openPaperOrders/{}".format(request.accountId)).get()
+				openOrders = await self.database.collection(f"details/openPaperOrders/{request.accountId}").get()
 				if len(openOrders) >= 50:
 					embed = Embed(title="You can only create up to 50 pending paper trades.", color=constants.colors["gray"])
 					embed.set_author(name="Maximum number of open paper orders reached", icon_url=static_storage.icon_bw)
 					await ctx.interaction.edit_original_message(embed=embed)
 					return
-				await self.database.document("details/openPaperOrders/{}/{}".format(request.accountId, str(uuid4()))).set(pendingOrder.parameters)
+				await self.database.document(f"details/openPaperOrders/{request.accountId}/{str(uuid4())}").set(pendingOrder.parameters)
 			else:
-				await self.database.document("details/paperOrderHistory/{}/{}".format(request.accountId, str(uuid4()))).set(pendingOrder.parameters)
+				await self.database.document(f"details/paperOrderHistory/{request.accountId}/{str(uuid4())}").set(pendingOrder.parameters)
 
-			successMessage = "Paper {} order of {} {} at {} was successfully {}.".format(orderType.replace("-", " "), pendingOrder.amountText, ticker.get("base"), pendingOrder.priceText, "placed" if pendingOrder.parameters["isLimit"] else "executed")
+			successMessage = f"Paper {orderType} order of {pendingOrder.amountText} {ticker.get('base')} at {pendingOrder.priceText} was successfully {'placed' if pendingOrder.parameters['isLimit'] else 'executed'}."
 			embed = Embed(title=successMessage, color=constants.colors["deep purple"])
 			embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon)
 			await ctx.interaction.edit_original_message(embed=embed)
@@ -122,7 +122,7 @@ class PaperCommand(BaseCommand):
 				payload, quoteText = await Processor.process_task("candle", request.authorId, task)
 
 				if payload is None or len(payload.get("candles", [])) == 0:
-					errorMessage = "Requested paper {} order for `{}` could not be executed.".format(orderType, currentTask.get("ticker").get("name")) if quoteText is None else quoteText
+					errorMessage = f"Requested paper {orderType} order for `{currentTask.get('ticker').get('name')}` could not be executed." if quoteText is None else quoteText
 					embed = Embed(title=errorMessage, color=constants.colors["gray"])
 					embed.set_author(name="Data not available", icon_url=static_storage.icon_bw)
 					await ctx.interaction.edit_original_message(embed=embed)
@@ -138,7 +138,7 @@ class PaperCommand(BaseCommand):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /paper {} {} {} {} {}".format(ctx.author.id, orderType, tickerId, amount, level, assetType))
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /paper {orderType} {tickerId} {amount} {level} {assetType}")
 			await self.unknown_error(ctx)
 
 	@paperGroup.command(name="buy", description="Execute a paper buy trade.")
@@ -173,7 +173,7 @@ class PaperCommand(BaseCommand):
 			if request is None: return
 
 			if request.is_registered():
-				paperOrders = await self.database.collection("details/openPaperOrders/{}".format(request.accountId)).get()
+				paperOrders = await self.database.collection(f"details/openPaperOrders/{request.accountId}").get()
 				paperBalances = request.accountProperties["paperTrader"].get("balance", {})
 
 				embed = Embed(title="Paper balance:", color=constants.colors["deep purple"])
@@ -226,7 +226,7 @@ class PaperCommand(BaseCommand):
 					valueText = "{:,.4f} USD".format(openOrdersValue)
 					embed.add_field(name="Locked up in open orders:", value=valueText, inline=True)
 
-				embed.description = "Holding {} asset{} with estimated total value of {:,.2f} USD and {:+,.2f} % ROI.{}".format(len(holdingAssets), "" if len(holdingAssets) == 1 else "s", totalValue, (totalValue / 10000 - 1) * 100, " Trading since {} with {} balance reset{}.".format(Utils.timestamp_to_date(lastResetTimestamp), resetCount, "" if resetCount == 1 else "s") if resetCount != 0 else "")
+				embed.description = "Holding {} asset{} with estimated total value of {:,.2f} USD and {:+,.2f} % ROI.{}".format(len(holdingAssets), "" if len(holdingAssets) == 1 else "s", totalValue, (totalValue / 10000 - 1) * 100, f" Trading since {Utils.timestamp_to_date(lastResetTimestamp)} with {resetCount} balance reset{'' if resetCount == 1 else 's'}." if resetCount != 0 else "")
 				await ctx.interaction.edit_original_message(embed=embed)
 
 			else:
@@ -237,7 +237,7 @@ class PaperCommand(BaseCommand):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /paper balance".format(ctx.author.id))
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /paper balance")
 			await self.unknown_error(ctx)
 
 	@paperGroup.command(name="orders", description="Fetch open paper orders.")
@@ -250,7 +250,7 @@ class PaperCommand(BaseCommand):
 			if request is None: return
 
 			if request.is_registered():
-				paperOrders = await self.database.collection("details/openPaperOrders/{}".format(request.accountId)).get()
+				paperOrders = await self.database.collection(f"details/openPaperOrders/{request.accountId}").get()
 				totalOrderCount = len(paperOrders)
 				if totalOrderCount == 0:
 					embed = Embed(title="No open paper orders.", color=constants.colors["deep purple"])
@@ -258,7 +258,7 @@ class PaperCommand(BaseCommand):
 					await ctx.interaction.edit_original_message(embed=embed)
 
 				else:
-					embed = Embed(title="You've set {} paper order{}.".format(totalOrderCount, "" if totalOrderCount == 1 else "s"), color=constants.colors["light blue"])
+					embed = Embed(title=f"You've set {totalOrderCount} paper order{'' if totalOrderCount == 1 else 's'}.", color=constants.colors["light blue"])
 					await ctx.interaction.edit_original_message(embed=embed)
 
 					for i, element in enumerate(paperOrders):
@@ -270,7 +270,7 @@ class PaperCommand(BaseCommand):
 						quoteText = ticker.get("quote")
 						side = order["orderType"].replace("-", " ")
 
-						embed = Embed(title="Paper {} {} {} at {} {}".format(side, order["amountText"], ticker.get("base"), order["priceText"], quoteText), color=constants.colors["deep purple"])
+						embed = Embed(title=f"Paper {side} {order['amountText']} {ticker.get('base')} at {order['priceText']} {quoteText}", color=constants.colors["deep purple"])
 						await ctx.followup.send(embed=embed, view=DeleteView(database=self.database, pathId=request.accountId, orderId=element.id, userId=request.authorId), ephemeral=True)
 
 			else:
@@ -281,7 +281,7 @@ class PaperCommand(BaseCommand):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /paper orders".format(ctx.author.id))
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /paper orders")
 
 	@paperGroup.command(name="history", description="Fetch open paper trading history.")
 	async def paper_history(
@@ -293,7 +293,7 @@ class PaperCommand(BaseCommand):
 			if request is None: return
 
 			if request.is_registered():
-				paperHistory = await self.database.collection("details/paperOrderHistory/{}".format(request.accountId)).limit(50).get()
+				paperHistory = await self.database.collection(f"details/paperOrderHistory/{request.accountId}").limit(50).get()
 				if len(paperHistory) == 0:
 					embed = Embed(title="No paper trading history.", color=constants.colors["deep purple"])
 					embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon)
@@ -312,7 +312,7 @@ class PaperCommand(BaseCommand):
 						if order["orderType"] == "buy": side = "Bought"
 						elif order["orderType"] == "sell": side = "Sold"
 						elif order["orderType"].startswith("stop"): side = "Stop sold"
-						embed.add_field(name="{} {} {} at {} {}".format(side, order["amountText"], ticker.get("base"), order["priceText"], ticker.get("quote")), value="{}".format(Utils.timestamp_to_date(order["timestamp"] / 1000)), inline=False)
+						embed.add_field(name=f"{side} {order['amountText']} {ticker.get('base')} at {order['priceText']} {ticker.get('quote')}", value=f"{Utils.timestamp_to_date(order['timestamp'] / 1000)}", inline=False)
 
 					await ctx.interaction.edit_original_message(embed=embed)
 			
@@ -324,7 +324,7 @@ class PaperCommand(BaseCommand):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /paper history".format(ctx.author.id))
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /paper history")
 			await self.unknown_error(ctx)
 
 	@paperGroup.command(name="leaderboard", description="Check Alpha's Paper Trader leaderboard.")
@@ -352,7 +352,7 @@ class PaperCommand(BaseCommand):
 						payload, quoteText = await Processor.process_conversion(request, asset, "USD", holding, [platform])
 						totalValue += payload["raw"]["quotePrice"][0] if quoteText is None else 0
 
-				paperOrders = await self.database.collection("details/openPaperOrders/{}".format(account.id)).get()
+				paperOrders = await self.database.collection(f"details/openPaperOrders/{account.id}").get()
 				for element in paperOrders:
 					order = element.to_dict()
 					if order["orderType"] in ["buy", "sell"]:
@@ -370,14 +370,14 @@ class PaperCommand(BaseCommand):
 			embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon)
 
 			for index, (balance, lastReset, authorId) in enumerate(topBalances[:10]):
-				embed.add_field(name="#{}: <@!{}> with {} USD".format(index + 1, authorId, balance), value="Since {}".format(Utils.timestamp_to_date(lastReset)), inline=False)
+				embed.add_field(name=f"#{index + 1}: <@!{authorId}> with {balance} USD", value=f"Since {Utils.timestamp_to_date(lastReset)}", inline=False)
 
 			await ctx.interaction.edit_original_message(embed=embed)
 
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /paper leaderboard".format(ctx.author.id))
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /paper leaderboard")
 			await self.unknown_error(ctx)
 
 	@paperGroup.command(name="reset", description="Reset paper trading balance.")
@@ -400,7 +400,7 @@ class PaperCommand(BaseCommand):
 				await ctx.interaction.edit_original_message(embed=embed)
 
 			elif request.accountProperties["paperTrader"]["globalLastReset"] + 604800 < time():
-				confirmation = Confirm(userId=request.authorId)
+				confirmation = Confirm(user=ctx.author)
 				embed = Embed(title="Do you really want to reset your paper balance? This cannot be undone.", description="Paper balance can only be reset once every seven days. Your last public reset date will be publicly visible.", color=constants.colors["pink"])
 				embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon)
 				await ctx.interaction.edit_original_message(embed=embed, view=confirmation)
@@ -426,15 +426,15 @@ class PaperCommand(BaseCommand):
 						if deleted >= batchSize:
 							return await delete_collection(collectionRef, batchSize)
 
-					await delete_collection(self.database.collection("details/openPaperOrders/{}".format(request.accountId)), 300)
-					await delete_collection(self.database.collection("details/paperOrderHistory/{}".format(request.accountId)), 300)
+					await delete_collection(self.database.collection(f"details/openPaperOrders/{request.accountId}"), 300)
+					await delete_collection(self.database.collection(f"details/paperOrderHistory/{request.accountId}"), 300)
 
 					paper = {
 						"globalResetCount": request.accountProperties["paperTrader"]["globalResetCount"] + 1,
 						"globalLastReset": int(time()),
 						"balance": DELETE_FIELD
 					}
-					await self.database.document("accounts/{}".format(request.accountId)).set({"paperTrader": paper}, merge=True)
+					await self.database.document(f"accounts/{request.accountId}").set({"paperTrader": paper}, merge=True)
 
 					embed = Embed(title="Paper balance has been reset successfully.", color=constants.colors["deep purple"])
 					embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon)
@@ -448,7 +448,7 @@ class PaperCommand(BaseCommand):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user="{}: /paper reset".format(ctx.author.id))
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /paper reset")
 			await self.unknown_error(ctx)
 
 	async def process_trade(self, paper, execAmount, execPrice, orderType, currentPlatform, request, payload):
@@ -481,7 +481,7 @@ class PaperCommand(BaseCommand):
 			execPriceText = "{:,.6f}".format(execPrice)
 			execAmountText = "{:,.6f}".format(execAmount)
 			async with ClientSession() as session:
-				async with session.get("https://cloud.iexapis.com/stable/stock/{}/logo?token={}".format(ticker.get("symbol"), environ["IEXC_KEY"])) as resp:
+				async with session.get(f"https://cloud.iexapis.com/stable/stock/{ticker.get('symbol')}/logo?token={environ['IEXC_KEY']}") as resp:
 					response = await resp.json()
 					thumbnailUrl = response["url"]
 
@@ -490,7 +490,7 @@ class PaperCommand(BaseCommand):
 
 		if execAmount == 0:
 			outputTitle = "Insuficient paper order size"
-			outputMessage = "Cannot execute an order of 0.0 {}.".format(ticker.get("base"))
+			outputMessage = f"Cannot execute an order of 0.0 {ticker.get('base')}."
 			return outputTitle, outputMessage, paper, None
 		elif (orderType.endswith("sell") and baseValue > baseBalance) or (orderType.endswith("buy") and quoteValue * 0.9999999999 > quoteBalance):
 			outputTitle = "Insuficient paper wallet balance"
@@ -498,7 +498,7 @@ class PaperCommand(BaseCommand):
 			return outputTitle, outputMessage, paper, None
 		elif (orderType.endswith("buy") and quoteBalance == 0) or (orderType.endswith("sell") and baseBalance == 0):
 			outputTitle = "Insuficient paper wallet balance"
-			outputMessage = "Your {} balance is empty.".format(ticker.get("quote") if orderType.endswith("buy") else ticker.get("base"))
+			outputMessage = f"Your {ticker.get('quote') if orderType.endswith('buy') else ticker.get('base')} balance is empty."
 			return outputTitle, outputMessage, paper, None
 
 		newOrder = {
@@ -514,7 +514,7 @@ class PaperCommand(BaseCommand):
 		if newOrder["isLimit"]:
 			newOrder["placement"] = "above" if newOrder["price"] > payload["candles"][-1][4] else "below"
 
-		priceText = "{} {}".format(execPriceText, ticker.get("quote"))
+		priceText = f"{execPriceText} {ticker.get('quote')}"
 		conversionText = "{} {} ≈ {:,.6f} {}".format(execAmountText, ticker.get("base"), quoteValue, ticker.get("quote"))
 
 		return None, None, paper, Order(newOrder, priceText=priceText, conversionText=conversionText, amountText=execAmountText)
@@ -571,7 +571,7 @@ class DeleteView(View):
 		if self.userId != interaction.user.id: return
 		properties = await DatabaseConnector(mode="account").get(self.pathId)
 
-		order = await self.database.document("details/openPaperOrders/{}/{}".format(self.pathId, self.orderId)).get()
+		order = await self.database.document(f"details/openPaperOrders/{self.pathId}/{self.orderId}").get()
 		if order is None: return
 		order = order.to_dict()
 
@@ -597,8 +597,8 @@ class DeleteView(View):
 		elif order["orderType"] == "sell":
 			baseBalance[base] += order["amount"]
 
-		await self.database.document("details/openPaperOrders/{}/{}".format(self.pathId, self.orderId)).delete()
-		await self.database.document("accounts/{}".format(self.pathId)).set({"paperTrader": properties["paperTrader"]}, merge=True)
+		await self.database.document(f"details/openPaperOrders/{self.pathId}/{self.orderId}").delete()
+		await self.database.document(f"accounts/{self.pathId}").set({"paperTrader": properties["paperTrader"]}, merge=True)
 
 		embed = Embed(title="Paper order has been canceled.", color=constants.colors["gray"])
 		await interaction.response.edit_message(embed=embed, view=None)

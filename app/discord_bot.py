@@ -81,7 +81,7 @@ async def on_guild_join(guild):
 			return
 		properties = await guild_secure_fetch(guild.id)
 		properties = CommandRequest.create_guild_settings(properties)
-		await database.document("discord/properties/guilds/{}".format(guild.id)).set(properties)
+		await database.document(f"discord/properties/guilds/{guild.id}").set(properties)
 		await update_guild_count()
 	except Exception:
 		print(format_exc())
@@ -99,7 +99,7 @@ async def update_guild_count():
 	if environ["PRODUCTION_MODE"] and len(bot.guilds) > 20000:
 		t = datetime.now().astimezone(utc)
 		await database.document("discord/statistics").set({"{}-{:02d}".format(t.year, t.month): {"servers": len(bot.guilds)}}, merge=True)
-		post("https://top.gg/api/bots/{}/stats".format(bot.user.id), data={"server_count": len(bot.guilds)}, headers={"Authorization": environ["TOPGG_KEY"]})
+		post(f"https://top.gg/api/bots/{bot.user.id}/stats", data={"server_count": len(bot.guilds)}, headers={"Authorization": environ["TOPGG_KEY"]})
 
 
 # -------------------------
@@ -158,14 +158,14 @@ async def send_alpha_messages(messageId, message):
 				await destinationUser.send(embed=embed)
 			except:
 				try:
-					mentionText = "<@!{}>!".format(message["user"]) if destinationUser is None else None
+					mentionText = f"<@!{message['user']}>!" if destinationUser is None else None
 					await destinationChannel.send(content=mentionText, embed=embed)
 				except: pass
-			await database.document("discord/properties/messages/{}".format(messageId)).delete()
+			await database.document(f"discord/properties/messages/{messageId}").delete()
 		elif message.get("channel") is not None:
 			try:
 				await destinationChannel.send(embed=embed)
-				await database.document("discord/properties/messages/{}".format(messageId)).delete()
+				await database.document(f"discord/properties/messages/{messageId}").delete()
 			except:
 				pass
 
@@ -213,14 +213,14 @@ async def security_check():
 					for i in range(0, len(guild.me.nick.replace(" ", "")) - 2):
 						nameSlice = guild.me.nick.lower().replace(" ", "")[i:i+3]
 						if nameSlice in guild.name.lower() and nameSlice not in ["the"]:
-							botNicknames.append("```{} ({}): {}```".format(guild.name, guild.id, guild.me.nick))
+							botNicknames.append(f"```{guild.name} ({guild.id}): {guild.me.nick}```")
 							break
 				else:
 					if isBlacklisted: alphaSettings["tosWatchlist"]["nicknames"]["blacklist"].pop(guild.name)
 					if isWhitelisted: alphaSettings["tosWatchlist"]["nicknames"]["whitelist"].pop(guild.name)
 
 		botNicknamesText = "No bot nicknames to review"
-		if len(botNicknames) > 0: botNicknamesText = "These guilds might be rebranding Alpha Bot:{}".format("".join(botNicknames))
+		if len(botNicknames) > 0: botNicknamesText = f"These guilds might be rebranding Alpha Bot: {''.join(botNicknames)}"
 
 		if environ["PRODUCTION_MODE"]:
 			usageReviewChannel = bot.get_channel(571786092077121536)
@@ -244,13 +244,13 @@ async def database_sanity_check():
 
 		for guildId in guilds:
 			if guildId not in guildIds:
-				await database.document("discord/properties/guilds/{}".format(guildId)).set({"stale": {"count": Increment(1), "timestamp": time()}}, merge=True)
+				await database.document(f"discord/properties/guilds/{guildId}").set({"stale": {"count": Increment(1), "timestamp": time()}}, merge=True)
 
 		for guildId in guildIds:
 			if guildId not in guilds:
 				properties = await guild_secure_fetch(guildId)
 				if not properties:
-					await database.document("discord/properties/guilds/{}".format(guildId)).set(CommandRequest.create_guild_settings({}))
+					await database.document(f"discord/properties/guilds/{guildId}").set(CommandRequest.create_guild_settings({}))
 
 	except Exception:
 		print(format_exc())
@@ -260,7 +260,7 @@ async def guild_secure_fetch(guildId):
 	properties = await guildProperties.get(guildId)
 
 	if properties is None:
-		properties = await database.document("discord/properties/guilds/{}".format(guildId)).get()
+		properties = await database.document(f"discord/properties/guilds/{guildId}").get()
 		properties = properties.to_dict()
 		if properties is None: properties = {}
 
@@ -309,13 +309,11 @@ async def on_message(message):
 				_availablePermissions = None if commandRequest.guildId == -1 else message.channel.permissions_for(message.guild.me)
 				hasPermissions = True if commandRequest.guildId == -1 else (_availablePermissions.send_messages and _availablePermissions.embed_links and _availablePermissions.attach_files and _availablePermissions.add_reactions and _availablePermissions.use_external_emojis and _availablePermissions.manage_messages)
 				if not hasPermissions:
-					await deprecation_message(message, "c", True)
+					await deprecation_message(message, "c")
 					return
 				elif not commandRequest.guildProperties["settings"]["setup"]["completed"]:
-					await deprecation_message(message, "c", True)
+					await deprecation_message(message, "c")
 					return
-
-			await deprecation_message(message, "c")
 
 			requestSlices = split(", c | c |, ", commandRequest.content.split(" ", 1)[1])
 			if len(requestSlices) > 1:
@@ -330,7 +328,7 @@ async def on_message(message):
 
 		elif commandRequest.content.startswith("x "):
 			if commandRequest.content.startswith(("x ichibot", "x ichi", "x login")):
-				await deprecation_message(message, "ichibot login", isGone=True)
+				await deprecation_message(message, "ichibot login")
 				return
 			elif commandRequest.guildId == -1:
 				_accountId = await accountProperties.match(_authorId)
@@ -355,19 +353,12 @@ async def on_message(message):
 # -------------------------
 
 async def chart(message, request, requestSlice):
-	sentMessages = []
 	try:
 		arguments = requestSlice.split(" ")
 
 		async with message.channel.typing():
 			outputMessage, task = await Processor.process_chart_arguments(request, arguments[1:], request.get_platform_order_for("c"), tickerId=arguments[0].upper())
-
-			if outputMessage is not None:
-				if outputMessage != "":
-					embed = Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/charting).", color=constants.colors["gray"])
-					embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
-					sentMessages.append(await message.channel.send(embed=embed))
-				return (sentMessages, len(sentMessages))
+			if outputMessage is not None: return
 
 			currentTask = task.get(task.get("currentPlatform"))
 			timeframes = task.pop("timeframes")
@@ -375,21 +366,16 @@ async def chart(message, request, requestSlice):
 				for p, t in timeframes.items(): task[p]["currentTimeframe"] = t[i]
 				payload, chartText = await Processor.process_task("chart", request.authorId, task)
 
-				if payload is None:
-					errorMessage = "Requested chart for `{}` is not available.".format(currentTask.get("ticker").get("name")) if chartText is None else chartText
-					embed = Embed(title=errorMessage, color=constants.colors["gray"])
-					embed.set_author(name="Chart not available", icon_url=static_storage.icon_bw)
-					sentMessages.append(await message.channel.send(embed=embed))
-				else:
+				if payload is not None:
 					currentTask = task.get(payload.get("platform"))
-					sentMessages.append(await message.channel.send(content=chartText, file=discord.File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, request.authorId, randint(1000, 9999)))))
+					embed = Embed(title=f"Alpha is transitioning to slash commands as is required by upcoming Discord changes. Use `/c` to avoid this warning. Old syntax will no longer work after deprecation <t:1656676800:R>.", color=constants.colors["red"])
+					# embed.set_image(url="https://firebasestorage.googleapis.com/v0/b/nlc-bot-36685.appspot.com/o/alpha%2Fassets%2Fdiscord%2Fslash-commands.gif?alt=media&token=32e05ba1-9b06-47b1-a037-d37036b382a6")
+					await message.channel.send(content=chartText, embed=embed, file=discord.File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, request.authorId, randint(1000, 9999))))
 
 	except CancelledError: pass
 	except Exception:
 		print(format_exc())
 		if environ["PRODUCTION_MODE"]: logging.report_exception(user=f"{message.author.id}: {message.clean_content}")
-		await unknown_error(message, request.authorId)
-	return (sentMessages, len(sentMessages))
 
 # -------------------------
 # Ichibot
@@ -402,9 +388,9 @@ async def process_ichibot_command(message, commandRequest, requestSlice):
 			embed = Embed(title=":dart: API key preferences are available in your Alpha Account settings.", description="[Sign into you Alpha Account](https://www.alphabotsystem.com/sign-in) and visit [Ichibot preferences](https://www.alphabotsystem.com/account/ichibot) to update your API keys.", color=constants.colors["deep purple"])
 			embed.set_author(name="Ichibot", icon_url=static_storage.ichibot)
 			await message.channel.send(embed=embed)
-		
+
 		elif commandRequest.is_registered():
-			origin = "{}_{}_ichibot".format(commandRequest.accountId, commandRequest.authorId)
+			origin = f"{commandRequest.accountId}_{commandRequest.authorId}_ichibot"
 
 			if origin in Ichibot.sockets:
 				socket = Ichibot.sockets.get(origin)
@@ -448,7 +434,8 @@ async def create_request(ctx, autodelete=-1):
 	# Ignore if user if locked in a prompt, or banned
 	if _authorId in constants.blockedUsers or _guildId in constants.blockedGuilds: return
 
-	await ctx.defer()
+	try: await ctx.defer()
+	except: return None
 
 	_accountProperties = {}
 	_guildProperties = await guildProperties.get(_guildId, {})
@@ -477,7 +464,7 @@ async def create_request(ctx, autodelete=-1):
 			await ctx.interaction.edit_original_message(embed=embed)
 			return None
 		elif not request.guildProperties["settings"]["setup"]["completed"]:
-			forceFetch = await database.document("discord/properties/guilds/{}".format(request.guildId)).get()
+			forceFetch = await database.document(f"discord/properties/guilds/{request.guildId}").get()
 			forcedFetch = CommandRequest.create_guild_settings(forceFetch.to_dict())
 			if forcedFetch["settings"]["setup"]["completed"]:
 				request.guildProperties = forcedFetch
@@ -523,17 +510,11 @@ async def unknown_error(ctx, authorId):
 	try: await ctx.channel.send(embed=embed)
 	except: return
 
-async def deprecation_message(ctx, command, isGone=False):
-	if isGone:
-		embed = Embed(title=f"Alpha is transitioning to slash commands as is required by upcoming Discord changes. Use `/{command}` instead of the old syntax.", color=constants.colors["red"])
-		embed.set_image(url="https://firebasestorage.googleapis.com/v0/b/nlc-bot-36685.appspot.com/o/alpha%2Fassets%2Fdiscord%2Fslash-commands.gif?alt=media&token=32e05ba1-9b06-47b1-a037-d37036b382a6")
-		try: await ctx.channel.send(embed=embed)
-		except: return
-	else:
-		embed = Embed(title=f"Alpha is transitioning to slash commands as is required by upcoming Discord changes. Use `/{command}` to avoid this warning. Old syntax will no longer work after deprecation <t:1656676800:R>.", color=constants.colors["red"])
-		# embed.set_image(url="https://firebasestorage.googleapis.com/v0/b/nlc-bot-36685.appspot.com/o/alpha%2Fassets%2Fdiscord%2Fslash-commands.gif?alt=media&token=32e05ba1-9b06-47b1-a037-d37036b382a6")
-		try: await ctx.channel.send(embed=embed)
-		except: return
+async def deprecation_message(ctx, command):
+	embed = Embed(title=f"Alpha is transitioning to slash commands as is required by upcoming Discord changes. Use `/{command}` instead of the old syntax.", color=constants.colors["red"])
+	embed.set_image(url="https://firebasestorage.googleapis.com/v0/b/nlc-bot-36685.appspot.com/o/alpha%2Fassets%2Fdiscord%2Fslash-commands.gif?alt=media&token=32e05ba1-9b06-47b1-a037-d37036b382a6")
+	try: await ctx.channel.send(embed=embed)
+	except: return
 
 
 # -------------------------
