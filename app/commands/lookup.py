@@ -55,6 +55,7 @@ class LookupCommand(BaseCommand):
 				embed = Embed(color=constants.colors["deep purple"])
 				embed.set_author(name=f"{ticker.get('base')} listings")
 				for quote, exchanges in listings:
+					if len(exchanges) == 0: continue
 					embed.add_field(name=f"{quote} pair found on {len(exchanges)} exchanges", value=", ".join(exchanges), inline=False)
 				await ctx.interaction.edit_original_message(embed=embed)
 			else:
@@ -121,7 +122,7 @@ class LookupCommand(BaseCommand):
 					if e.get("price_change_percentage_24h_in_currency", None) is not None:
 						response.append({"symbol": e["symbol"].upper(), "change": e["price_change_percentage_24h_in_currency"]})
 				response = sorted(response, key=lambda k: k["change"])[:10]
-				
+
 				embed = Embed(title="Top losers", color=constants.colors["deep purple"])
 				for token in response:
 					embed.add_field(name=token["symbol"], value="Lost {:,.2f} %".format(token["change"]), inline=True)
