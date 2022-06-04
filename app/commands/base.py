@@ -158,7 +158,7 @@ class BaseCommand(Cog):
 class Confirm(View):
 	def __init__(self, user=None):
 		super().__init__(timeout=None)
-		self.user.id = user
+		self.user = user
 		self.value = None
 
 	@button(label="Confirm", style=ButtonStyle.primary)

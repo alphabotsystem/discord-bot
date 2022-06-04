@@ -72,7 +72,7 @@ class AlertCommand(BaseCommand):
 					embed = Embed(title=errorMessage, color=constants.colors["gray"])
 					embed.set_author(name="Data not available", icon_url=static_storage.icon_bw)
 					await ctx.interaction.edit_original_message(embed=embed)
-				elif not channel.permissions_for(ctx.author).send_messages:
+				elif channel is not None and not channel.permissions_for(ctx.author).send_messages:
 					embed = Embed(title="You do not have permission to send messages in this channel.", color=constants.colors["gray"])
 					embed.set_author(name="Permission denied", icon_url=static_storage.icon_bw)
 					await ctx.interaction.edit_original_message(embed=embed)
