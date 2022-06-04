@@ -219,7 +219,7 @@ class PaperCommand(BaseCommand):
 						ticker = task.get("ticker").get("quote") if order["orderType"] == "buy" else task.get("ticker").get("base")
 						payload, quoteText = await Processor.process_conversion(request, ticker, "USD", order["amount"] * (order["price"] if order["orderType"] == "buy" else 1), [currentPlatform])
 						openOrdersValue += payload["raw"]["quotePrice"][0] if quoteText is None else 0
-						holdingAssets.add(currentPlatform + "_" + ticker.get("base"))
+						holdingAssets.add(currentPlatform + "_" + task.get("ticker").get("base"))
 
 				if openOrdersValue > 0:
 					totalValue += openOrdersValue
