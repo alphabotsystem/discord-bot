@@ -119,3 +119,4 @@ class IchibotCommand(BaseCommand):
 			print(format_exc())
 			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /ichibot login {exchange}")
 			await self.unknown_error(ctx)
+		finally: await request.deferment

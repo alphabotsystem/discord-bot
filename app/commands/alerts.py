@@ -161,6 +161,7 @@ class AlertCommand(BaseCommand):
 			print(format_exc())
 			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /alert set {tickerId} {level} {assetType} {venue} {message} {channel}")
 			await self.unknown_error(ctx)
+		finally: await request.deferment
 
 	@alertGroup.command(name="list", description="List all price alerts.")
 	async def alert_list(
@@ -201,6 +202,7 @@ class AlertCommand(BaseCommand):
 		except Exception:
 			print(format_exc())
 			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /alert list")
+		finally: await request.deferment
 
 
 class DeleteView(View):

@@ -8,7 +8,7 @@ from copy import deepcopy
 from datetime import datetime
 from pytz import utc
 from requests import post
-from asyncio import CancelledError, sleep
+from asyncio import CancelledError, sleep, gather, create_task
 from zmq import NOBLOCK
 from traceback import format_exc
 
@@ -331,13 +331,8 @@ async def on_message(message):
 				await deprecation_message(message, "ichibot login")
 				return
 			elif commandRequest.guildId == -1:
-				_accountId = await accountProperties.match(_authorId)
-				if _accountId is None:
-					_accountProperties = await accountProperties.get(str(_authorId), {})
-				else:
-					_accountProperties = await accountProperties.get(_accountId, {})
-				commandRequest.accountId = _accountId
-				commandRequest.accountProperties = _accountProperties
+				commandRequest.accountId = await accountProperties.match(_authorId)
+				commandRequest.accountProperties = await accountProperties.get(str(_authorId), {})
 
 				await process_ichibot_command(message, commandRequest, commandRequest.content.split(" ", 1)[1])
 				await database.document("discord/statistics").set({_snapshot: {"x": Increment(1)}}, merge=True)
@@ -433,33 +428,27 @@ async def process_ichibot_command(message, commandRequest, requestSlice):
 
 async def create_request(ctx, autodelete=-1):
 	_authorId = ctx.author.id
-	_accountId = None
 	_guildId = ctx.guild.id if ctx.guild is not None else -1
 	_channelId = ctx.channel.id if ctx.channel is not None else -1
 
 	# Ignore if user if locked in a prompt, or banned
 	if _authorId in constants.blockedUsers or _guildId in constants.blockedGuilds: return
 
-	try: await ctx.defer()
-	except: return None
-
-	_accountProperties = {}
-	_guildProperties = await guildProperties.get(_guildId, {})
-	if not ctx.author.bot:
-		_accountId = await accountProperties.match(_authorId)
-		if _accountId is None:
-			_accountProperties = await accountProperties.get(str(_authorId), {})
-		else:
-			_accountProperties = await accountProperties.get(_accountId, {})
+	responses = await gather(
+		accountProperties.match(_authorId),
+		accountProperties.get(str(_authorId), {}),
+		guildProperties.get(_guildId, {})
+	)
 
 	request = CommandRequest(
-		accountId=_accountId,
+		accountId=responses[0],
 		authorId=_authorId,
 		channelId=_channelId,
 		guildId=_guildId,
-		accountProperties=_accountProperties,
-		guildProperties=_guildProperties,
-		autodelete=autodelete
+		accountProperties=responses[1],
+		guildProperties=responses[2],
+		autodelete=autodelete,
+		deferment=create_task(ctx.defer())
 	)
 
 	if request.guildId != -1:

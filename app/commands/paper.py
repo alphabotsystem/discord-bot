@@ -140,6 +140,7 @@ class PaperCommand(BaseCommand):
 			print(format_exc())
 			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /paper {orderType} {tickerId} {amount} {level} {assetType}")
 			await self.unknown_error(ctx)
+		finally: await request.deferment
 
 	@paperGroup.command(name="buy", description="Execute a paper buy trade.")
 	async def paper_buy(
@@ -239,6 +240,7 @@ class PaperCommand(BaseCommand):
 			print(format_exc())
 			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /paper balance")
 			await self.unknown_error(ctx)
+		finally: await request.deferment
 
 	@paperGroup.command(name="orders", description="Fetch open paper orders.")
 	async def paper_orders(
@@ -282,6 +284,8 @@ class PaperCommand(BaseCommand):
 		except Exception:
 			print(format_exc())
 			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /paper orders")
+			await self.unknown_error(ctx)
+		finally: await request.deferment
 
 	@paperGroup.command(name="history", description="Fetch open paper trading history.")
 	async def paper_history(
@@ -326,6 +330,7 @@ class PaperCommand(BaseCommand):
 			print(format_exc())
 			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /paper history")
 			await self.unknown_error(ctx)
+		finally: await request.deferment
 
 	@paperGroup.command(name="leaderboard", description="Check Alpha's Paper Trader leaderboard.")
 	async def paper_leaderboard(
@@ -379,6 +384,7 @@ class PaperCommand(BaseCommand):
 			print(format_exc())
 			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /paper leaderboard")
 			await self.unknown_error(ctx)
+		finally: await request.deferment
 
 	@paperGroup.command(name="reset", description="Reset paper trading balance.")
 	async def paper_reset(
@@ -450,6 +456,7 @@ class PaperCommand(BaseCommand):
 			print(format_exc())
 			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /paper reset")
 			await self.unknown_error(ctx)
+		finally: await request.deferment
 
 	async def process_trade(self, paper, execAmount, execPrice, orderType, currentPlatform, request, payload):
 		outputTitle = None

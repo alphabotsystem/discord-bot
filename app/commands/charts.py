@@ -106,6 +106,7 @@ class ChartCommand(BaseCommand):
 			print(format_exc())
 			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /c {' '.join(arguments)} autodelete:{autodelete}")
 			await self.unknown_error(ctx)
+		finally: await request.deferment
 
 	# @slash_command(name="chart", description="Pull charts from TradingView, TradingLite, GoCharting, and more.")
 	# async def chart(

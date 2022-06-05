@@ -62,27 +62,35 @@ class FlowCommand(BaseCommand):
 			await ctx.interaction.edit_original_message(embed=embed)
 
 	async def flow_proxy(self, ctx, tickerId, autodelete):
-		request = await self.create_request(ctx, autodelete=autodelete)
-		if request is None: return
+		try:
+			request = await self.create_request(ctx, autodelete=autodelete)
+			if request is None: return
 
-		embed = Embed(title="Flow command is being updated, and is currently unavailable.", description="An updated flow command is coming after slash commands are stable, which is the priority. All Alpha Pro subscribers using Alpha Flow during August and September 2021 will receive reimbursment in form of credit, or a refund if requested. No charges were made since then. All trials will also be reset.", color=constants.colors["gray"])
-		await ctx.interaction.edit_original_message(embed=embed)
-		return
-
-		arguments = []
-		outputMessage, task = await Processor.process_chart_arguments(request, arguments, ["Alpha Flow"], tickerId=tickerId)
-
-		if outputMessage is not None:
-			embed = discord.Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/pro/flow).", color=constants.colors["gray"])
-			embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
-			await ctx.interaction.edit_original_message(embed=embed)
-			return
-		elif autodelete is not None and (autodelete < 1 or autodelete > 10):
-			embed = Embed(title="Response autodelete duration must be between one and ten minutes.", color=constants.colors["gray"])
+			embed = Embed(title="Flow command is being updated, and is currently unavailable.", description="An updated flow command is coming after slash commands are stable, which is the priority. All Alpha Pro subscribers using Alpha Flow during August and September 2021 will receive reimbursment in form of credit, or a refund if requested. No charges were made since then. All trials will also be reset.", color=constants.colors["gray"])
 			await ctx.interaction.edit_original_message(embed=embed)
 			return
 
-		self.respond(ctx, request, task)
+			arguments = []
+			outputMessage, task = await Processor.process_chart_arguments(request, arguments, ["Alpha Flow"], tickerId=tickerId)
+
+			if outputMessage is not None:
+				embed = discord.Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/pro/flow).", color=constants.colors["gray"])
+				embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
+				await ctx.interaction.edit_original_message(embed=embed)
+				return
+			elif autodelete is not None and (autodelete < 1 or autodelete > 10):
+				embed = Embed(title="Response autodelete duration must be between one and ten minutes.", color=constants.colors["gray"])
+				await ctx.interaction.edit_original_message(embed=embed)
+				return
+
+			self.respond(ctx, request, task)
+		
+		except CancelledError: pass
+		except Exception:
+			print(format_exc())
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /flow {tickerId} autodelete:{autodelete}")
+			await self.unknown_error(ctx)
+		finally: await request.deferment
 
 	@flowGroup.command(name="overview", description="Pull aggregated stocks orderflow overview.")
 	async def flow_overview(
@@ -90,14 +98,7 @@ class FlowCommand(BaseCommand):
 		ctx,
 		autodelete: Option(float, "Bot response self destruct timer in minutes.", name="autodelete", required=False, default=None)
 	):
-		try:
-			await self.flow_proxy(ctx, "options", autodelete)
-
-		except CancelledError: pass
-		except Exception:
-			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /flow overview autodelete:{autodelete}")
-			await self.unknown_error(ctx)
+		await self.flow_proxy(ctx, "options", autodelete)
 
 	@flowGroup.command(name="search", description="Pull aggregated orderflow of a single stock.")
 	async def flow_search(
@@ -106,11 +107,4 @@ class FlowCommand(BaseCommand):
 		tickerId: Option(str, "Ticker id of an asset.", name="ticker"),
 		autodelete: Option(float, "Bot response self destruct timer in minutes.", name="autodelete", required=False, default=None)
 	):
-		try:
-			await self.flow_proxy(ctx, tickerId.upper(), autodelete)
-
-		except CancelledError: pass
-		except Exception:
-			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /flow seearch {tickerId} autodelete:{autodelete}")
-			await self.unknown_error(ctx)
+		await self.flow_proxy(ctx, tickerId.upper(), autodelete)
