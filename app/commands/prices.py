@@ -55,11 +55,8 @@ class PriceCommand(BaseCommand):
 		arguments: Option(str, "Request arguments starting with ticker id.", name="arguments")
 	):
 		try:
-			s = perf_counter()
 			request = await self.create_request(ctx)
 			if request is None: return
-
-			print(perf_counter() - s)
 
 			defaultPlatforms = request.get_platform_order_for("p")
 
@@ -76,10 +73,7 @@ class PriceCommand(BaseCommand):
 				partArguments = part.lower().split()
 				if len(partArguments) == 0: continue
 
-				s = perf_counter()
 				outputMessage, task = await Processor.process_quote_arguments(request, partArguments[1:], defaultPlatforms, tickerId=partArguments[0].upper())
-
-				print(perf_counter() - s)
 
 				if outputMessage is not None:
 					embed = Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/prices).", color=constants.colors["gray"])
