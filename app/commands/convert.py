@@ -48,4 +48,3 @@ class ConvertCommand(BaseCommand):
 			print(format_exc())
 			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /convert {fromTicker} {toTicker} {amount}")
 			await self.unknown_error(ctx)
-		finally: await request.deferment

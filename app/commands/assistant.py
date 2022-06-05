@@ -54,7 +54,6 @@ class AlphaCommand(BaseCommand):
 			print(format_exc())
 			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /alpha {question}")
 			await self.unknown_error(ctx)
-		finally: await request.deferment
 
 	def process_reply(self, question, hasPermissions):
 		response = self.funnyReplies(question.lower())

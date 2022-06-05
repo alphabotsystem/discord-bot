@@ -90,7 +90,6 @@ class FlowCommand(BaseCommand):
 			print(format_exc())
 			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /flow {tickerId} autodelete:{autodelete}")
 			await self.unknown_error(ctx)
-		finally: await request.deferment
 
 	@flowGroup.command(name="overview", description="Pull aggregated stocks orderflow overview.")
 	async def flow_overview(

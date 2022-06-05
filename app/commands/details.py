@@ -136,4 +136,3 @@ class DetailsCommand(BaseCommand):
 			print(format_exc())
 			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /info {tickerId} type:{assetType} venue:{venue}")
 			await self.unknown_error(ctx)
-		finally: await request.deferment
