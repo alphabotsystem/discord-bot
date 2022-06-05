@@ -355,7 +355,7 @@ async def chart(message, request, requestSlice):
 			outputMessage, task = await Processor.process_chart_arguments(request, arguments[1:], request.get_platform_order_for("c"), tickerId=arguments[0].upper())
 			if outputMessage is not None: return
 
-			if task.get("requestCount") > 0:
+			if task.get("requestCount") > 1:
 				embed = Embed(title="Chained requests are no longer supported by traditional commands due to imminent deprecation. Use slash commands for this instead.", color=constants.colors["gray"])
 				embed.set_image(url="https://firebasestorage.googleapis.com/v0/b/nlc-bot-36685.appspot.com/o/alpha%2Fassets%2Fdiscord%2Fslash-commands.gif?alt=media&token=32e05ba1-9b06-47b1-a037-d37036b382a6")
 				await message.channel.send(embed=embed)
