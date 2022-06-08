@@ -107,51 +107,6 @@ class ChartCommand(BaseCommand):
 			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /c {' '.join(arguments)} autodelete:{autodelete}")
 			await self.unknown_error(ctx)
 
-	# @slash_command(name="chart", description="Pull charts from TradingView, TradingLite, GoCharting, and more.")
-	# async def chart(
-	# 	self,
-	# 	ctx,
-	# 	tickerId: Option(str, "Ticker id of an asset.", name="ticker"),
-	# 	assetType: Option(str, "Asset class of the ticker.", name="type", autocomplete=BaseCommand.get_types, required=False, default=""),
-	# 	venue: Option(str, "Venue to pull the data from.", name="venue", autocomplete=BaseCommand.get_venues, required=False, default=""),
-	# 	platform: Option(str, "Platform to get the chart from.", name="platform", autocomplete=BaseCommand.get_platforms, required=False, default=""),
-	# 	timeframe: Option(str, "Chart timeframe.", name="timeframe", autocomplete=BaseCommand.get_timeframes, required=False, default="1h"),
-	# 	indicators: Option(str, "List of indicators and studies.", name="indicators", autocomplete=BaseCommand.get_indicators, required=False, default=""),
-	# 	style: Option(str, "Chart type and style.", name="style", required=False, default=""),
-	# 	autodelete: Option(float, "Bot response self destruct timer in minutes.", name="autodelete", required=False, default=None)
-	# ):
-	# 	try:
-	# 		request = await self.create_request(ctx, autodelete=autodelete)
-	# 		if request is None: return
-
-	# 		defaultPlatforms = request.get_platform_order_for("c", assetType=assetType)
-	# 		preferredPlatforms = BaseCommand.sources["c"].get(assetType)
-	# 		platforms = [e for e in defaultPlatforms if preferredPlatforms is None or e in preferredPlatforms]
-
-	# 		arguments = [exchange, platform, timeframe, indicators, style]
-	# 		parts = arguments.split(",")
-
-	# 		outputMessage, task = await Processor.process_chart_arguments(request, partArguments[1:], platforms, tickerId=tickerId.upper())
-
-	# 		if outputMessage is not None:
-	# 			embed = Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/charting).", color=constants.colors["gray"])
-	# 			embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
-	# 			await ctx.interaction.edit_original_message(embed=embed)
-	# 			return
-	# 		elif autodelete is not None and (autodelete < 1 or autodelete > 10):
-	# 			embed = Embed(title="Response autodelete duration must be between one and ten minutes.", color=constants.colors["gray"])
-	# 			await ctx.interaction.edit_original_message(embed=embed)
-	# 			return
-			
-	# 		await self.respond(ctx, request, [task])
-
-	# 	except CancelledError: pass
-	# 	except Exception:
-	# 		print(format_exc())
-	# 		if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /c {' '.join(arguments)} autodelete:{autodelete}")
-	# 		await self.unknown_error(ctx)
-
-
 class IchibotView(ActionsView):
 	def __init__(self, eventLoop, task, user=None):
 		super().__init__(user=user)
