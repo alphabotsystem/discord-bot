@@ -140,44 +140,59 @@ async def send_alpha_messages(messageId, message):
 
 		destinationUser = None
 		destinationChannel = None
-		if message.get("primaryUser") is not None:
+		backupUser = None
+		backupChannel = None
+		error = ""
+
+		if message.get("user") is not None:
 			try:
-				destinationUser = bot.get_user(int(message["primaryUser"]))
+				destinationUser = bot.get_user(int(message["user"]))
 				if destinationUser is None:
-					destinationUser = await bot.fetch_user(int(message["primaryUser"]))
-			except:
-				try:
-					destinationChannel = bot.get_channel(int(message["backupChannel"]))
-					if destinationChannel is None:
-						destinationChannel = await bot.fetch_channel(int(message["backupChannel"]))
-				except: pass
+					destinationUser = await bot.fetch_user(int(message["user"]))
+			except: print(format_exc())
+			try:
+				backupChannel = bot.get_channel(int(message["backupChannel"]))
+				if backupChannel is None:
+					backupChannel = await bot.fetch_channel(int(message["backupChannel"]))
+			except: print(format_exc())
 		else:
 			try:
-				destinationChannel = bot.get_channel(int(message["primaryChannel"]))
+				destinationChannel = bot.get_channel(int(message["channel"]))
 				if destinationChannel is None:
-					destinationChannel = await bot.fetch_channel(int(message["primaryChannel"]))
-			except:
-				try:
-					destinationUser = bot.get_user(int(message["backupUser"]))
-					if destinationUser is None:
-						destinationUser = await bot.fetch_user(int(message["backupUser"]))
-				except: pass
+					destinationChannel = await bot.fetch_channel(int(message["channel"]))
+			except: print(format_exc())
+			try:
+				backupUser = bot.get_user(int(message["backupUser"]))
+				if backupUser is None:
+					backupUser = await bot.fetch_user(int(message["backupUser"]))
+			except: print(format_exc())
 
 		if destinationUser is not None:
 			try:
 				await destinationUser.send(embed=embed)
 			except:
-				try:
-					mentionText = f"<@!{message['user']}>!" if destinationUser is None else None
-					await destinationChannel.send(content=mentionText, embed=embed)
-				except: pass
+				print(format_exc())
 			await database.document(f"discord/properties/messages/{messageId}").delete()
 		elif destinationChannel is not None:
 			try:
 				await destinationChannel.send(embed=embed)
-				await database.document(f"discord/properties/messages/{messageId}").delete()
+			except Exception as e:
+				print(format_exc())
+				error = e.text.lower() if hasattr(e, 'text') else str(e)
+				print(error)
+			await database.document(f"discord/properties/messages/{messageId}").delete()
+
+		if backupChannel is not None:
+			try:
+				mentionText = f"<@!{message['user']}>, you weren't reachable via DMs!" if destinationUser is None else None
+				await backupChannel.send(content=mentionText, embed=embed)
 			except:
-				pass
+				print(format_exc())
+		elif backupUser is not None:
+			try:
+				await backupUser.send(content=f"The alert could not be sent into the channel that was initially requested. Reason: `{error}`", embed=embed)
+			except:
+				print(format_exc())
 
 	except Exception:
 		print(format_exc())
