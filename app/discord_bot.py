@@ -153,9 +153,9 @@ async def send_alpha_messages(messageId, message):
 				except: pass
 		else:
 			try:
-				destinationChannel = bot.get_channel(int(message["channel"]))
+				destinationChannel = bot.get_channel(int(message["primaryChannel"]))
 				if destinationChannel is None:
-					destinationChannel = await bot.fetch_channel(int(message["channel"]))
+					destinationChannel = await bot.fetch_channel(int(message["primaryChannel"]))
 			except:
 				try:
 					destinationUser = bot.get_user(int(message["backupUser"]))
