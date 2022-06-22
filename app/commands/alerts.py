@@ -31,7 +31,7 @@ class AlertCommand(BaseCommand):
 		venue: Option(str, "Venue to pull the data from.", name="venue", autocomplete=BaseCommand.get_venues, required=False, default=""),
 		message: Option(str, "Public message to display on trigger.", name="message", required=False, default=None),
 		channel: Option(TextChannel, "Channel to display the alert in.", name="channel", required=False, default=None),
-		role: Option(TextChannel, "Channel to display the alert in.", name="role", required=False, default=None)
+		role: Option(TextChannel, "Role to tag on trigger.", name="role", required=False, default=None)
 	):
 		try:
 			request = await self.create_request(ctx)
@@ -73,7 +73,11 @@ class AlertCommand(BaseCommand):
 					embed.set_author(name="Data not available", icon_url=static_storage.icon_bw)
 					await ctx.interaction.edit_original_message(embed=embed)
 				elif channel is not None and not channel.permissions_for(ctx.author).send_messages:
-					embed = Embed(title="You do not have permission to send messages in this channel.", color=constants.colors["gray"])
+					embed = Embed(title="You do not have the permission to send messages in this channel.", color=constants.colors["gray"])
+					embed.set_author(name="Permission denied", icon_url=static_storage.icon_bw)
+					await ctx.interaction.edit_original_message(embed=embed)
+				elif channel is not None and not channel.permissions_for(self.bot.user).send_messages:
+					embed = Embed(title="Alpha doesn't have the permission to send messages in this channel.", color=constants.colors["gray"])
 					embed.set_author(name="Permission denied", icon_url=static_storage.icon_bw)
 					await ctx.interaction.edit_original_message(embed=embed)
 				else:
@@ -90,6 +94,7 @@ class AlertCommand(BaseCommand):
 					newAlert = {
 						"timestamp": time(),
 						"channel": None if channel is None else channel.id,
+						"backupChannel": ctx.channel.id,
 						"service": "Discord",
 						"request": task,
 						"level": level,

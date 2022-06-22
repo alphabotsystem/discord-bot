@@ -140,20 +140,30 @@ async def send_alpha_messages(messageId, message):
 
 		destinationUser = None
 		destinationChannel = None
-		if message.get("user") is not None:
+		if message.get("primaryUser") is not None:
 			try:
-				destinationUser = bot.get_user(int(message["user"]))
+				destinationUser = bot.get_user(int(message["primaryUser"]))
 				if destinationUser is None:
-					destinationUser = await bot.fetch_user(int(message["user"]))
-			except: pass
-		if message.get("channel") is not None:
+					destinationUser = await bot.fetch_user(int(message["primaryUser"]))
+			except:
+				try:
+					destinationChannel = bot.get_channel(int(message["backupChannel"]))
+					if destinationChannel is None:
+						destinationChannel = await bot.fetch_channel(int(message["backupChannel"]))
+				except: pass
+		else:
 			try:
 				destinationChannel = bot.get_channel(int(message["channel"]))
 				if destinationChannel is None:
 					destinationChannel = await bot.fetch_channel(int(message["channel"]))
-			except: pass
+			except:
+				try:
+					destinationUser = bot.get_user(int(message["backupUser"]))
+					if destinationUser is None:
+						destinationUser = await bot.fetch_user(int(message["backupUser"]))
+				except: pass
 
-		if message.get("user") is not None:
+		if destinationUser is not None:
 			try:
 				await destinationUser.send(embed=embed)
 			except:
@@ -162,7 +172,7 @@ async def send_alpha_messages(messageId, message):
 					await destinationChannel.send(content=mentionText, embed=embed)
 				except: pass
 			await database.document(f"discord/properties/messages/{messageId}").delete()
-		elif message.get("channel") is not None:
+		elif destinationChannel is not None:
 			try:
 				await destinationChannel.send(embed=embed)
 				await database.document(f"discord/properties/messages/{messageId}").delete()
@@ -179,11 +189,11 @@ async def send_alpha_messages(messageId, message):
 
 async def security_check():
 	try:
-		guildNames = [e.name for e in bot.guilds]
+		guildIds = [e.id for e in bot.guilds]
 		guildsToRemove = []
 		for key in ["blacklist", "whitelist"]:
 			for guild in alphaSettings["tosWatchlist"]["nicknames"][key]:
-				if guild not in guildNames: guildsToRemove.append(guild)
+				if guild not in guildIds: guildsToRemove.append(guild)
 			for guild in guildsToRemove:
 				if guild in alphaSettings["tosWatchlist"]["nicknames"][key]: alphaSettings["tosWatchlist"]["nicknames"][key].pop(guild)
 
@@ -193,22 +203,22 @@ async def security_check():
 				await guild.leave()
 
 			if guild.me is not None:
-				isBlacklisted = guild.name in alphaSettings["tosWatchlist"]["nicknames"]["blacklist"]
-				isWhitelisted = guild.name in alphaSettings["tosWatchlist"]["nicknames"]["whitelist"]
+				isBlacklisted = str(guild.id) in alphaSettings["tosWatchlist"]["nicknames"]["blacklist"]
+				isWhitelisted = str(guild.id) in alphaSettings["tosWatchlist"]["nicknames"]["whitelist"]
 
 				if guild.me.nick is not None:
 					if isBlacklisted:
-						if guild.me.nick == alphaSettings["tosWatchlist"]["nicknames"]["blacklist"][guild.name]:
+						if guild.me.nick == alphaSettings["tosWatchlist"]["nicknames"]["blacklist"][str(guild.id)]:
 							if guild.me.guild_permissions.change_nickname:
 								try:
 									await guild.me.edit(nick=None)
-									alphaSettings["tosWatchlist"]["nicknames"]["blacklist"].pop(guild.name)
+									alphaSettings["tosWatchlist"]["nicknames"]["blacklist"].pop(str(guild.id))
 								except: pass
 							continue
-						else: alphaSettings["tosWatchlist"]["nicknames"]["blacklist"].pop(guild.name)
+						else: alphaSettings["tosWatchlist"]["nicknames"]["blacklist"].pop(str(guild.id))
 					if isWhitelisted:
-						if guild.me.nick == alphaSettings["tosWatchlist"]["nicknames"]["whitelist"][guild.name]: continue
-						else: alphaSettings["tosWatchlist"]["nicknames"]["whitelist"].pop(guild.name)
+						if guild.me.nick == alphaSettings["tosWatchlist"]["nicknames"]["whitelist"][str(guild.id)]: continue
+						else: alphaSettings["tosWatchlist"]["nicknames"]["whitelist"].pop(str(guild.id))
 
 					for i in range(0, len(guild.me.nick.replace(" ", "")) - 2):
 						nameSlice = guild.me.nick.lower().replace(" ", "")[i:i+3]
@@ -216,8 +226,8 @@ async def security_check():
 							botNicknames.append(f"```{guild.name} ({guild.id}): {guild.me.nick}```")
 							break
 				else:
-					if isBlacklisted: alphaSettings["tosWatchlist"]["nicknames"]["blacklist"].pop(guild.name)
-					if isWhitelisted: alphaSettings["tosWatchlist"]["nicknames"]["whitelist"].pop(guild.name)
+					if isBlacklisted: alphaSettings["tosWatchlist"]["nicknames"]["blacklist"].pop(str(guild.id))
+					if isWhitelisted: alphaSettings["tosWatchlist"]["nicknames"]["whitelist"].pop(str(guild.id))
 
 		botNicknamesText = "No bot nicknames to review"
 		if len(botNicknames) > 0: botNicknamesText = f"These guilds might be rebranding Alpha Bot: {''.join(botNicknames)}"
@@ -452,10 +462,10 @@ async def create_request(ctx, autodelete=-1):
 	)
 
 	if request.guildId != -1:
-		if len(alphaSettings["tosWatchlist"]["nicknames"]["blacklist"]) != 0 and ctx.interaction.guild.name in alphaSettings["tosWatchlist"]["nicknames"]["blacklist"]:
+		if str(ctx.interaction.guild.id) in alphaSettings["tosWatchlist"]["nicknames"]["blacklist"]:
 			embed = Embed(title="This Discord community guild was flagged for rebranding Alpha and is therefore violating the Terms of Service. Inability to comply will result in termination of all Alpha branded services.", color=0x000000)
 			embed.add_field(name="Terms of service", value="[Read now](https://www.alphabotsystem.com/terms-of-service)", inline=True)
-			embed.add_field(name="Alpha Discord guild", value="[Join now](https://discord.gg/GQeDE85)", inline=True)
+			embed.add_field(name="Alpha support Discord server", value="[Join now](https://discord.gg/GQeDE85)", inline=True)
 			await ctx.interaction.edit_original_message(embed=embed)
 			return None
 		elif not request.guildProperties["settings"]["setup"]["completed"]:
