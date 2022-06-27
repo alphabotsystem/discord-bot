@@ -304,15 +304,11 @@ async def on_message(message):
 		_rawMessage = " ".join(message.clean_content.split())
 		_messageContent = _rawMessage.lower()
 		_authorId = message.author.id if message.webhook_id is None else message.webhook_id
-		_accountId = None
 		_guildId = message.guild.id if message.guild is not None else -1
 		_channelId = message.channel.id if message.channel is not None else -1
 
 		# Ignore if user or server is banned
 		if _authorId in constants.blockedUsers or _guildId in constants.blockedGuilds: return
-
-		_accountProperties = {}
-		_guildProperties = await guildProperties.get(_guildId, {})
 
 		commandRequest = CommandRequest(
 			raw=_rawMessage,
@@ -320,41 +316,21 @@ async def on_message(message):
 			authorId=_authorId,
 			channelId=_channelId,
 			guildId=_guildId,
-			guildProperties=_guildProperties
 		)
 		_snapshot = "{}-{:02d}".format(message.created_at.year, message.created_at.month)
 
 		if commandRequest.content.startswith("/c "):
-			embed = Embed(title="Plain text commands will not work. To use slash commands, type `/c`, and select the command from the popup above the chat box.", color=constants.colors["red"])
+			embed = Embed(title="Slash commands won't work by sending plain text commands with a slash as a prefix. To use slash commands, type `/c`, and select the command from the popup above the chat box.", description="The reason for this is that Discord treats slash commands fundamentally differently from plain text messages. Bots, excluding for example those for moderation, will no longer have access to plain text at all. Slash commands get sent separately and directly to the bot. The only reason we are receiving this message right now is that we're still in a transitionary period. This period ends <t:1661990400:R>.", color=constants.colors["red"])
 			embed.set_image(url="https://firebasestorage.googleapis.com/v0/b/nlc-bot-36685.appspot.com/o/alpha%2Fassets%2Fdiscord%2Fslash-commands.gif?alt=media&token=32e05ba1-9b06-47b1-a037-d37036b382a6")
 			await message.channel.send(embed=embed)
 
 		if commandRequest.content.startswith("c "):
-			if commandRequest.guildId != -1:
-				_availablePermissions = None if commandRequest.guildId == -1 else message.channel.permissions_for(message.guild.me)
-				hasPermissions = True if commandRequest.guildId == -1 else (_availablePermissions.send_messages and _availablePermissions.embed_links and _availablePermissions.attach_files and _availablePermissions.add_reactions and _availablePermissions.use_external_emojis and _availablePermissions.manage_messages)
-				if not hasPermissions:
-					await deprecation_message(message, "c")
-					return
-				elif not commandRequest.guildProperties["settings"]["setup"]["completed"]:
-					await deprecation_message(message, "c")
-					return
-
-			requestSlices = split(", c | c |, ", commandRequest.content.split(" ", 1)[1])
-			if len(requestSlices) > 1:
-				embed = Embed(title="Chained requests are no longer supported by traditional commands due to imminent deprecation. Use slash commands for this instead.", color=constants.colors["gray"])
-				embed.set_image(url="https://firebasestorage.googleapis.com/v0/b/nlc-bot-36685.appspot.com/o/alpha%2Fassets%2Fdiscord%2Fslash-commands.gif?alt=media&token=32e05ba1-9b06-47b1-a037-d37036b382a6")
-				await message.channel.send(embed=embed)
-				return
-			for requestSlice in requestSlices:
-				await chart(message, commandRequest, requestSlice)
-
-			await database.document("discord/statistics").set({_snapshot: {"c": Increment(1)}}, merge=True)
+			await deprecation_message(message, "c")
 
 		elif commandRequest.content.startswith("x "):
 			if commandRequest.content.startswith(("x ichibot", "x ichi", "x login")):
 				await deprecation_message(message, "ichibot login")
-				return
+
 			elif commandRequest.guildId == -1:
 				commandRequest.accountId = await accountProperties.match(_authorId)
 				commandRequest.accountProperties = await accountProperties.get(str(_authorId), {})
@@ -367,41 +343,6 @@ async def on_message(message):
 		print(format_exc())
 		if environ["PRODUCTION_MODE"]: logging.report_exception()
 
-
-# -------------------------
-# Legacy
-# -------------------------
-
-async def chart(message, request, requestSlice):
-	try:
-		arguments = requestSlice.split(" ")
-
-		async with message.channel.typing():
-			outputMessage, task = await Processor.process_chart_arguments(request, arguments[1:], request.get_platform_order_for("c"), tickerId=arguments[0].upper())
-			if outputMessage is not None: return
-
-			if task.get("requestCount") > 1:
-				embed = Embed(title="Chained requests are no longer supported by traditional commands due to imminent deprecation. Use slash commands for this instead.", color=constants.colors["gray"])
-				embed.set_image(url="https://firebasestorage.googleapis.com/v0/b/nlc-bot-36685.appspot.com/o/alpha%2Fassets%2Fdiscord%2Fslash-commands.gif?alt=media&token=32e05ba1-9b06-47b1-a037-d37036b382a6")
-				await message.channel.send(embed=embed)
-				return
-
-			currentTask = task.get(task.get("currentPlatform"))
-			timeframes = task.pop("timeframes")
-			for i in range(task.get("requestCount")):
-				for p, t in timeframes.items(): task[p]["currentTimeframe"] = t[i]
-				payload, chartText = await Processor.process_task("chart", request.authorId, task)
-
-				if payload is not None:
-					currentTask = task.get(payload.get("platform"))
-					embed = Embed(title=f"Alpha is transitioning to slash commands as is required by upcoming Discord changes. Use `/c` to avoid this warning. Old syntax will no longer work after deprecation <t:1656676800:R>.", color=constants.colors["red"])
-					# embed.set_image(url="https://firebasestorage.googleapis.com/v0/b/nlc-bot-36685.appspot.com/o/alpha%2Fassets%2Fdiscord%2Fslash-commands.gif?alt=media&token=32e05ba1-9b06-47b1-a037-d37036b382a6")
-					await message.channel.send(content=chartText, embed=embed, file=discord.File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, request.authorId, randint(1000, 9999))))
-
-	except CancelledError: pass
-	except Exception:
-		print(format_exc())
-		if environ["PRODUCTION_MODE"]: logging.report_exception(user=f"{message.author.id}: {message.clean_content}")
 
 # -------------------------
 # Ichibot
