@@ -371,7 +371,7 @@ async def process_ichibot_command(message, commandRequest, requestSlice):
 					embed.set_author(name="Ichibot", icon_url=static_storage.ichibot)
 					await message.channel.send(embed=embed)
 			else:
-				embed = Embed(title="Ichibot connection is not open.", description="You can initiate a connection with `x login` followed by the exchange you want to connect to.", color=constants.colors["pink"])
+				embed = Embed(title="Ichibot connection is not open.", description="You can initiate a connection with `/ichibot login`.", color=constants.colors["pink"])
 				embed.set_author(name="Ichibot", icon_url=static_storage.ichibot)
 				missingExchangeMessage = await message.channel.send(embed=embed)
 
