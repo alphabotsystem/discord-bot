@@ -32,6 +32,10 @@ class BaseCommand(Cog):
 			"other": ["TradingView", "Finviz"],
 			"crypto": ["TradingView", "TradingLite", "GoCharting", "Bookmap"]
 		},
+		"hmap": {
+			"stocks": ["TradingView Stock Heatmap"],
+			"crypto": ["TradingView Crypto Heatmap"]
+		},
 		"flow": {
 			"stocks": ["Alpha Flow"]
 		},
@@ -87,8 +91,9 @@ class BaseCommand(Cog):
 		assetType = " ".join(ctx.options.get("type", "").lower().split())
 		venue = " ".join(ctx.options.get("venue", "").lower().split())
 
-		venues = await TickerParser.get_venues("", "")
-		venueType = [v for v in venues if v.lower().startswith(venue)]
+		if venue != "":
+			venues = await TickerParser.get_venues("")
+			venueType = [v for v in venues if v.lower().startswith(venue)]
 
 		return sorted([s for s in cls.sources.get(command) if s.lower().startswith(assetType) and (venue == "" or s in venueType)])
 
@@ -102,11 +107,15 @@ class BaseCommand(Cog):
 		venue = " ".join(ctx.options.get("venue", "").lower().split())
 
 		if assetType == "" and command == "ichibot": assetType = "crypto"
-		elif assetType == "" or tickerId == "": return []
-		platforms = cls.sources.get(command).get(assetType, [])
-		if len(platforms) == 0: return []
-		venues = await TickerParser.get_venues(",".join(platforms), tickerId)
+		elif tickerId == "": return []
 
+		types = cls.sources.get(command)
+		if assetType not in types:
+			platforms = list(set([e for v in types.values() for e in v]))
+		else:
+			platforms = types.get(assetType, [])
+
+		venues = await TickerParser.get_venues(",".join(platforms))
 		return sorted([v for v in venues if v.lower().startswith(venue)])
 
 	async def get_platforms(cls, ctx):
