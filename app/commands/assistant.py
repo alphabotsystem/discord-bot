@@ -1,6 +1,12 @@
 from os import environ
 from json import loads, load
 from random import choice
+from asyncio import CancelledError
+from traceback import format_exc
+
+from discord.commands import slash_command, Option
+
+from google.cloud.firestore import Increment
 
 from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
@@ -8,44 +14,75 @@ from google.auth.transport.grpc import secure_authorized_channel
 from google.assistant.embedded.v1alpha2 import embedded_assistant_pb2, embedded_assistant_pb2_grpc
 
 from helpers import constants
+from assets import static_storage
+from Processor import Processor
+
+from commands.base import BaseCommand
 
 
-class Assistant(object):
-	def __init__(self):
+class AlphaCommand(BaseCommand):
+	def __init__(self, bot, create_request, database, logging):
+		super().__init__(bot, create_request, database, logging)
+
 		assistantCredentials = Credentials(token=None, **loads(environ["GOOGLE_ASSISTANT_OAUTH"]))
 		http_request = Request()
 		assistantCredentials.refresh(http_request)
 		self.grpc_channel = secure_authorized_channel(assistantCredentials, http_request, "embeddedassistant.googleapis.com")
 
-	def process_reply(self, raw, rawCaps, hasPermissions):
-		command = raw.split(" ", 1)[1]
-		if command in ["help", "ping", "pro", "invite", "status", "vote", "referrals", "settings"] or not hasPermissions: return True, command
-		response = self.funnyReplies(rawCaps.lower())
-		if response is not None: return False, response
+	@slash_command(name="alpha", description="Look up definitions, wikipedia articles, and get answers to many other questions.")
+	async def assistant(
+		self,
+		ctx,
+		question: Option(str, "Question you want to ask.", name="question")
+	):
+		try:
+			request = await self.create_request(ctx)
+			if request is None: return
+
+			if len(question) > 500: return
+			response = await self.bot.loop.run_in_executor(None, self.process_reply, question, request.guildProperties["settings"]["assistant"]["enabled"])
+
+			if response is not None:
+				await ctx.interaction.edit_original_message(content=response)
+			else:
+				await ctx.interaction.edit_original_message(content="Sorry, I can't help you with that.")
+
+			await self.database.document("discord/statistics").set({request.snapshot: {"alpha": Increment(1)}}, merge=True)
+
+		except CancelledError: pass
+		except Exception:
+			print(format_exc())
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /alpha {question}")
+			await self.unknown_error(ctx)
+
+	def process_reply(self, question, hasPermissions):
+		response = self.funnyReplies(question.lower())
+		if response is not None: return response
 		with GoogleAssistant("en-US", "nlc-bot-36685-nlc-bot-9w6rhy", "Alpha", self.grpc_channel, 60 * 3 + 5) as assistant:
-			try: response, response_html = assistant.assist(text_query=rawCaps)
-			except: return False, None
+			try: response, response_html = assistant.assist(text_query=question)
+			except: return None
 
 			if response	is not None and response != "":
 				if "Here are some things you can ask for:" in response:
-					return True, "help"
+					return "You can learn more about Alpha at https://www.alphabotsystem.com"
 				elif any(trigger in response for trigger in constants.badPunTrigger):
 					with open("app/assets/jokes.json") as json_data:
-						return False, "Here's a pun that might make you laugh :smile:\n{}".format(choice(load(json_data)))
+						return f"Here's a pun that might make you laugh :smile:\n{choice(load(json_data))}"
 				else:
 					for override in constants.messageOverrides:
 						for trigger in constants.messageOverrides[override]:
 							if trigger.lower() in response.lower():
-								return False, override
-					return False, " ".join(response.replace("Google Assistant", "Alpha").replace("Google", "Alpha").split())
+								return override
+					return " ".join(response.replace("Google Assistant", "Alpha").replace("Google", "Alpha").split())
 			else:
-				return False, None
+				return None
 
 	def funnyReplies(self, raw):
 		for response in constants.funnyReplies:
 			for trigger in constants.funnyReplies[response]:
 				if raw == trigger: return response
 		return None
+
 
 class GoogleAssistant(object):
 	"""Sample Assistant that supports text based conversations.
