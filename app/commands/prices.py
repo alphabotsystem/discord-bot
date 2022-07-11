@@ -34,7 +34,7 @@ class PriceCommand(BaseCommand):
 				embed.set_author(name="Data not available", icon_url=static_storage.icon_bw)
 			else:
 				currentTask = task.get(payload.get("platform"))
-				if payload.get("platform") in ["Alternative.me"]:
+				if payload.get("platform") in ["Alternative.me", "CNN Business"]:
 					embed = Embed(title=f"{payload['quotePrice']} *({payload['change']})*", description=payload.get("quoteConvertedPrice", EmptyEmbed), color=constants.colors[payload["messageColor"]])
 					embed.set_author(name=payload["title"], icon_url=payload.get("thumbnailUrl"))
 					embed.set_footer(text=payload["sourceText"])

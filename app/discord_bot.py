@@ -1,15 +1,11 @@
 from os import environ, _exit
 environ["PRODUCTION_MODE"] = environ["PRODUCTION_MODE"] if "PRODUCTION_MODE" in environ and environ["PRODUCTION_MODE"] else ""
 
-from re import split
-from random import randint
 from time import time
-from copy import deepcopy
 from datetime import datetime
 from pytz import utc
 from requests import post
 from asyncio import CancelledError, sleep, gather, create_task
-from zmq import NOBLOCK
 from traceback import format_exc
 
 import discord
@@ -23,7 +19,6 @@ from assets import static_storage
 from helpers.utils import Utils
 from helpers import constants
 
-from TickerParser import TickerParser
 from Processor import Processor
 from DatabaseConnector import DatabaseConnector
 

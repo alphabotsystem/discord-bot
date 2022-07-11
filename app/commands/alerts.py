@@ -1,5 +1,6 @@
 from os import environ
 from time import time
+from re import split
 from uuid import uuid4
 from orjson import dumps, OPT_SORT_KEYS
 from asyncio import CancelledError
@@ -26,7 +27,7 @@ class AlertCommand(BaseCommand):
 		self,
 		ctx,
 		tickerId: Option(str, "Ticker id of an asset.", name="ticker"),
-		level: Option(float, "Trigger price for the alert.", name="price"),
+		levels: Option(str, "Trigger price for the alert.", name="price"),
 		assetType: Option(str, "Asset class of the ticker.", name="type", autocomplete=BaseCommand.get_types, required=False, default=""),
 		venue: Option(str, "Venue to pull the data from.", name="venue", autocomplete=BaseCommand.get_venues, required=False, default=""),
 		message: Option(str, "Public message to display on trigger.", name="message", required=False, default=None),
@@ -36,6 +37,14 @@ class AlertCommand(BaseCommand):
 		try:
 			request = await self.create_request(ctx)
 			if request is None: return
+
+			try:
+				levels = [float(e) for e in split(", |,", levels)]
+			except:
+				embed = Embed(title="Invalid price level requested.", description="Make sure the requested level is a valid number. If you're requesting multiple levels, make sure they are all valid and separated with a comma.", color=constants.colors["gray"])
+				embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
+				await ctx.interaction.edit_original_message(embed=embed)
+				return
 
 			defaultPlatforms = request.get_platform_order_for("alert", assetType=assetType)
 			preferredPlatforms = BaseCommand.sources["alert"].get(assetType)
@@ -84,71 +93,79 @@ class AlertCommand(BaseCommand):
 					currentPlatform = payload.get("platform")
 					currentTask = task.get(currentPlatform)
 					ticker = currentTask.get("ticker")
+					tickerHash = hash(dumps(ticker, option=OPT_SORT_KEYS))
 					exchange = ticker.get("exchange")
 					exchangeName = f" ({exchange.get('name')})" if exchange else ""
 					pairQuoteName = " " + ticker.get("quote") if ticker.get("quote") else ""
 
-					levelText = "{:,.10f}".format(level).rstrip('0').rstrip('.')
-
 					for platform in task.get("platforms"): task[platform]["ticker"].pop("tree")
-					newAlert = {
-						"timestamp": time(),
-						"channel": None if channel is None else channel.id,
-						"backupChannel": ctx.channel.id,
-						"service": "Discord",
-						"request": task,
-						"level": level,
-						"levelText": levelText,
-						"version": 4,
-						"triggerMessage": message,
-						"triggerTag": None if role is None else role.id,
-					}
-					alertId = str(uuid4())
-					hashName = hash(dumps(ticker, option=OPT_SORT_KEYS))
 
-					for alert in marketAlerts:
-						currentAlertPlatform = alert["request"].get("currentPlatform")
-						currentAlertRequest = alert["request"].get(currentAlertPlatform)
-						alertTicker = currentAlertRequest.get("ticker")
+					newAlerts = []
+					for level in levels:
+						levelText = "{:,.10f}".format(level).rstrip('0').rstrip('.')
 
-						if currentAlertPlatform == currentPlatform and hash(dumps(alertTicker, option=OPT_SORT_KEYS)) == hashName:
-							if alert["level"] == newAlert["level"]:
-								
-								embed = Embed(title=f"Price alert for {ticker.get('name')}{exchangeName} at {levelText}{pairQuoteName} already exists.", color=constants.colors["gray"])
-								embed.set_author(name="Alert already exists", icon_url=static_storage.icon_bw)
-								await ctx.interaction.edit_original_message(embed=embed)
-								return
-							elif alert["level"] * 0.999 < newAlert["level"] < alert["level"] * 1.001:
-								embed = Embed(title="Price alert within 0.1% already exists.", color=constants.colors["gray"])
-								embed.set_author(name="Alert already exists", icon_url=static_storage.icon_bw)
-								await ctx.interaction.edit_original_message(embed=embed)
-								return
+						for alert in marketAlerts:
+							currentAlertPlatform = alert["request"].get("currentPlatform")
+							currentAlertRequest = alert["request"].get(currentAlertPlatform)
+							alertTicker = currentAlertRequest.get("ticker")
 
-					currentLevel = payload["candles"][-1][4]
-					currentLevelText = "{:,.10f}".format(currentLevel).rstrip('0').rstrip('.')
-					if currentLevel * 0.2 > newAlert["level"] or currentLevel * 5 < newAlert["level"]:
-						embed = Embed(title=f"Your desired alert trigger level at {levelText} {ticker.get('quote')} is too far from the current price of {currentLevelText} {ticker.get('quote')}.", color=constants.colors["gray"])
-						embed.set_author(name="Price Alerts", icon_url=static_storage.icon_bw)
-						embed.set_footer(text=payload.get("sourceText"))
-						await ctx.interaction.edit_original_message(embed=embed)
-						return
+							if currentAlertPlatform == currentPlatform and hash(dumps(alertTicker, option=OPT_SORT_KEYS)) == tickerHash:
+								if alert["level"] == level:
+									embed = Embed(title=f"Price alert for {ticker.get('name')}{exchangeName} at {levelText}{pairQuoteName} already exists.", color=constants.colors["gray"])
+									embed.set_author(name="Alert already exists", icon_url=static_storage.icon_bw)
+									await ctx.interaction.edit_original_message(embed=embed)
+									return
+								elif alert["level"] * 0.999 < level < alert["level"] * 1.001:
+									embed = Embed(title="Price alert within 0.1% already exists.", color=constants.colors["gray"])
+									embed.set_author(name="Alert already exists", icon_url=static_storage.icon_bw)
+									await ctx.interaction.edit_original_message(embed=embed)
+									return
 
-					newAlert["placement"] = "above" if newAlert["level"] > currentLevel else "below"
+						currentLevel = payload["candles"][-1][4]
+						currentLevelText = "{:,.10f}".format(currentLevel).rstrip('0').rstrip('.')
+						if currentLevel * 0.2 > level or currentLevel * 5 < level:
+							embed = Embed(title=f"Your desired alert trigger level at {levelText} {ticker.get('quote')} is too far from the current price of {currentLevelText} {ticker.get('quote')}.", color=constants.colors["gray"])
+							embed.set_author(name="Price Alerts", icon_url=static_storage.icon_bw)
+							embed.set_footer(text=payload.get("sourceText"))
+							await ctx.interaction.edit_original_message(embed=embed)
+							return
 
-					embed = Embed(title=f"Price alert set for {ticker.get('name')}{exchangeName} at {levelText}{pairQuoteName}.", color=constants.colors["deep purple"])
-					if currentPlatform in ["IEXC"]: embed.description = "The alert might trigger with up to 15-minute delay due to data licencing requirements on different exchanges."
-					embed.set_author(name="Alert successfully set", icon_url=static_storage.icon)
+						newAlerts.append({
+							"timestamp": time(),
+							"channel": None if channel is None else channel.id,
+							"backupChannel": ctx.channel.id,
+							"service": "Discord",
+							"request": task,
+							"level": level,
+							"levelText": levelText,
+							"version": 4,
+							"triggerMessage": message,
+							"triggerTag": None if role is None else role.id,
+							"placement": "above" if level > currentLevel else "below"
+						})
+
+					if len(newAlerts) == 1:
+						embed = Embed(title=f"Price alert set for {ticker.get('name')}{exchangeName} at {newAlerts[0]['levelText']}{pairQuoteName}.", color=constants.colors["deep purple"])
+						if currentPlatform in ["IEXC"]: embed.description = "The alert might trigger with up to 15-minute delay due to data licencing requirements on different exchanges."
+						embed.set_author(name="Alert successfully set", icon_url=static_storage.icon)
+					else:
+						levelsText = ", ".join([e["levelText"] for e in newAlerts])
+						embed = Embed(title=f"Price alerts set for {ticker.get('name')}{exchangeName} at {levelsText}{pairQuoteName}.", color=constants.colors["deep purple"])
+						if currentPlatform in ["IEXC"]: embed.description = "Alerts might trigger with up to 15-minute delay due to data licencing requirements on different exchanges."
+						embed.set_author(name="Alerts successfully set", icon_url=static_storage.icon)
 					await ctx.interaction.edit_original_message(embed=embed)
 
-					if not request.is_registered():
-						await self.database.document(f"details/marketAlerts/{request.authorId}/{alertId}").set(newAlert)
-					elif request.serverwide_price_alerts_available():
-						await self.database.document(f"details/marketAlerts/{request.accountId}/{alertId}").set(newAlert)
-					elif request.personal_price_alerts_available():
-						await self.database.document(f"details/marketAlerts/{request.accountId}/{alertId}").set(newAlert)
-						await self.database.document(f"accounts/{request.accountId}").set({"customer": {"addons": {"marketAlerts": 1}}}, merge=True)
+					for newAlert in newAlerts:
+						alertId = str(uuid4())
+						if not request.is_registered():
+							await self.database.document(f"details/marketAlerts/{request.authorId}/{alertId}").set(newAlert)
+						elif request.serverwide_price_alerts_available():
+							await self.database.document(f"details/marketAlerts/{request.accountId}/{alertId}").set(newAlert)
+						elif request.personal_price_alerts_available():
+							await self.database.document(f"details/marketAlerts/{request.accountId}/{alertId}").set(newAlert)
+							await self.database.document(f"accounts/{request.accountId}").set({"customer": {"addons": {"marketAlerts": 1}}}, merge=True)
 
-					await self.database.document("discord/statistics").set({request.snapshot: {"alert": Increment(1)}}, merge=True)
+					await self.database.document("discord/statistics").set({request.snapshot: {"alert": Increment(len(levels))}}, merge=True)
 					await self.cleanup(ctx, request)
 
 			elif request.is_pro():
