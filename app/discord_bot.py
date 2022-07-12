@@ -5,7 +5,7 @@ from time import time
 from datetime import datetime
 from pytz import utc
 from requests import post
-from asyncio import CancelledError, sleep, gather, create_task
+from asyncio import CancelledError, sleep, gather, wait, create_task
 from traceback import format_exc
 
 import discord
@@ -262,15 +262,18 @@ async def database_sanity_check():
 
 		guildIds = [str(g.id) for g in bot.guilds]
 
+		tasks = []
 		for guildId in guilds:
 			if guildId not in guildIds:
-				await database.document(f"discord/properties/guilds/{guildId}").set({"stale": {"count": Increment(1), "timestamp": time()}}, merge=True)
+				tasks.append(database.document(f"discord/properties/guilds/{guildId}").set({"stale": {"count": Increment(1), "timestamp": time()}}, merge=True))
 
 		for guildId in guildIds:
 			if guildId not in guilds:
 				properties = await guild_secure_fetch(guildId)
 				if not properties:
-					await database.document(f"discord/properties/guilds/{guildId}").set(CommandRequest.create_guild_settings({}))
+					tasks.append(database.document(f"discord/properties/guilds/{guildId}").set(CommandRequest.create_guild_settings({})))
+
+		await wait(tasks)
 
 	except Exception:
 		print(format_exc())
