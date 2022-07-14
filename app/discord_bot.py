@@ -456,7 +456,7 @@ bot.add_cog(DetailsCommand(bot, create_request, database, logging))
 bot.add_cog(LookupCommand(bot, create_request, database, logging))
 bot.add_cog(PaperCommand(bot, create_request, database, logging))
 bot.add_cog(IchibotCommand(bot, create_request, database, logging))
-bot.add_cog(CopeVoteCommand(bot, create_request, database, logging))
+# bot.add_cog(CopeVoteCommand(bot, create_request, database, logging))
 
 
 # -------------------------
