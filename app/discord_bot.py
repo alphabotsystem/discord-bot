@@ -406,7 +406,6 @@ async def create_request(ctx, autodelete=-1):
 
 	ephemeral = False
 	if ctx.command.qualified_name == "alpha":
-		print(guild)
 		ephemeral = not guild["settings"]["assistant"]["enabled"]
 
 	request = CommandRequest(
