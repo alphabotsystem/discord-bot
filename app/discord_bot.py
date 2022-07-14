@@ -391,28 +391,33 @@ async def process_ichibot_command(message, commandRequest, requestSlice):
 # -------------------------
 
 async def create_request(ctx, autodelete=-1):
-	_authorId = ctx.author.id
-	_guildId = ctx.guild.id if ctx.guild is not None else -1
-	_channelId = ctx.channel.id if ctx.channel is not None else -1
+	authorId = ctx.author.id
+	guildId = ctx.guild.id if ctx.guild is not None else -1
+	channelId = ctx.channel.id if ctx.channel is not None else -1
 
 	# Ignore if user if locked in a prompt, or banned
-	if _authorId in constants.blockedUsers or _guildId in constants.blockedGuilds: return
+	if authorId in constants.blockedUsers or guildId in constants.blockedGuilds: return
 
-	responses = await gather(
-		accountProperties.match(_authorId),
-		accountProperties.get(str(_authorId), {}),
-		guildProperties.get(_guildId, {})
+	[accountId, user, guild] = await gather(
+		accountProperties.match(authorId),
+		accountProperties.get(str(authorId), {}),
+		guildProperties.get(guildId, {})
 	)
 
+	ephemeral = False
+	if ctx.command.qualified_name == "alpha":
+		print(guild)
+		ephemeral = not guild["settings"]["assistant"]["enabled"]
+
 	request = CommandRequest(
-		accountId=responses[0],
-		authorId=_authorId,
-		channelId=_channelId,
-		guildId=_guildId,
-		accountProperties=responses[1],
-		guildProperties=responses[2],
+		accountId=accountId,
+		authorId=authorId,
+		channelId=channelId,
+		guildId=guildId,
+		accountProperties=user,
+		guildProperties=guild,
 		autodelete=autodelete,
-		deferment=create_task(ctx.defer())
+		deferment=create_task(ctx.defer(ephemeral=ephemeral))
 	)
 
 	if request.guildId != -1:
