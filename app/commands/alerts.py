@@ -68,9 +68,9 @@ class AlertCommand(BaseCommand):
 				if request.is_registered():
 					response1 = await self.database.collection(f"details/marketAlerts/{request.accountId}").get()
 				response2 = await self.database.collection(f"details/marketAlerts/{request.authorId}").get()
-				marketAlerts = [e.to_dict() for e in response1] + [e.to_dict() for e in response2]
+				priceAlerts = [e.to_dict() for e in response1] + [e.to_dict() for e in response2]
 
-				if len(marketAlerts) >= 50:
+				if len(priceAlerts) >= 50:
 					embed = Embed(title="You can only create up to 50 price alerts.", color=constants.colors["gray"])
 					embed.set_author(name="Maximum number of price alerts reached", icon_url=static_storage.icon_bw)
 					await ctx.interaction.edit_original_message(embed=embed)
@@ -105,7 +105,7 @@ class AlertCommand(BaseCommand):
 					for level in levels:
 						levelText = "{:,.10f}".format(level).rstrip('0').rstrip('.')
 
-						for alert in marketAlerts:
+						for alert in priceAlerts:
 							currentAlertPlatform = alert["request"].get("currentPlatform")
 							currentAlertRequest = alert["request"].get(currentAlertPlatform)
 							alertTicker = currentAlertRequest.get("ticker")
@@ -158,24 +158,13 @@ class AlertCommand(BaseCommand):
 
 					for newAlert in newAlerts:
 						alertId = str(uuid4())
-						if not request.is_registered():
-							await self.database.document(f"details/marketAlerts/{request.authorId}/{alertId}").set(newAlert)
-						elif request.serverwide_price_alerts_available():
-							await self.database.document(f"details/marketAlerts/{request.accountId}/{alertId}").set(newAlert)
-						elif request.personal_price_alerts_available():
-							await self.database.document(f"details/marketAlerts/{request.accountId}/{alertId}").set(newAlert)
-							await self.database.document(f"accounts/{request.accountId}").set({"customer": {"addons": {"marketAlerts": 1}}}, merge=True)
+						await self.database.document(f"details/marketAlerts/{request.authorId}/{alertId}").set(newAlert)
 
 					await self.database.document("discord/statistics").set({request.snapshot: {"alert": Increment(len(levels))}}, merge=True)
 					await self.cleanup(ctx, request)
 
-			elif request.is_pro():
-				embed = Embed(title=":bell: Price Alerts are disabled.", description=f"You can enable Price Alerts feature for your account in [Discord Preferences](https://www.alphabotsystem.com/account/discord) or for the entire community in your [Communities Dashboard](https://www.alphabotsystem.com/communities/manage?id={request.guildId}).", color=constants.colors["gray"])
-				embed.set_author(name="Price Alerts", icon_url=static_storage.icon_bw)
-				await ctx.interaction.edit_original_message(embed=embed)
-
 			else:
-				embed = Embed(title=":gem: Price Alerts are available to Alpha Pro users or communities for only $2.00 per month.", description="If you'd like to start your 14-day free trial, visit your [subscription page](https://www.alphabotsystem.com/account/subscription).", color=constants.colors["deep purple"])
+				embed = Embed(title=":gem: Price Alerts are available as an Alpha Pro Subscription for individuals or communities for only $2.00 per month.", description="If you'd like to start your 30-day free trial, visit your [subscription page](https://www.alphabotsystem.com/subscriptions).", color=constants.colors["deep purple"])
 				embed.set_image(url="https://www.alphabotsystem.com/files/uploads/pro-hero.jpg")
 				await ctx.interaction.edit_original_message(embed=embed)
 
@@ -198,8 +187,8 @@ class AlertCommand(BaseCommand):
 			if request.is_registered():
 				response1 = await self.database.collection(f"details/marketAlerts/{request.accountId}").get()
 			response2 = await self.database.collection(f"details/marketAlerts/{request.authorId}").get()
-			marketAlerts = [(e.id, e.to_dict(), request.accountId) for e in response1] + [(e.id, e.to_dict(), request.authorId) for e in response2]
-			totalAlertCount = len(marketAlerts)
+			priceAlerts = [(e.id, e.to_dict(), request.accountId) for e in response1] + [(e.id, e.to_dict(), request.authorId) for e in response2]
+			totalAlertCount = len(priceAlerts)
 
 			if totalAlertCount == 0:
 				embed = Embed(title="You haven't set any alerts yet.", color=constants.colors["gray"])
@@ -210,7 +199,7 @@ class AlertCommand(BaseCommand):
 				embed = Embed(title=f"You've scheduled {totalAlertCount} price alert{'' if totalAlertCount == 1 else 's'}.", color=constants.colors["light blue"])
 				await ctx.interaction.edit_original_message(embed=embed)
 
-				for key, alert, matchedId in marketAlerts:
+				for key, alert, matchedId in priceAlerts:
 					currentPlatform = alert["request"].get("currentPlatform")
 					currentTask = alert["request"].get(currentPlatform)
 					ticker = currentTask.get("ticker")

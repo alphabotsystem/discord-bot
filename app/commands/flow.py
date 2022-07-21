@@ -46,18 +46,9 @@ class FlowCommand(BaseCommand):
 
 			await self.database.document("discord/statistics").set({request.snapshot: {"flow": Increment(1)}}, merge=True)
 			await self.cleanup(ctx, request, removeView=True)
-		elif request.is_pro():
-			if not message.author.bot and message.channel.permissions_for(message.author).administrator:
-				embed = discord.Embed(title=":microscope: Alpha Flow is disabled.", description=f"You can enable Alpha Flow feature for your account in [Discord Preferences](https://www.alphabotsystem.com/account/discord) or for the entire community in your [Communities Dashboard](https://www.alphabotsystem.com/communities/manage?id={request.guildId}).", color=constants.colors["gray"])
-				embed.set_author(name="Alpha Flow", icon_url=static_storage.icon_bw)
-				await ctx.interaction.edit_original_message(embed=embed)
-			else:
-				embed = discord.Embed(title=":microscope: Alpha Flow is disabled.", description="You can enable Alpha Flow feature for your account in [Discord Preferences](https://www.alphabotsystem.com/account/discord).", color=constants.colors["gray"])
-				embed.set_author(name="Alpha Flow", icon_url=static_storage.icon_bw)
-				await ctx.interaction.edit_original_message(embed=embed)
 
 		else:
-			embed = discord.Embed(title=":gem: Alpha Flow is available to Alpha Pro users or communities for only $15.00 per month.", description="If you'd like to start your 14-day free trial, visit your [subscription page](https://www.alphabotsystem.com/account/subscription).", color=constants.colors["deep purple"])
+			embed = discord.Embed(title=":gem: Options and crypto orderflow is available as an Alpha Pro Subscription for individuals or communities for only $15.00 per month.", description="If you'd like to start your 30-day free trial, visit your [subscription page](https://www.alphabotsystem.com/subscriptions).", color=constants.colors["deep purple"])
 			embed.set_image(url="https://www.alphabotsystem.com/files/uploads/pro-hero.jpg")
 			await ctx.interaction.edit_original_message(embed=embed)
 
