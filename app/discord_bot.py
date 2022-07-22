@@ -91,7 +91,7 @@ async def on_guild_remove(guild):
 		if environ["PRODUCTION_MODE"]: logging.report_exception(user=str(guild.id))
 
 async def update_guild_count():
-	if environ["PRODUCTION_MODE"] and len(bot.guilds) > 20000:
+	if environ["PRODUCTION_MODE"] and len(bot.guilds) > 24000:
 		t = datetime.now().astimezone(utc)
 		await database.document("discord/statistics").set({"{}-{:02d}".format(t.year, t.month): {"servers": len(bot.guilds)}}, merge=True)
 		post(f"https://top.gg/api/bots/{bot.user.id}/stats", data={"server_count": len(bot.guilds)}, headers={"Authorization": environ["TOPGG_KEY"]})
