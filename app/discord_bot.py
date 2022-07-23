@@ -75,6 +75,7 @@ async def on_guild_join(guild):
 			await guild.leave()
 			return
 		properties = await guild_secure_fetch(guild.id)
+		properties.pop("connection", None)
 		properties = CommandRequest.create_guild_settings(properties)
 		await database.document(f"discord/properties/guilds/{guild.id}").set(properties)
 		await update_guild_count()
