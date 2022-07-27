@@ -50,8 +50,7 @@ class AlertCommand(BaseCommand):
 			preferredPlatforms = BaseCommand.sources["alert"].get(assetType)
 			platforms = [e for e in defaultPlatforms if preferredPlatforms is None or e in preferredPlatforms]
 
-			if True:
-			# if request.price_alerts_available():
+			if request.price_alerts_available():
 				arguments = [venue]
 				outputMessage, task = await Processor.process_quote_arguments(request, arguments, platforms, tickerId=tickerId.upper())
 
