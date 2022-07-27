@@ -113,7 +113,7 @@ class PaperCommand(BaseCommand):
 
 				outputMessage, task = await Processor.process_quote_arguments(request, [], platforms, tickerId=tickerId.upper())
 				if outputMessage is not None:
-					embed = Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/paper-trader).", color=constants.colors["gray"])
+					embed = Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/paper-trading).", color=constants.colors["gray"])
 					embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
 					await ctx.interaction.edit_original_message(embed=embed)
 					return
@@ -131,7 +131,7 @@ class PaperCommand(BaseCommand):
 				await self.respond(ctx, request, task, payload, amount, level, orderType)
 
 			else:
-				embed = Embed(title=":joystick: You must have an Alpha Account connected to your Discord to use Alpha Paper Trader.", description="[Sign up for a free account on our website](https://www.alphabotsystem.com/sign-up). If you already signed up, [sign in](https://www.alphabotsystem.com/sign-in), and connect your account with your Discord profile.", color=constants.colors["deep purple"])
+				embed = Embed(title=":joystick: You must have an Alpha Account connected to your Discord to use Alpha Paper Trader.", description="[Sign up for a free account on our website](https://www.alphabotsystem.com/signup). If you already signed up, [sign in](https://www.alphabotsystem.com/login), and connect your account with your Discord profile.", color=constants.colors["deep purple"])
 				embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon)
 				await ctx.interaction.edit_original_message(embed=embed)
 
@@ -230,7 +230,7 @@ class PaperCommand(BaseCommand):
 				await ctx.interaction.edit_original_message(embed=embed)
 
 			else:
-				embed = Embed(title=":joystick: You must have an Alpha Account connected to your Discord to use Alpha Paper Trader.", description="[Sign up for a free account on our website](https://www.alphabotsystem.com/sign-up). If you already signed up, [sign in](https://www.alphabotsystem.com/sign-in), and connect your account with your Discord profile.", color=constants.colors["deep purple"])
+				embed = Embed(title=":joystick: You must have an Alpha Account connected to your Discord to use Alpha Paper Trader.", description="[Sign up for a free account on our website](https://www.alphabotsystem.com/signup). If you already signed up, [sign in](https://www.alphabotsystem.com/login), and connect your account with your Discord profile.", color=constants.colors["deep purple"])
 				embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon)
 				await ctx.interaction.edit_original_message(embed=embed)
 
@@ -274,7 +274,7 @@ class PaperCommand(BaseCommand):
 						await ctx.followup.send(embed=embed, view=DeleteView(database=self.database, pathId=request.accountId, orderId=element.id, userId=request.authorId), ephemeral=True)
 
 			else:
-				embed = Embed(title=":joystick: You must have an Alpha Account connected to your Discord to use Alpha Paper Trader.", description="[Sign up for a free account on our website](https://www.alphabotsystem.com/sign-up). If you already signed up, [sign in](https://www.alphabotsystem.com/sign-in), and connect your account with your Discord profile.", color=constants.colors["deep purple"])
+				embed = Embed(title=":joystick: You must have an Alpha Account connected to your Discord to use Alpha Paper Trader.", description="[Sign up for a free account on our website](https://www.alphabotsystem.com/signup). If you already signed up, [sign in](https://www.alphabotsystem.com/login), and connect your account with your Discord profile.", color=constants.colors["deep purple"])
 				embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon)
 				await ctx.interaction.edit_original_message(embed=embed)
 
@@ -318,7 +318,7 @@ class PaperCommand(BaseCommand):
 					await ctx.interaction.edit_original_message(embed=embed)
 			
 			else:
-				embed = Embed(title=":joystick: You must have an Alpha Account connected to your Discord to use Alpha Paper Trader.", description="[Sign up for a free account on our website](https://www.alphabotsystem.com/sign-up). If you already signed up, [sign in](https://www.alphabotsystem.com/sign-in), and connect your account with your Discord profile.", color=constants.colors["deep purple"])
+				embed = Embed(title=":joystick: You must have an Alpha Account connected to your Discord to use Alpha Paper Trader.", description="[Sign up for a free account on our website](https://www.alphabotsystem.com/signup). If you already signed up, [sign in](https://www.alphabotsystem.com/login), and connect your account with your Discord profile.", color=constants.colors["deep purple"])
 				embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon)
 				await ctx.interaction.edit_original_message(embed=embed)
 
@@ -391,7 +391,7 @@ class PaperCommand(BaseCommand):
 			if request is None: return
 
 			if not request.is_registered():
-				embed = Embed(title=":joystick: You must have an Alpha Account connected to your Discord to use Alpha Paper Trader.", description="[Sign up for a free account on our website](https://www.alphabotsystem.com/sign-up). If you already signed up, [sign in](https://www.alphabotsystem.com/sign-in), and connect your account with your Discord profile.", color=constants.colors["deep purple"])
+				embed = Embed(title=":joystick: You must have an Alpha Account connected to your Discord to use Alpha Paper Trader.", description="[Sign up for a free account on our website](https://www.alphabotsystem.com/signup). If you already signed up, [sign in](https://www.alphabotsystem.com/login), and connect your account with your Discord profile.", color=constants.colors["deep purple"])
 				embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon)
 				await ctx.interaction.edit_original_message(embed=embed)
 

@@ -88,7 +88,7 @@ class ChartCommand(BaseCommand):
 				outputMessage, task = await Processor.process_chart_arguments(request, partArguments[1:], defaultPlatforms, tickerId=partArguments[0].upper())
 
 				if outputMessage is not None:
-					embed = Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/charting).", color=constants.colors["gray"])
+					embed = Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/charting).", color=constants.colors["gray"])
 					embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
 					await ctx.interaction.edit_original_message(embed=embed)
 					return
@@ -122,7 +122,7 @@ class IchibotView(ActionsView):
 			accountProperties = await self.accountProperties.get(accountId, {})
 
 		if not accountProperties.get("apiKeys", {}):
-			embed = Embed(title="Before you can execute trades via Ichibot, you have to add exchange API keys.", description="You can add API keys for FTX, Binance and Binance Futures to you Alpha Account in your [Ichibot Preferences](https://www.alphabotsystem.com/account/ichibot).", color=constants.colors["gray"])
+			embed = Embed(title="Before you can execute trades via Ichibot, you have to add exchange API keys.", description="You can add API keys for FTX, Binance and Binance Futures to you Alpha Account in your [Ichibot Preferences](https://www.alphabotsystem.com/account/trading).", color=constants.colors["gray"])
 			embed.set_author(name="Ichibot", icon_url=static_storage.ichibot)
 			await interaction.response.send_message(embed=embed, ephemeral=True)
 			return accountId, None, None

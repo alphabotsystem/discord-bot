@@ -351,7 +351,7 @@ async def process_ichibot_command(message, commandRequest, requestSlice):
 	sentMessages = []
 	try:
 		if requestSlice == "login":
-			embed = Embed(title=":dart: API key preferences are available in your Alpha Account settings.", description="[Sign into you Alpha Account](https://www.alphabotsystem.com/sign-in) and visit [Ichibot preferences](https://www.alphabotsystem.com/account/ichibot) to update your API keys.", color=constants.colors["deep purple"])
+			embed = Embed(title=":dart: API key preferences are available in your Alpha Account settings.", description="[Sign into you Alpha Account](https://www.alphabotsystem.com/login) and visit [Ichibot preferences](https://www.alphabotsystem.com/account/trading) to update your API keys.", color=constants.colors["deep purple"])
 			embed.set_author(name="Ichibot", icon_url=static_storage.ichibot)
 			await message.channel.send(embed=embed)
 
@@ -375,7 +375,7 @@ async def process_ichibot_command(message, commandRequest, requestSlice):
 				missingExchangeMessage = await message.channel.send(embed=embed)
 
 		else:
-			embed = Embed(title=":dart: You must have an Alpha Account connected to your Discord to execute live trades.", description="[Sign up for a free account on our website](https://www.alphabotsystem.com/sign-up). If you already signed up, [sign in](https://www.alphabotsystem.com/sign-in), connect your account with your Discord profile, and add an API key.", color=constants.colors["deep purple"])
+			embed = Embed(title=":dart: You must have an Alpha Account connected to your Discord to execute live trades.", description="[Sign up for a free account on our website](https://www.alphabotsystem.com/signup). If you already signed up, [sign in](https://www.alphabotsystem.com/login), connect your account with your Discord profile, and add an API key.", color=constants.colors["deep purple"])
 			embed.set_author(name="Ichibot", icon_url=static_storage.ichibot)
 			await message.channel.send(embed=embed)
 

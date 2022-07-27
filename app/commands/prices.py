@@ -76,7 +76,7 @@ class PriceCommand(BaseCommand):
 				outputMessage, task = await Processor.process_quote_arguments(request, partArguments[1:], defaultPlatforms, tickerId=partArguments[0].upper())
 
 				if outputMessage is not None:
-					embed = Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/prices).", color=constants.colors["gray"])
+					embed = Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/prices).", color=constants.colors["gray"])
 					embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
 					await ctx.interaction.edit_original_message(embed=embed)
 					return
@@ -111,7 +111,7 @@ class PriceCommand(BaseCommand):
 			outputMessage, task = await Processor.process_quote_arguments(request, arguments, platforms, tickerId=tickerId.upper())
 
 			if outputMessage is not None:
-				embed = Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/prices).", color=constants.colors["gray"])
+				embed = Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/prices).", color=constants.colors["gray"])
 				embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
 				await ctx.interaction.edit_original_message(embed=embed)
 				return

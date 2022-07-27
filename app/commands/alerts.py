@@ -55,7 +55,7 @@ class AlertCommand(BaseCommand):
 				outputMessage, task = await Processor.process_quote_arguments(request, arguments, platforms, tickerId=tickerId.upper())
 
 				if outputMessage is not None:
-					embed = Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/pro/price-alerts).", color=constants.colors["gray"])
+					embed = Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/price-alerts).", color=constants.colors["gray"])
 					embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
 					await ctx.interaction.edit_original_message(embed=embed)
 					return
@@ -164,7 +164,7 @@ class AlertCommand(BaseCommand):
 
 			else:
 				embed = Embed(title=":gem: Price Alerts are available as an Alpha Pro Subscription for individuals or communities for only $2.00 per month.", description="If you'd like to start your 30-day free trial, visit your [subscription page](https://www.alphabotsystem.com/subscriptions).", color=constants.colors["deep purple"])
-				embed.set_image(url="https://www.alphabotsystem.com/files/uploads/pro-hero.jpg")
+				# embed.set_image(url="https://www.alphabotsystem.com/files/uploads/pro-hero.jpg")
 				await ctx.interaction.edit_original_message(embed=embed)
 
 		except CancelledError: pass

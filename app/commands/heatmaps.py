@@ -161,7 +161,7 @@ class HeatmapCommand(BaseCommand):
 			outputMessage, task = await Processor.process_heatmap_arguments(request, arguments, platforms)
 
 			if outputMessage is not None:
-				embed = Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/guide/heat-maps).", color=constants.colors["gray"])
+				embed = Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/heatmaps).", color=constants.colors["gray"])
 				embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
 				await ctx.interaction.edit_original_message(embed=embed)
 				return
