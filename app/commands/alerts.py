@@ -170,7 +170,7 @@ class AlertCommand(BaseCommand):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /alert set {tickerId} {level} {assetType} {venue} {message} {channel}")
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /alert set {tickerId} {levels} {assetType} {venue} {message} {channel}")
 			await self.unknown_error(ctx)
 
 	@alertGroup.command(name="list", description="List all price alerts.")
