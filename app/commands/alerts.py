@@ -105,11 +105,9 @@ class AlertCommand(BaseCommand):
 						levelText = "{:,.10f}".format(level).rstrip('0').rstrip('.')
 
 						for alert in priceAlerts:
-							currentAlertPlatform = alert["request"].get("currentPlatform")
-							currentAlertRequest = alert["request"].get(currentAlertPlatform)
-							alertTicker = currentAlertRequest.get("ticker")
+							alertTicker = alert["request"].get("ticker")
 
-							if currentAlertPlatform == currentPlatform and hash(dumps(alertTicker, option=OPT_SORT_KEYS)) == tickerHash:
+							if hash(dumps(alertTicker, option=OPT_SORT_KEYS)) == tickerHash:
 								if alert["level"] == level:
 									embed = Embed(title=f"Price alert for {ticker.get('name')}{exchangeName} at {levelText}{pairQuoteName} already exists.", color=constants.colors["gray"])
 									embed.set_author(name="Alert already exists", icon_url=static_storage.icon_bw)
@@ -135,7 +133,7 @@ class AlertCommand(BaseCommand):
 							"channel": None if channel is None else channel.id,
 							"backupChannel": ctx.channel.id,
 							"service": "Discord",
-							"request": task,
+							"request": currentTask,
 							"level": level,
 							"levelText": levelText,
 							"version": 4,
@@ -146,12 +144,12 @@ class AlertCommand(BaseCommand):
 
 					if len(newAlerts) == 1:
 						embed = Embed(title=f"Price alert set for {ticker.get('name')}{exchangeName} at {newAlerts[0]['levelText']}{pairQuoteName}.", color=constants.colors["deep purple"])
-						if currentPlatform in ["IEXC"]: embed.description = "The alert might trigger with up to 15-minute delay due to data licencing requirements on different exchanges."
+						if currentPlatform == "IEXC": embed.description = "The alert might trigger with up to 15-minute delay due to data licencing requirements on different exchanges."
 						embed.set_author(name="Alert successfully set", icon_url=static_storage.icon)
 					else:
 						levelsText = ", ".join([e["levelText"] for e in newAlerts])
 						embed = Embed(title=f"Price alerts set for {ticker.get('name')}{exchangeName} at {levelsText}{pairQuoteName}.", color=constants.colors["deep purple"])
-						if currentPlatform in ["IEXC"]: embed.description = "Alerts might trigger with up to 15-minute delay due to data licencing requirements on different exchanges."
+						if currentPlatform == "IEXC": embed.description = "Alerts might trigger with up to 15-minute delay due to data licencing requirements on different exchanges."
 						embed.set_author(name="Alerts successfully set", icon_url=static_storage.icon)
 					await ctx.interaction.edit_original_message(embed=embed)
 
@@ -202,9 +200,7 @@ class AlertCommand(BaseCommand):
 				await ctx.interaction.edit_original_message(embed=embed)
 
 				for key, alert, matchedId in priceAlerts:
-					currentPlatform = alert["request"].get("currentPlatform")
-					currentTask = alert["request"].get(currentPlatform)
-					ticker = currentTask.get("ticker")
+					ticker = alert["request"].get("ticker")
 					exchangeName = f" ({ticker.get('exchange').get('name')})" if ticker.get("exchange") else ""
 					pairQuoteName = " " + ticker.get("quote") if ticker.get("quote") else ""
 
