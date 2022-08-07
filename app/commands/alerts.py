@@ -6,7 +6,7 @@ from orjson import dumps, OPT_SORT_KEYS
 from asyncio import CancelledError
 from traceback import format_exc
 
-from discord import Embed, ButtonStyle, Interaction, TextChannel
+from discord import Embed, ButtonStyle, Interaction, TextChannel, Role
 from discord.commands import slash_command, SlashCommandGroup, Option
 from discord.ui import View, button, Button
 
@@ -32,7 +32,7 @@ class AlertCommand(BaseCommand):
 		venue: Option(str, "Venue to pull the data from.", name="venue", autocomplete=BaseCommand.get_venues, required=False, default=""),
 		message: Option(str, "Public message to display on trigger.", name="message", required=False, default=None),
 		channel: Option(TextChannel, "Channel to display the alert in.", name="channel", required=False, default=None),
-		role: Option(TextChannel, "Role to tag on trigger.", name="role", required=False, default=None)
+		role: Option(Role, "Role to tag on trigger.", name="role", required=False, default=None)
 	):
 		try:
 			request = await self.create_request(ctx)
@@ -85,8 +85,8 @@ class AlertCommand(BaseCommand):
 					embed = Embed(title="You do not have the permission to send messages in this channel.", color=constants.colors["gray"])
 					embed.set_author(name="Permission denied", icon_url=static_storage.icon_bw)
 					await ctx.interaction.edit_original_message(embed=embed)
-				elif channel is not None and not channel.permissions_for(ctx.guild.me).send_messages:
-					embed = Embed(title="Alpha doesn't have the permission to send messages in this channel.", color=constants.colors["gray"])
+				elif role is not None and not channel.permissions_for(ctx.author).manage_messages:
+					embed = Embed(title="You do not have the sufficient permission to tag other server members.", description="To tag other server members, you must have the `manage messages` permission.", color=constants.colors["gray"])
 					embed.set_author(name="Permission denied", icon_url=static_storage.icon_bw)
 					await ctx.interaction.edit_original_message(embed=embed)
 				else:
@@ -134,6 +134,7 @@ class AlertCommand(BaseCommand):
 							"backupChannel": ctx.channel.id,
 							"service": "Discord",
 							"request": currentTask,
+							"currentPlatform": currentPlatform,
 							"level": level,
 							"levelText": levelText,
 							"version": 4,
