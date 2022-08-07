@@ -157,7 +157,10 @@ class AlertCommand(BaseCommand):
 
 					for newAlert in newAlerts:
 						alertId = str(uuid4())
-						await self.database.document(f"details/marketAlerts/{request.authorId}/{alertId}").set(newAlert)
+						if request.is_registered():
+							await self.database.document(f"details/marketAlerts/{request.accountId}/{alertId}").set(newAlert)
+						else:
+							await self.database.document(f"details/marketAlerts/{request.authorId}/{alertId}").set(newAlert)
 
 					await self.database.document("discord/statistics").set({request.snapshot: {"alert": Increment(len(levels))}}, merge=True)
 					await self.cleanup(ctx, request)
