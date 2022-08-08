@@ -61,7 +61,7 @@ intents.integrations = True
 intents.webhooks = True
 
 discord.http.API_VERSION = 9 # TEMP
-bot = AutoShardedBot(intents=intents, chunk_guilds_at_startup=False, status=Status.idle, activity=Activity(type=ActivityType.playing, name="a reboot, brb!"))
+bot = AutoShardedBot(intents=intents, chunk_guilds_at_startup=False, max_messages=None, status=Status.idle, activity=Activity(type=ActivityType.playing, name="a reboot, brb!"))
 
 
 # -------------------------
@@ -322,9 +322,6 @@ async def on_message(message):
 			embed = Embed(title="Slash commands won't work by sending plain text commands with a slash as a prefix. To use slash commands, type `/c`, and select the command from the popup above the chat box.", description="The reason for this is that Discord treats slash commands fundamentally differently from plain text messages. Bots, excluding for example those for moderation, will no longer have access to plain text at all. Slash commands get sent separately and directly to the bot. The only reason we are receiving this message right now is that we're still in a transitionary period. This period ends <t:1661990400:R>.", color=constants.colors["red"])
 			embed.set_image(url="https://firebasestorage.googleapis.com/v0/b/nlc-bot-36685.appspot.com/o/alpha%2Fassets%2Fdiscord%2Fslash-commands.gif?alt=media&token=32e05ba1-9b06-47b1-a037-d37036b382a6")
 			await message.channel.send(embed=embed)
-
-		if commandRequest.content.startswith("c "):
-			await deprecation_message(message, "c")
 
 		elif commandRequest.content.startswith("x "):
 			if commandRequest.content.startswith(("x ichibot", "x ichi", "x login")):
