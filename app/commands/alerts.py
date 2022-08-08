@@ -74,7 +74,7 @@ class AlertCommand(BaseCommand):
 					embed.set_author(name="Maximum number of price alerts reached", icon_url=static_storage.icon_bw)
 					await ctx.interaction.edit_original_message(embed=embed)
 
-				payload, quoteText = await Processor.process_task("candle", request.authorId, task)
+				payload, quoteText = await Processor.process_http_task("candle", request.authorId, task)
 
 				if payload is None or len(payload.get("candles", [])) == 0:
 					errorMessage = f"Requested price alert for `{currentTask.get('ticker').get('name')}` is not available." if quoteText is None else quoteText
@@ -90,15 +90,15 @@ class AlertCommand(BaseCommand):
 					embed.set_author(name="Permission denied", icon_url=static_storage.icon_bw)
 					await ctx.interaction.edit_original_message(embed=embed)
 				else:
+					for platform in task.get("platforms"): task[platform]["ticker"].pop("tree")
+
 					currentPlatform = payload.get("platform")
 					currentTask = task.get(currentPlatform)
 					ticker = currentTask.get("ticker")
-					tickerHash = hash(dumps(ticker, option=OPT_SORT_KEYS))
+					tickerDump = dumps(ticker, option=OPT_SORT_KEYS)
 					exchange = ticker.get("exchange")
 					exchangeName = f" ({exchange.get('name')})" if exchange else ""
 					pairQuoteName = " " + ticker.get("quote") if ticker.get("quote") else ""
-
-					for platform in task.get("platforms"): task[platform]["ticker"].pop("tree")
 
 					newAlerts = []
 					for level in levels:
@@ -107,7 +107,8 @@ class AlertCommand(BaseCommand):
 						for alert in priceAlerts:
 							alertTicker = alert["request"].get("ticker")
 
-							if hash(dumps(alertTicker, option=OPT_SORT_KEYS)) == tickerHash:
+							if dumps(alertTicker, option=OPT_SORT_KEYS) == tickerDump:
+								print(alert["level"], level)
 								if alert["level"] == level:
 									embed = Embed(title=f"Price alert for {ticker.get('name')}{exchangeName} at {levelText}{pairQuoteName} already exists.", color=constants.colors["gray"])
 									embed.set_author(name="Alert already exists", icon_url=static_storage.icon_bw)

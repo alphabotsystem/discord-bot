@@ -25,7 +25,7 @@ class DepthCommand(BaseCommand):
 		task
 	):
 		currentTask = task.get(task.get("currentPlatform"))
-		payload, chartText = await Processor.process_task("depth", request.authorId, task)
+		payload, chartText = await Processor.process_zmq_task("depth", request.authorId, task)
 
 		if payload is None:
 			embed = Embed(title=f"Requested orderbook visualization for `{currentTask.get('ticker').get('name')}` is not available.", color=constants.colors["gray"])
