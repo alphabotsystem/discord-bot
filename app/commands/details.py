@@ -24,7 +24,7 @@ class DetailsCommand(BaseCommand):
 		task
 	):
 		currentTask = task.get(task.get("currentPlatform"))
-		payload, detailText = await Processor.process_zmq_task("detail", request.authorId, task)
+		payload, detailText = await Processor.process_http_task("detail", request.authorId, task)
 
 		if payload is None:
 			errorMessage = f"Requested details for `{currentTask.get('ticker').get('name')}` are not available." if detailText is None else detailText

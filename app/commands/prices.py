@@ -26,7 +26,7 @@ class PriceCommand(BaseCommand):
 		embeds = []
 		for task in tasks:
 			currentTask = task.get(task.get("currentPlatform"))
-			payload, quoteText = await Processor.process_zmq_task("quote", request.authorId, task)
+			payload, quoteText = await Processor.process_http_task("quote", request.authorId, task)
 
 			if payload is None or "quotePrice" not in payload:
 				errorMessage = f"Requested price for `{currentTask.get('ticker').get('name')}` is not available." if quoteText is None else quoteText
