@@ -173,7 +173,7 @@ class AlertCommand(BaseCommand):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /alert set {tickerId} {levels} {assetType} {venue} {message} {channel}")
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /alert set {tickerId} {levels} {assetType} {venue} {message} {channel}")
 			await self.unknown_error(ctx)
 
 	@alertGroup.command(name="list", description="List all price alerts.")
@@ -212,7 +212,7 @@ class AlertCommand(BaseCommand):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /alert list")
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /alert list")
 
 
 class DeleteView(View):

@@ -40,7 +40,7 @@ class AlphaCommand(BaseCommand):
 			if request is None: return
 
 			if len(question) > 500: return
-			response = await self.bot.loop.run_in_executor(None, self.process_reply, question, request.guildProperties["settings"]["assistant"]["enabled"])
+			response = await self.bot.loop.run_in_executor(None, self.process_reply, question, request.guildProperties.get("settings", {}).get("assistant", {}).get("enabled", True))
 
 			if response is not None:
 				await ctx.interaction.edit_original_message(content=response)
@@ -52,7 +52,7 @@ class AlphaCommand(BaseCommand):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /alpha {question}")
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /alpha {question}")
 			await self.unknown_error(ctx)
 
 	def process_reply(self, question, hasPermissions):

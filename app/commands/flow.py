@@ -32,7 +32,7 @@ class FlowCommand(BaseCommand):
 			timeframes = task.pop("timeframes")
 			for i in range(task.get("requestCount")):
 				for p, t in timeframes.items(): task[p]["currentTimeframe"] = t[i]
-				payload, chartText = await Processor.process_zmq_task("chart", request.authorId, task)
+				payload, chartText = await Processor.process_http_task("chart", request.authorId, task)
 
 				if payload is None:
 					errorMessage = f"Requested orderflow data for `{currentTask.get('ticker').get('name')}` is not available." if chartText is None else chartText
@@ -79,7 +79,7 @@ class FlowCommand(BaseCommand):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /flow {tickerId} autodelete:{autodelete}")
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /flow {tickerId} autodelete:{autodelete}")
 			await self.unknown_error(ctx)
 
 	@flowGroup.command(name="overview", description="Pull aggregated stocks orderflow overview.")

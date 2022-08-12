@@ -116,7 +116,7 @@ class HeatmapCommand(BaseCommand):
 			timeframes = task.pop("timeframes")
 			for i in range(task.get("requestCount")):
 				for p, t in timeframes.items(): task[p]["currentTimeframe"] = t[i]
-				payload, heatmapText = await Processor.process_zmq_task("heatmap", request.authorId, task)
+				payload, heatmapText = await Processor.process_http_task("heatmap", request.authorId, task)
 
 				if payload is None:
 					errorMessage = "Requested heat map is not available." if heatmapText is None else heatmapText
@@ -175,5 +175,5 @@ class HeatmapCommand(BaseCommand):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /hmap assetType:{assetType} timeframe:{timeframe} market:{market} category:{category} color:{color} size:{size} group:{group} theme:{theme} autodelete:{autodelete}")
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /hmap assetType:{assetType} timeframe:{timeframe} market:{market} category:{category} color:{color} size:{size} group:{group} theme:{theme} autodelete:{autodelete}")
 			await self.unknown_error(ctx)

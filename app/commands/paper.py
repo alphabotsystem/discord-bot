@@ -138,7 +138,7 @@ class PaperCommand(BaseCommand):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /paper {orderType} {tickerId} {amount} {level} {assetType}")
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /paper {orderType} {tickerId} {amount} {level} {assetType}")
 			await self.unknown_error(ctx)
 
 	@paperGroup.command(name="buy", description="Execute a paper buy trade.")
@@ -237,7 +237,7 @@ class PaperCommand(BaseCommand):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /paper balance")
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /paper balance")
 			await self.unknown_error(ctx)
 
 	@paperGroup.command(name="orders", description="Fetch open paper orders.")
@@ -281,7 +281,7 @@ class PaperCommand(BaseCommand):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /paper orders")
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /paper orders")
 			await self.unknown_error(ctx)
 
 	@paperGroup.command(name="history", description="Fetch open paper trading history.")
@@ -325,7 +325,7 @@ class PaperCommand(BaseCommand):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /paper history")
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /paper history")
 			await self.unknown_error(ctx)
 
 	@paperGroup.command(name="leaderboard", description="Check Alpha's Paper Trader leaderboard.")
@@ -378,7 +378,7 @@ class PaperCommand(BaseCommand):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /paper leaderboard")
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /paper leaderboard")
 			await self.unknown_error(ctx)
 
 	@paperGroup.command(name="reset", description="Reset paper trading balance.")
@@ -449,7 +449,7 @@ class PaperCommand(BaseCommand):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id}: /paper reset")
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /paper reset")
 			await self.unknown_error(ctx)
 
 	async def process_trade(self, paper, execAmount, execPrice, orderType, currentPlatform, request, payload):
