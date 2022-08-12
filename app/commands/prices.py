@@ -88,7 +88,7 @@ class PriceCommand(BaseCommand):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /p {' '.join(arguments)}")
+			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /p {arguments}")
 			await self.unknown_error(ctx)
 
 	@slash_command(name="price", description="Fetch stock, crypto and forex quotes.")
