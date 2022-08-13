@@ -116,7 +116,7 @@ class HeatmapCommand(BaseCommand):
 			timeframes = task.pop("timeframes")
 			for i in range(task.get("requestCount")):
 				for p, t in timeframes.items(): task[p]["currentTimeframe"] = t[i]
-				payload, heatmapText = await Processor.process_http_task("heatmap", request.authorId, task)
+				payload, heatmapText = await Processor.process_task("heatmap", request.authorId, task)
 
 				if payload is None:
 					errorMessage = "Requested heat map is not available." if heatmapText is None else heatmapText

@@ -32,7 +32,7 @@ class FlowCommand(BaseCommand):
 			timeframes = task.pop("timeframes")
 			for i in range(task.get("requestCount")):
 				for p, t in timeframes.items(): task[p]["currentTimeframe"] = t[i]
-				payload, chartText = await Processor.process_http_task("chart", request.authorId, task)
+				payload, chartText = await Processor.process_task("chart", request.authorId, task)
 
 				if payload is None:
 					errorMessage = f"Requested orderflow data for `{currentTask.get('ticker').get('name')}` is not available." if chartText is None else chartText

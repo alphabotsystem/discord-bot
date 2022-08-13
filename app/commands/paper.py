@@ -119,7 +119,7 @@ class PaperCommand(BaseCommand):
 					return
 
 				currentTask = task.get(task.get("currentPlatform"))
-				payload, quoteText = await Processor.process_http_task("candle", request.authorId, task)
+				payload, quoteText = await Processor.process_task("candle", request.authorId, task)
 
 				if payload is None or len(payload.get("candles", [])) == 0:
 					errorMessage = f"Requested paper {orderType} order for `{currentTask.get('ticker').get('name')}` could not be executed." if quoteText is None else quoteText

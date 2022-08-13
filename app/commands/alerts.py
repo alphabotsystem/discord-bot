@@ -74,7 +74,7 @@ class AlertCommand(BaseCommand):
 					embed.set_author(name="Maximum number of price alerts reached", icon_url=static_storage.icon_bw)
 					await ctx.interaction.edit_original_message(embed=embed)
 
-				payload, quoteText = await Processor.process_http_task("candle", request.authorId, task)
+				payload, quoteText = await Processor.process_task("candle", request.authorId, task)
 
 				if payload is None or len(payload.get("candles", [])) == 0:
 					errorMessage = f"Requested price alert for `{currentTask.get('ticker').get('name')}` is not available." if quoteText is None else quoteText
