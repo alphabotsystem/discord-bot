@@ -92,7 +92,8 @@ class ChartCommand(BaseCommand):
 				outputMessage, task = await Processor.process_chart_arguments(request, partArguments[1:], defaultPlatforms, tickerId=partArguments[0].upper())
 
 				if outputMessage is not None:
-					embed = Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/charting).", color=constants.colors["gray"])
+					description = "[Live Charting Data addon](https://www.alphabotsystem.com/pro/live-charting) unlocks additional assets, indicators, timeframes and more." if outputMessage.endswith("add-on.") else "Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/charting)."
+					embed = Embed(title=outputMessage, description=description, color=constants.colors["gray"])
 					embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
 					await ctx.interaction.edit_original_message(embed=embed)
 					return

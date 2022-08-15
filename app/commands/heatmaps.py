@@ -119,9 +119,9 @@ class HeatmapCommand(BaseCommand):
 				payload, heatmapText = await Processor.process_task("heatmap", request.authorId, task)
 
 				if payload is None:
-					errorMessage = "Requested heat map is not available." if heatmapText is None else heatmapText
+					errorMessage = "Requested heatmap is not available." if heatmapText is None else heatmapText
 					embed = Embed(title=errorMessage, color=constants.colors["gray"])
-					embed.set_author(name="Heat map not available", icon_url=static_storage.icon_bw)
+					embed.set_author(name="Heatmap not available", icon_url=static_storage.icon_bw)
 					embeds.append(embed)
 				else:
 					files.append(File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, request.authorId, randint(1000, 9999))))
