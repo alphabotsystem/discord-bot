@@ -39,7 +39,11 @@ class ChartCommand(BaseCommand):
 				for p, t in timeframes.items(): task[p]["currentTimeframe"] = t[i]
 				payload, chartText = await Processor.process_task("chart", request.authorId, task)
 
-				if payload is None:
+				if chartText == "requires pro":
+					embed = Embed(title=f"The requested chart for `{currentTask.get('ticker').get('name')}` is only available on TradingView Premium.", description="All TradingView Premium charts are bundled with the [Live Charting Data addon](https://www.alphabotsystem.com/pro/live-charting).", color=constants.colors["gray"])
+					embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
+					embeds.append(embed)
+				elif payload is None:
 					errorMessage = f"Requested chart for `{currentTask.get('ticker').get('name')}` is not available." if chartText is None else chartText
 					embed = Embed(title=errorMessage, color=constants.colors["gray"])
 					embed.set_author(name="Chart not available", icon_url=static_storage.icon_bw)
