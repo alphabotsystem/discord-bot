@@ -109,7 +109,7 @@ class ChartCommand(BaseCommand):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /c {arguments} autodelete:{autodelete}")
+			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /c {arguments} autodelete:{autodelete}")
 			await self.unknown_error(ctx)
 
 class IchibotView(ActionsView):

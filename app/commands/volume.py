@@ -69,5 +69,5 @@ class VolumeCommand(BaseCommand):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /volume {tickerId} type:{assetType} venue:{venue}")
+			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /volume {tickerId} type:{assetType} venue:{venue}")
 			await self.unknown_error(ctx)

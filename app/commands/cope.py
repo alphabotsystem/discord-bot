@@ -17,7 +17,7 @@ from commands.ichibot import Ichibot
 
 
 COPE_CONSENSUS_VOTE_TESTING = [414498292655980583, 824445607585775646]
-if not environ["PRODUCTION_MODE"]: COPE_CONSENSUS_VOTE_TESTING = [926518026457739304]
+if not environ["PRODUCTION"]: COPE_CONSENSUS_VOTE_TESTING = [926518026457739304]
 
 
 class CopeVoteCommand(BaseCommand):
@@ -54,7 +54,7 @@ class CopeVoteCommand(BaseCommand):
 
 				currentTask = task.get(task.get("currentPlatform"))
 				ticker = currentTask.get("ticker")
-				copePoolAccountId = "TPeMv6ZJvRZ1QLw0ivCRkCzoirU2" if environ["PRODUCTION_MODE"] else "ebOX1w1N2DgMtXVN978fnL0FKCP2"
+				copePoolAccountId = "TPeMv6ZJvRZ1QLw0ivCRkCzoirU2" if environ["PRODUCTION"] else "ebOX1w1N2DgMtXVN978fnL0FKCP2"
 
 				if ticker.get("exchange").get("id") != "ftx":
 					embed = Embed(title="Cope consensus trading is only available on FTX.", color=constants.colors["gray"])
@@ -151,7 +151,7 @@ class CopeVoteCommand(BaseCommand):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /vote")
+			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /vote")
 			await self.unknown_error(ctx)
 
 

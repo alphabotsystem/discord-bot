@@ -1,13 +1,11 @@
 FROM python:latest
-
-# Make a directory for the service
-WORKDIR /usr/src/discord-bot
+WORKDIR /app
 
 # Install dependencies
 COPY ./build/requirements.txt ./
 RUN pip install -r ./requirements.txt
 
-RUN git clone https://github.com/alphabotsystem/dependencies.git && cd ./dependencies && git checkout v1.13.1
+RUN git clone https://github.com/alphabotsystem/dependencies.git && cd ./dependencies && git checkout v1.14.0
 RUN pip install ./dependencies/py/commands
 RUN pip install ./dependencies/py/database
 RUN pip install ./dependencies/py/processor
@@ -16,10 +14,10 @@ RUN pip install ./dependencies/py/requests
 RUN rm -r ./dependencies
 
 # Copy source code
-COPY ./app ./app
+COPY ./app ./
 
 # Pass required credentials
 ENV GOOGLE_APPLICATION_CREDENTIALS="/run/secrets/google-cloud-auth/key"
 
 # Run
-ENTRYPOINT ["python", "app/discord_bot.py"]
+ENTRYPOINT ["python", "discord_bot.py"]

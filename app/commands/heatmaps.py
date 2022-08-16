@@ -175,5 +175,5 @@ class HeatmapCommand(BaseCommand):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /hmap assetType:{assetType} timeframe:{timeframe} market:{market} category:{category} color:{color} size:{size} group:{group} theme:{theme} autodelete:{autodelete}")
+			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /hmap assetType:{assetType} timeframe:{timeframe} market:{market} category:{category} color:{color} size:{size} group:{group} theme:{theme} autodelete:{autodelete}")
 			await self.unknown_error(ctx)

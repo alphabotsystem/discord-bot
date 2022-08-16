@@ -1,5 +1,5 @@
 from os import environ, _exit
-environ["PRODUCTION_MODE"] = environ["PRODUCTION_MODE"] if "PRODUCTION_MODE" in environ and environ["PRODUCTION_MODE"] else ""
+environ["PRODUCTION"] = environ["PRODUCTION"] if "PRODUCTION" in environ and environ["PRODUCTION"] else ""
 
 from time import time
 from datetime import datetime
@@ -81,7 +81,7 @@ async def on_guild_join(guild):
 		await update_guild_count()
 	except Exception:
 		print(format_exc())
-		if environ["PRODUCTION_MODE"]: logging.report_exception(user=str(guild.id))
+		if environ["PRODUCTION"]: logging.report_exception(user=str(guild.id))
 
 @bot.event
 async def on_guild_remove(guild):
@@ -89,10 +89,10 @@ async def on_guild_remove(guild):
 		await update_guild_count()
 	except Exception:
 		print(format_exc())
-		if environ["PRODUCTION_MODE"]: logging.report_exception(user=str(guild.id))
+		if environ["PRODUCTION"]: logging.report_exception(user=str(guild.id))
 
 async def update_guild_count():
-	if environ["PRODUCTION_MODE"] and len(bot.guilds) > 24000:
+	if environ["PRODUCTION"] and len(bot.guilds) > 24000:
 		t = datetime.now().astimezone(utc)
 		await database.document("discord/statistics").set({"{}-{:02d}".format(t.year, t.month): {"servers": len(bot.guilds)}}, merge=True)
 		post(f"https://top.gg/api/bots/{bot.user.id}/stats", data={"server_count": len(bot.guilds)}, headers={"Authorization": environ["TOPGG_KEY"]})
@@ -112,7 +112,7 @@ def update_alpha_settings(settings, changes, timestamp):
 # -------------------------
 
 def process_alpha_messages(pendingMessages, changes, timestamp):
-	if len(changes) == 0 or not environ["PRODUCTION_MODE"]: return
+	if len(changes) == 0 or not environ["PRODUCTION"]: return
 	try:
 		for change in changes:
 			message = change.document.to_dict()
@@ -121,7 +121,7 @@ def process_alpha_messages(pendingMessages, changes, timestamp):
 
 	except Exception:
 		print(format_exc())
-		if environ["PRODUCTION_MODE"]: logging.report_exception()
+		if environ["PRODUCTION"]: logging.report_exception()
 
 async def send_alpha_messages(messageId, message):
 	try:
@@ -196,7 +196,7 @@ async def send_alpha_messages(messageId, message):
 
 	except Exception:
 		print(format_exc())
-		if environ["PRODUCTION_MODE"]: logging.report_exception()
+		if environ["PRODUCTION"]: logging.report_exception()
 
 # -------------------------
 # Job functions
@@ -247,7 +247,7 @@ async def security_check():
 		botNicknamesText = "No bot nicknames to review"
 		if len(botNicknames) > 0: botNicknamesText = f"These guilds might be rebranding Alpha Bot: {''.join(botNicknames)}"
 
-		if environ["PRODUCTION_MODE"]:
+		if environ["PRODUCTION"]:
 			usageReviewChannel = bot.get_channel(571786092077121536)
 			botNicknamesMessage = await usageReviewChannel.fetch_message(709335020174573620)
 			await botNicknamesMessage.edit(content=botNicknamesText[:2000])
@@ -257,10 +257,10 @@ async def security_check():
 	except CancelledError: pass
 	except Exception:
 		print(format_exc())
-		if environ["PRODUCTION_MODE"]: logging.report_exception()
+		if environ["PRODUCTION"]: logging.report_exception()
 
 async def database_sanity_check():
-	if not environ["PRODUCTION_MODE"]: return
+	if not environ["PRODUCTION"]: return
 	try:
 		guilds = await guildProperties.keys()
 		if guilds is None: return
@@ -282,7 +282,7 @@ async def database_sanity_check():
 
 	except Exception:
 		print(format_exc())
-		if environ["PRODUCTION_MODE"]: logging.report_exception()
+		if environ["PRODUCTION"]: logging.report_exception()
 
 async def guild_secure_fetch(guildId):
 	properties = await guildProperties.get(guildId)
@@ -341,7 +341,7 @@ async def on_message(message):
 	except CancelledError: pass
 	except Exception:
 		print(format_exc())
-		if environ["PRODUCTION_MODE"]: logging.report_exception()
+		if environ["PRODUCTION"]: logging.report_exception()
 
 
 # -------------------------
@@ -383,7 +383,7 @@ async def process_ichibot_command(message, commandRequest, requestSlice):
 	except CancelledError: pass
 	except Exception:
 		print(format_exc())
-		if environ["PRODUCTION_MODE"]: logging.report_exception(user=f"{message.author.id}: {message.clean_content}")
+		if environ["PRODUCTION"]: logging.report_exception(user=f"{message.author.id}: {message.clean_content}")
 		await unknown_error(message, commandRequest.authorId)
 	return (sentMessages, len(sentMessages))
 
@@ -503,7 +503,7 @@ async def job_queue():
 		except CancelledError: return
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION_MODE"]: logging.report_exception()
+			if environ["PRODUCTION"]: logging.report_exception()
 
 
 # -------------------------
@@ -532,7 +532,7 @@ async def on_ready():
 		await bot.change_presence(status=Status.online, activity=Activity(type=ActivityType.watching, name="alphabotsystem.com"))
 	except:
 		print(format_exc())
-		if environ["PRODUCTION_MODE"]: logging.report_exception()
+		if environ["PRODUCTION"]: logging.report_exception()
 		_exit(1)
 	print("[Startup]: Alpha Bot startup complete")
 
@@ -545,5 +545,5 @@ def is_bot_ready():
 # -------------------------
 
 bot.loop.create_task(job_queue())
-token = environ["DISCORD_PRODUCTION_TOKEN" if environ["PRODUCTION_MODE"] else "DISCORD_DEVELOPMENT_TOKEN"]
+token = environ["DISCORD_PRODUCTION_TOKEN" if environ["PRODUCTION"] else "DISCORD_DEVELOPMENT_TOKEN"]
 bot.loop.run_until_complete(bot.start(token))
