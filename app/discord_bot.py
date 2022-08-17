@@ -166,19 +166,19 @@ async def send_alpha_messages(messageId, message):
 		if destinationUser is not None:
 			try:
 				await destinationUser.send(embed=embed)
+				await database.document(f"discord/properties/messages/{messageId}").delete()
 				return
 			except:
 				print(format_exc())
-			await database.document(f"discord/properties/messages/{messageId}").delete()
 		elif destinationChannel is not None:
 			try:
 				await destinationChannel.send(embed=embed)
+				await database.document(f"discord/properties/messages/{messageId}").delete()
 				return
 			except Exception as e:
 				print(format_exc())
 				error = e.text.lower() if hasattr(e, 'text') else str(e)
 				print(error)
-			await database.document(f"discord/properties/messages/{messageId}").delete()
 
 		if backupChannel is not None:
 			try:
@@ -410,6 +410,9 @@ async def create_request(ctx, autodelete=-1):
 	if ctx.command.qualified_name == "alpha":
 		ephemeral = not guild.get("settings", {}).get("assistant", {}).get("enabled", True)
 
+	try: await ctx.defer(ephemeral=ephemeral)
+	except: return
+
 	request = CommandRequest(
 		accountId=accountId,
 		authorId=authorId,
@@ -417,8 +420,7 @@ async def create_request(ctx, autodelete=-1):
 		guildId=guildId,
 		accountProperties=user,
 		guildProperties=guild,
-		autodelete=autodelete,
-		deferment=create_task(ctx.defer(ephemeral=ephemeral))
+		autodelete=autodelete
 	)
 
 	if request.guildId != -1:
