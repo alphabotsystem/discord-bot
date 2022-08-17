@@ -83,7 +83,7 @@ class PaperCommand(BaseCommand):
 
 			successMessage = f"Paper {orderType} order of {pendingOrder.amountText} {ticker.get('base')} at {pendingOrder.priceText} was successfully {'placed' if pendingOrder.parameters['isLimit'] else 'executed'}."
 			embed = Embed(title=successMessage, color=constants.colors["deep purple"])
-			embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon)
+			embed.set_author(name="Alpha Paper Trader", icon_url=pendingOrder.parameters.get("thumbnailUrl"))
 			await ctx.interaction.edit_original_message(embed=embed)
 
 		await self.database.document("discord/statistics").set({request.snapshot: {"paper": Increment(1)}}, merge=True)
