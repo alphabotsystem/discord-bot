@@ -515,7 +515,6 @@ botStatus = [False, False]
 alphaSettings = {}
 accountProperties = DatabaseConnector(mode="account")
 guildProperties = DatabaseConnector(mode="guild")
-Processor.clientId = b"discord_alpha"
 Ichibot.logging = logging
 
 discordSettingsLink = snapshots.document("discord/settings").on_snapshot(update_alpha_settings)
