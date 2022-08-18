@@ -1,6 +1,7 @@
 FROM python:slim
 WORKDIR /app
 
+ENV PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
 RUN apt-get update && apt-get install -y git build-essential
 
 # Install dependencies
