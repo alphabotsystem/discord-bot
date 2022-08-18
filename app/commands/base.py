@@ -42,7 +42,7 @@ class BaseCommand(Cog):
 		"p": {
 			"stocks": ["IEXC"],
 			"forex": ["IEXC", "CoinGecko"],
-			"crypto": ["CCXT", "CoinGecko", "Serum"]
+			"crypto": ["CCXT", "CoinGecko"]
 		},
 		"v": {
 			"stocks": ["IEXC"],
@@ -50,7 +50,7 @@ class BaseCommand(Cog):
 		},
 		"d": {
 			"stocks": ["IEXC"],
-			"crypto": ["CCXT", "Serum"]
+			"crypto": ["CCXT"]
 		},
 		"info": {
 			"stocks": ["IEXC"],
