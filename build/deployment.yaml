@@ -17,12 +17,8 @@ spec:
     spec:
       containers:
       - name: discord-bot
-        image: europe-west4-docker.pkg.dev/nlc-bot-36685/alpha-bot/discord-bot
+        image: us-central1-docker.pkg.dev/nlc-bot-36685/discord-bot/production
         imagePullPolicy: Always
-        volumeMounts:
-          - name: google-cloud-auth
-            mountPath: /run/secrets/google-cloud-auth
-            readOnly: true
         resources:
           requests:
             memory: "3350Mi"
@@ -58,10 +54,3 @@ spec:
                 key: IEXC_KEY
         ports:
           - containerPort: 6910
-      volumes:
-        - name: google-cloud-auth
-          secret:
-            secretName: google-cloud-auth
-            items:
-              - key: gcloud_credentials.json
-                path: key

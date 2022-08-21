@@ -19,8 +19,5 @@ RUN rm -r ./dependencies
 # Copy source code
 COPY ./app ./
 
-# Pass required credentials
-ENV GOOGLE_APPLICATION_CREDENTIALS="/run/secrets/google-cloud-auth/key"
-
 # Run
 ENTRYPOINT ["python", "discord_bot.py"]

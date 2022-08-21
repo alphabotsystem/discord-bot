@@ -7,8 +7,10 @@ on:
 
 env:
   PROJECT_ID: nlc-bot-36685
-  GKE_CLUSTER: alpha-service
-  GKE_ZONE: europe-west4-a
+  GKE_CLUSTER: main-cluster
+  GKE_ZONE: us-central1-c
+  GAR_LOCATION: us-central1
+  SERVICE: discord-bot
 
 jobs:
   setup-build-publish-deploy:
@@ -29,7 +31,7 @@ jobs:
     # Configure Docker to use the gcloud command-line tool as a credential
     # helper for authentication
     - run: |-
-        gcloud --quiet auth configure-docker europe-west4-docker.pkg.dev
+        gcloud --quiet auth configure-docker ${{ env.GAR_LOCATION }}-docker.pkg.dev
 
     # Get the GKE credentials so we can deploy to the cluster
     - uses: google-github-actions/get-gke-credentials@v0.2.1
@@ -41,16 +43,16 @@ jobs:
     # Build the Docker image
     - name: Build
       run: |-
-        docker image build -t europe-west4-docker.pkg.dev/$PROJECT_ID/alpha-bot/discord-bot -f ./build/dockerfile ./
+        docker image build -t ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.SERVICE }}/production:latest -f ./build/dockerfile ./
 
     # Push the Docker image to Google Container Registry
     - name: Publish
       run: |-
-        gcloud artifacts docker images delete europe-west4-docker.pkg.dev/$PROJECT_ID/alpha-bot/discord-bot || :
-        docker push europe-west4-docker.pkg.dev/$PROJECT_ID/alpha-bot/discord-bot
+        gcloud artifacts docker images delete ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.SERVICE }}/production || :
+        docker push ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.SERVICE }}/production:latest
 
     # Deploy the Docker image to the GKE cluster
     - name: Deploy
       run: |-
-        kubectl delete deployments/discord-bot --namespace=alpha-bot || :
+        kubectl delete deployments/${{ env.SERVICE }} --namespace=alpha-bot || :
         kubectl apply -f build/deployment.yaml
