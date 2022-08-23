@@ -85,6 +85,10 @@ class AlertCommand(BaseCommand):
 					embed = Embed(title="You do not have the permission to send messages in this channel.", color=constants.colors["gray"])
 					embed.set_author(name="Permission denied", icon_url=static_storage.icon_bw)
 					await ctx.interaction.edit_original_message(embed=embed)
+				elif channel is None and role is not None:
+					embed = Embed(title="You must provide a channel send the alert to when a role argument is provided.", color=constants.colors["gray"])
+					embed.set_author(name="Missing channel", icon_url=static_storage.icon_bw)
+					await ctx.interaction.edit_original_message(embed=embed)
 				elif role is not None and not channel.permissions_for(ctx.author).manage_messages:
 					embed = Embed(title="You do not have the sufficient permission to tag other server members.", description="To tag other server members, you must have the `manage messages` permission.", color=constants.colors["gray"])
 					embed.set_author(name="Permission denied", icon_url=static_storage.icon_bw)
