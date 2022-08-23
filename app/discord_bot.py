@@ -131,7 +131,7 @@ async def send_alpha_messages(messageId, message):
 		content = None
 		embed = Embed(title=message["title"], color=message["color"])
 		if message.get("description") is not None: embed.description = message.get("description")
-		if message.get("tag") is not None: content = message.get("tag")
+		if message.get("tag") is not None: content = f"<@&{message.get('tag')}>"
 		if message.get("subtitle") is not None: embed.set_author(name=message["subtitle"], icon_url=message.get("icon", static_storage.icon))
 		if message.get("image") is not None: embed.set_image(url=message["image"])
 		if message.get("url") is not None: embed.url = message["url"]
