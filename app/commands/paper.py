@@ -284,7 +284,7 @@ class PaperCommand(BaseCommand):
 			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /paper orders")
 			await self.unknown_error(ctx)
 
-	@paperGroup.command(name="history", description="Fetch open paper trading history.")
+	@paperGroup.command(name="history", description="Fetch paper trading history.")
 	async def paper_history(
 		self,
 		ctx

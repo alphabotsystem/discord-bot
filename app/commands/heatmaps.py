@@ -135,7 +135,7 @@ class HeatmapCommand(BaseCommand):
 		await self.database.document("discord/statistics").set({request.snapshot: {"hmap": Increment(len(tasks))}}, merge=True)
 		await self.cleanup(ctx, request)
 
-	@slash_command(name="hmap", description="Pull heatmaps from TradingView. Command for power users.")
+	@slash_command(name="hmap", description="Pull market heatmaps from TradingView.")
 	async def hmap(
 		self,
 		ctx,

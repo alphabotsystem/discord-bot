@@ -27,9 +27,9 @@ async def get_categories(ctx):
 
 
 class LookupCommand(BaseCommand):
-	lookupGroup = SlashCommandGroup("lookup", "Lookup or screen the market for various properties.")
+	lookupGroup = SlashCommandGroup("lookup", "Look up or screen the market for various properties.")
 
-	@lookupGroup.command(name="markets", description="Lookup available markets for a particular crypto asset.")
+	@lookupGroup.command(name="markets", description="Look up available markets for a particular crypto asset.")
 	async def markets(
 		self,
 		ctx,
@@ -71,7 +71,7 @@ class LookupCommand(BaseCommand):
 			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /lookup markets {tickerId}")
 			await self.unknown_error(ctx)
 
-	@lookupGroup.command(name="top", description="Lookup top ganers and losers in the crypto space.")
+	@lookupGroup.command(name="top", description="Look up top ganers and losers in the crypto space.")
 	async def markets(
 		self,
 		ctx,
