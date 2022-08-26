@@ -69,9 +69,6 @@ funnyReplies = {
 	],
 	"Happy to help": [
 		"thank you Alpha"
-	],
-	"https://firebasestorage.googleapis.com/v0/b/nlc-bot-36685.appspot.com/o/alpha%2Fassets%2Fads%2Falphasystem_V1.png?alt=media&token=fa4dcca0-4093-4209-b25f-a70fe2354426": [
-		"take a seat"
 	]
 }
 badPunTrigger = [
