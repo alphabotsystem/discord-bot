@@ -52,10 +52,10 @@ class AlertCommand(BaseCommand):
 
 			if request.price_alerts_available():
 				arguments = [venue]
-				outputMessage, task = await Processor.process_quote_arguments(request, arguments, platforms, tickerId=tickerId.upper())
+				responseMessage, task = await Processor.process_quote_arguments(request, arguments, platforms, tickerId=tickerId.upper())
 
-				if outputMessage is not None:
-					embed = Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/price-alerts).", color=constants.colors["gray"])
+				if responseMessage is not None:
+					embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/price-alerts).", color=constants.colors["gray"])
 					embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
 					await ctx.interaction.edit_original_message(embed=embed)
 					return
@@ -74,10 +74,10 @@ class AlertCommand(BaseCommand):
 					embed.set_author(name="Maximum number of price alerts reached", icon_url=static_storage.icon_bw)
 					await ctx.interaction.edit_original_message(embed=embed)
 
-				payload, quoteText = await Processor.process_task("candle", request.authorId, task)
+				payload, responseMessage = await Processor.process_task("candle", request.authorId, task)
 
 				if payload is None or len(payload.get("candles", [])) == 0:
-					errorMessage = f"Requested price alert for `{currentTask.get('ticker').get('name')}` is not available." if quoteText is None else quoteText
+					errorMessage = f"Requested price alert for `{currentTask.get('ticker').get('name')}` is not available." if responseMessage is None else responseMessage
 					embed = Embed(title=errorMessage, color=constants.colors["gray"])
 					embed.set_author(name="Data not available", icon_url=static_storage.icon_bw)
 					await ctx.interaction.edit_original_message(embed=embed)

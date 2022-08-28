@@ -39,10 +39,10 @@ class LookupCommand(BaseCommand):
 			request = await self.create_request(ctx)
 			if request is None: return
 
-			outputMessage, task = await Processor.process_quote_arguments(request, [], ["CCXT"], tickerId=tickerId.upper())
+			responseMessage, task = await Processor.process_quote_arguments(request, [], ["CCXT"], tickerId=tickerId.upper())
 
-			if outputMessage is not None:
-				embed = Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features).", color=constants.colors["gray"])
+			if responseMessage is not None:
+				embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features).", color=constants.colors["gray"])
 				embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
 				await ctx.interaction.edit_original_message(embed=embed)
 				return

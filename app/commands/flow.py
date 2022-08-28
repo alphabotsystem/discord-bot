@@ -32,17 +32,17 @@ class FlowCommand(BaseCommand):
 			timeframes = task.pop("timeframes")
 			for i in range(task.get("requestCount")):
 				for p, t in timeframes.items(): task[p]["currentTimeframe"] = t[i]
-				payload, chartText = await Processor.process_task("chart", request.authorId, task)
+				payload, responseMessage = await Processor.process_task("chart", request.authorId, task)
 
 				if payload is None:
-					errorMessage = f"Requested orderflow data for `{currentTask.get('ticker').get('name')}` is not available." if chartText is None else chartText
+					errorMessage = f"Requested orderflow data for `{currentTask.get('ticker').get('name')}` is not available." if responseMessage is None else responseMessage
 					embed = discord.Embed(title=errorMessage, color=constants.colors["gray"])
 					embed.set_author(name="Data not available", icon_url=static_storage.icon_bw)
 					await ctx.interaction.edit_original_message(embed=embed)
 				else:
 					currentTask = task.get(payload.get("platform"))
 					actions = ActionsView(user=ctx.author)
-					await ctx.interaction.edit_original_message(content=chartText, file=discord.File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, request.authorId, randint(1000, 9999))), view=actions)
+					await ctx.interaction.edit_original_message(file=discord.File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, request.authorId, randint(1000, 9999))), view=actions)
 
 			await self.database.document("discord/statistics").set({request.snapshot: {"flow": Increment(1)}}, merge=True)
 			await self.cleanup(ctx, request, removeView=True)
@@ -62,10 +62,10 @@ class FlowCommand(BaseCommand):
 			return
 
 			arguments = []
-			outputMessage, task = await Processor.process_chart_arguments(request, arguments, ["Alpha Flow"], tickerId=tickerId)
+			responseMessage, task = await Processor.process_chart_arguments(request, arguments, ["Alpha Flow"], tickerId=tickerId)
 
-			if outputMessage is not None:
-				embed = discord.Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/pro/flow).", color=constants.colors["gray"])
+			if responseMessage is not None:
+				embed = discord.Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/pro/flow).", color=constants.colors["gray"])
 				embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
 				await ctx.interaction.edit_original_message(embed=embed)
 				return

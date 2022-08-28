@@ -24,10 +24,10 @@ class DetailsCommand(BaseCommand):
 		task
 	):
 		currentTask = task.get(task.get("currentPlatform"))
-		payload, detailText = await Processor.process_task("detail", request.authorId, task)
+		payload, responseMessage = await Processor.process_task("detail", request.authorId, task)
 
 		if payload is None:
-			errorMessage = f"Requested details for `{currentTask.get('ticker').get('name')}` are not available." if detailText is None else detailText
+			errorMessage = f"Requested details for `{currentTask.get('ticker').get('name')}` are not available." if responseMessage is None else responseMessage
 			embed = Embed(title=errorMessage, color=constants.colors["gray"])
 			embed.set_author(name="Data not available", icon_url=static_storage.icon_bw)
 			await ctx.interaction.edit_original_message(embed=embed)
@@ -121,10 +121,10 @@ class DetailsCommand(BaseCommand):
 			platforms = [e for e in defaultPlatforms if preferredPlatforms is None or e in preferredPlatforms]
 
 			arguments = [venue]
-			outputMessage, task = await Processor.process_quote_arguments(request, arguments, platforms, tickerId=tickerId.upper())
+			responseMessage, task = await Processor.process_quote_arguments(request, arguments, platforms, tickerId=tickerId.upper())
 
-			if outputMessage is not None:
-				embed = Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/asset-details).", color=constants.colors["gray"])
+			if responseMessage is not None:
+				embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/asset-details).", color=constants.colors["gray"])
 				embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
 				await ctx.interaction.edit_original_message(embed=embed)
 				return

@@ -25,14 +25,15 @@ class DepthCommand(BaseCommand):
 		task
 	):
 		currentTask = task.get(task.get("currentPlatform"))
-		payload, chartText = await Processor.process_task("depth", request.authorId, task)
+		payload, responseMessage = await Processor.process_task("depth", request.authorId, task)
 
 		if payload is None:
-			embed = Embed(title=f"Requested orderbook visualization for `{currentTask.get('ticker').get('name')}` is not available.", color=constants.colors["gray"])
+			errorMessage = f"Requested orderbook visualization for `{currentTask.get('ticker').get('name')}` is not available." if responseMessage is None else responseMessage
+			embed = Embed(title=errorMessage, color=constants.colors["gray"])
 			embed.set_author(name="Chart not available", icon_url=static_storage.icon_bw)
 			await ctx.interaction.edit_original_message(embed=embed)
 		else:
-			await ctx.interaction.edit_original_message(content=chartText, file=File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, request.authorId, randint(1000, 9999))))
+			await ctx.interaction.edit_original_message(file=File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, request.authorId, randint(1000, 9999))))
 
 		await self.database.document("discord/statistics").set({request.snapshot: {"d": Increment(1)}}, merge=True)
 
@@ -53,10 +54,10 @@ class DepthCommand(BaseCommand):
 			platforms = [e for e in defaultPlatforms if preferredPlatforms is None or e in preferredPlatforms]
 
 			arguments = [venue]
-			outputMessage, task = await Processor.process_quote_arguments(request, arguments, platforms, tickerId=tickerId.upper())
+			responseMessage, task = await Processor.process_quote_arguments(request, arguments, platforms, tickerId=tickerId.upper())
 
-			if outputMessage is not None:
-				embed = Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/orderbook-visualizations).", color=constants.colors["gray"])
+			if responseMessage is not None:
+				embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/orderbook-visualizations).", color=constants.colors["gray"])
 				embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
 				await ctx.interaction.edit_original_message(embed=embed)
 				return

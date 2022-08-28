@@ -44,10 +44,10 @@ class CopeVoteCommand(BaseCommand):
 					ctx.interaction.edit_original_message(embed=Embed(title="Vote can only be held anywhere from a minute up to 15 minutes.", color=constants.colors["gray"]))
 					return
 
-				outputMessage, task = await Processor.process_quote_arguments(request, ["ftx"], ["Ichibot"], tickerId=tickerId.upper())
+				responseMessage, task = await Processor.process_quote_arguments(request, ["ftx"], ["Ichibot"], tickerId=tickerId.upper())
 
-				if outputMessage is not None:
-					embed = Embed(title=outputMessage, description="If the issue persists, please contact support.", color=constants.colors["gray"])
+				if responseMessage is not None:
+					embed = Embed(title=responseMessage, description="If the issue persists, please contact support.", color=constants.colors["gray"])
 					embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
 					await ctx.interaction.edit_original_message(embed=embed)
 					return

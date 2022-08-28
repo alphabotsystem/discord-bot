@@ -116,10 +116,10 @@ class HeatmapCommand(BaseCommand):
 			timeframes = task.pop("timeframes")
 			for i in range(task.get("requestCount")):
 				for p, t in timeframes.items(): task[p]["currentTimeframe"] = t[i]
-				payload, heatmapText = await Processor.process_task("heatmap", request.authorId, task)
+				payload, responseMessage = await Processor.process_task("heatmap", request.authorId, task)
 
 				if payload is None:
-					errorMessage = "Requested heatmap is not available." if heatmapText is None else heatmapText
+					errorMessage = "Requested heatmap is not available." if responseMessage is None else responseMessage
 					embed = Embed(title=errorMessage, color=constants.colors["gray"])
 					embed.set_author(name="Heatmap not available", icon_url=static_storage.icon_bw)
 					embeds.append(embed)
@@ -158,10 +158,10 @@ class HeatmapCommand(BaseCommand):
 			platforms = [e for e in defaultPlatforms if preferredPlatforms is None or e in preferredPlatforms]
 
 			arguments = [assetType, timeframe, market, category, color, size, group, theme]
-			outputMessage, task = await Processor.process_heatmap_arguments(request, arguments, platforms)
+			responseMessage, task = await Processor.process_heatmap_arguments(request, arguments, platforms)
 
-			if outputMessage is not None:
-				embed = Embed(title=outputMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/heatmaps).", color=constants.colors["gray"])
+			if responseMessage is not None:
+				embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/heatmaps).", color=constants.colors["gray"])
 				embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
 				await ctx.interaction.edit_original_message(embed=embed)
 				return

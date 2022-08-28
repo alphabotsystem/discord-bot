@@ -29,10 +29,10 @@ class ConvertCommand(BaseCommand):
 
 			defaultPlatforms = request.get_platform_order_for("convert")
 
-			payload, quoteText = await Processor.process_conversion(request, fromTicker.upper(), toTicker.upper(), amount, defaultPlatforms)
+			payload, responseMessage = await Processor.process_conversion(request, fromTicker.upper(), toTicker.upper(), amount, defaultPlatforms)
 
 			if payload is None:
-				errorMessage = "Requested conversion is not available." if quoteText is None else quoteText
+				errorMessage = "Requested conversion is not available." if responseMessage is None else responseMessage
 				embed = Embed(title=errorMessage, color=constants.colors["gray"])
 				embed.set_author(name="Conversion not available", icon_url=static_storage.icon_bw)
 				await ctx.interaction.edit_original_message(embed=embed)

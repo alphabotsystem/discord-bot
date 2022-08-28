@@ -37,14 +37,14 @@ class ChartCommand(BaseCommand):
 			timeframes = task.pop("timeframes")
 			for i in range(task.get("requestCount")):
 				for p, t in timeframes.items(): task[p]["currentTimeframe"] = t[i]
-				payload, chartText = await Processor.process_task("chart", request.authorId, task)
+				payload, responseMessage = await Processor.process_task("chart", request.authorId, task)
 
-				if chartText == "requires pro":
+				if responseMessage == "requires pro":
 					embed = Embed(title=f"The requested chart for `{currentTask.get('ticker').get('name')}` is only available on TradingView Premium.", description="All TradingView Premium charts are bundled with the [Live Charting Data addon](https://www.alphabotsystem.com/pro/live-charting).", color=constants.colors["gray"])
 					embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
 					embeds.append(embed)
 				elif payload is None:
-					errorMessage = f"Requested chart for `{currentTask.get('ticker').get('name')}` is not available." if chartText is None else chartText
+					errorMessage = f"Requested chart for `{currentTask.get('ticker').get('name')}` is not available." if responseMessage is None else responseMessage
 					embed = Embed(title=errorMessage, color=constants.colors["gray"])
 					embed.set_author(name="Chart not available", icon_url=static_storage.icon_bw)
 					embeds.append(embed)
@@ -89,11 +89,11 @@ class ChartCommand(BaseCommand):
 				partArguments = part.lower().split()
 				if len(partArguments) == 0: continue
 
-				outputMessage, task = await Processor.process_chart_arguments(request, partArguments[1:], defaultPlatforms, tickerId=partArguments[0].upper())
+				responseMessage, task = await Processor.process_chart_arguments(request, partArguments[1:], defaultPlatforms, tickerId=partArguments[0].upper())
 
-				if outputMessage is not None:
-					description = "[Live Charting Data addon](https://www.alphabotsystem.com/pro/live-charting) unlocks additional assets, indicators, timeframes and more." if outputMessage.endswith("add-on.") else "Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/charting)."
-					embed = Embed(title=outputMessage, description=description, color=constants.colors["gray"])
+				if responseMessage is not None:
+					description = "[Live Charting Data addon](https://www.alphabotsystem.com/pro/live-charting) unlocks additional assets, indicators, timeframes and more." if responseMessage.endswith("add-on.") else "Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/charting)."
+					embed = Embed(title=responseMessage, description=description, color=constants.colors["gray"])
 					embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
 					await ctx.interaction.edit_original_message(embed=embed)
 					return
