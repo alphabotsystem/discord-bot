@@ -316,7 +316,8 @@ async def on_message(message):
 		commandRequest = CommandRequest(
 			raw=message.clean_content,
 			content=message.clean_content.lower(),
-			authorId=message.author.id
+			authorId=message.author.id,
+			accountProperties=user,
 		)
 		_snapshot = "{}-{:02d}".format(message.created_at.year, message.created_at.month)
 
