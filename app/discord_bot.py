@@ -316,6 +316,7 @@ async def on_message(message):
 		commandRequest = CommandRequest(
 			raw=message.clean_content,
 			content=message.clean_content.lower(),
+			accountId=accountId,
 			authorId=message.author.id,
 			accountProperties=user,
 		)
