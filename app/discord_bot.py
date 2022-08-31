@@ -60,7 +60,6 @@ intents.guilds = True
 intents.integrations = True
 intents.webhooks = True
 
-discord.http.API_VERSION = 9 # TEMP
 bot = AutoShardedBot(intents=intents, chunk_guilds_at_startup=False, max_messages=None, status=Status.idle, activity=Activity(type=ActivityType.playing, name="a reboot, brb!"))
 
 
@@ -247,7 +246,7 @@ async def security_check():
 					if isWhitelisted: alphaSettings["tosWatchlist"]["nicknames"]["whitelist"].pop(str(guild.id))
 
 		botNicknamesText = "No bot nicknames to review"
-		if len(botNicknames) > 0: botNicknamesText = f"These guilds might be rebranding Alpha Bot: {''.join(botNicknames)}"
+		if len(botNicknames) > 0: botNicknamesText = f"These guilds might be re-branding Alpha Bot: {''.join(botNicknames)}"
 
 		if environ["PRODUCTION"]:
 			usageReviewChannel = bot.get_channel(571786092077121536)
@@ -303,42 +302,27 @@ async def guild_secure_fetch(guildId):
 @bot.event
 async def on_message(message):
 	try:
-		# Skip messages with empty content field, messages from self, or all messages when in startup mode
-		if message.clean_content == "" or message.type != MessageType.default or message.author == bot.user or not is_bot_ready(): return
-
-		_rawMessage = " ".join(message.clean_content.split())
-		_messageContent = _rawMessage.lower()
-		_authorId = message.author.id if message.webhook_id is None else message.webhook_id
-		_guildId = message.guild.id if message.guild is not None else -1
-		_channelId = message.channel.id if message.channel is not None else -1
+		# Skip messages in servers, messages with empty content field, messages from self, or all messages when in startup mode
+		if message.guild is not None or message.clean_content == "" or message.type != MessageType.default or message.author == bot.user or not is_bot_ready(): return
 
 		# Ignore if user or server is banned
-		if _authorId in constants.blockedUsers or _guildId in constants.blockedGuilds: return
+		if message.author.id in constants.blockedUsers: return
+
+		[accountId, user] = await gather(
+			accountProperties.match(message.author.id),
+			accountProperties.get(str(message.author.id), {})
+		)
 
 		commandRequest = CommandRequest(
-			raw=_rawMessage,
-			content=_messageContent,
-			authorId=_authorId,
-			channelId=_channelId,
-			guildId=_guildId,
+			raw=message.clean_content,
+			content=message.clean_content.lower(),
+			authorId=message.author.id
 		)
 		_snapshot = "{}-{:02d}".format(message.created_at.year, message.created_at.month)
 
-		if commandRequest.content.startswith("/c "):
-			embed = Embed(title="Slash commands won't work by sending plain text commands with a slash as a prefix. To use slash commands, type `/c`, and select the command from the popup above the chat box.", description="The reason for this is that Discord treats slash commands fundamentally differently from plain text messages. Bots, excluding for example those for moderation, will no longer have access to plain text at all. Slash commands get sent separately and directly to the bot. The only reason we are receiving this message right now is that we're still in a transitionary period. This period ends <t:1661990400:R>.", color=constants.colors["red"])
-			embed.set_image(url="https://firebasestorage.googleapis.com/v0/b/nlc-bot-36685.appspot.com/o/alpha%2Fassets%2Fdiscord%2Fslash-commands.gif?alt=media&token=32e05ba1-9b06-47b1-a037-d37036b382a6")
-			await message.channel.send(embed=embed)
-
-		elif commandRequest.content.startswith("x "):
-			if commandRequest.content.startswith(("x ichibot", "x ichi", "x login")):
-				await deprecation_message(message, "ichibot login")
-
-			elif commandRequest.guildId == -1:
-				commandRequest.accountId = await accountProperties.match(_authorId)
-				commandRequest.accountProperties = await accountProperties.get(str(_authorId), {})
-
-				await process_ichibot_command(message, commandRequest, commandRequest.content.split(" ", 1)[1])
-				await database.document("discord/statistics").set({_snapshot: {"x": Increment(1)}}, merge=True)
+		if commandRequest.content.startswith("x "):
+			await process_ichibot_command(message, commandRequest, commandRequest.content.split(" ", 1)[1])
+			await database.document("discord/statistics").set({_snapshot: {"x": Increment(1)}}, merge=True)
 
 	except CancelledError: pass
 	except Exception:
@@ -391,7 +375,7 @@ async def process_ichibot_command(message, commandRequest, requestSlice):
 
 
 # -------------------------
-# Slash command prelight
+# Slash command request
 # -------------------------
 
 async def create_request(ctx, autodelete=-1):
@@ -427,7 +411,7 @@ async def create_request(ctx, autodelete=-1):
 
 	if request.guildId != -1:
 		if str(ctx.interaction.guild.id) in alphaSettings["tosWatchlist"]["nicknames"]["blacklist"]:
-			embed = Embed(title="This Discord community guild was flagged for rebranding Alpha and is therefore violating the Terms of Service. Inability to comply will result in termination of all Alpha branded services.", color=0x000000)
+			embed = Embed(title="This Discord community guild was flagged for re-branding Alpha and is therefore violating the Terms of Service. Inability to comply will result in termination of all Alpha branded services.", color=0x000000)
 			embed.add_field(name="Terms of service", value="[Read now](https://www.alphabotsystem.com/terms-of-service)", inline=True)
 			embed.add_field(name="Alpha support Discord server", value="[Join now](https://discord.gg/GQeDE85)", inline=True)
 			await ctx.interaction.edit_original_message(embed=embed)
