@@ -21,7 +21,7 @@ spec:
         imagePullPolicy: Always
         resources:
           requests:
-            memory: "3350Mi"
+            memory: "2048Mi"
             cpu: "170m"
             ephemeral-storage: "5000Ki"
         env:

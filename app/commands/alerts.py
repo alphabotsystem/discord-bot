@@ -170,7 +170,7 @@ class AlertCommand(BaseCommand):
 					await self.cleanup(ctx, request)
 
 			else:
-				embed = Embed(title=":gem: Price Alerts are available as an Alpha Pro Subscription for individuals or communities for only $2.00 per month.", description="If you'd like to start your 30-day free trial, visit your [subscription page](https://www.alphabotsystem.com/subscriptions).", color=constants.colors["deep purple"])
+				embed = Embed(title=":gem: Price Alerts are available as an Alpha Pro Subscription for individuals or communities for only $2.00 per month.", description="If you'd like to start your 30-day free trial, visit [our website](https://www.alphabotsystem.com/pro/price-alerts).", color=constants.colors["deep purple"])
 				# embed.set_image(url="https://www.alphabotsystem.com/files/uploads/pro-hero.jpg")
 				await ctx.interaction.edit_original_message(embed=embed)
 
