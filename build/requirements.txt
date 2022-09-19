@@ -8,3 +8,4 @@ pycoingecko>=0.3.0
 pytz>=2019.2
 pyzmq>=18.1.1
 orjson>=3.6.0
+influxdb-client>=1.32.0

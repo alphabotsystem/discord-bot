@@ -49,7 +49,7 @@ class LookupCommand(BaseCommand):
 
 			currentTask = task.get(task.get("currentPlatform"))
 			ticker = currentTask.get("ticker")
-			listings, total = await TickerParser.get_listings(ticker.get("base"), ticker.get("quote"))
+			listings, total = await TickerParser.get_listings(ticker)
 
 			if total != 0:
 				embed = Embed(color=constants.colors["deep purple"])

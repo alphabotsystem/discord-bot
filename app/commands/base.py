@@ -92,8 +92,11 @@ class BaseCommand(Cog):
 		venue = " ".join(ctx.options.get("venue", "").lower().split())
 
 		if venue != "":
-			venues = await TickerParser.get_venues("")
+			venues = await TickerParser.get_venues("", "")
+			# print(venues)
 			venueType = [v for v in venues if v.lower().startswith(venue)]
+			# print(venueType)
+		# print(cls.sources.get(command), assetType)
 
 		return sorted([s for s in cls.sources.get(command) if s.lower().startswith(assetType) and (venue == "" or s in venueType)])
 
@@ -115,23 +118,8 @@ class BaseCommand(Cog):
 		else:
 			platforms = types.get(assetType, [])
 
-		venues = await TickerParser.get_venues(",".join(platforms))
+		venues = await TickerParser.get_venues(tickerId, ",".join(platforms))
 		return sorted([v for v in venues if v.lower().startswith(venue)])
-
-	async def get_platforms(cls, ctx):
-		if ctx.options.get("ticker", "") is None: return []
-		_commandName = ctx.command.name if ctx.command.parent is None else ctx.command.parent.name
-		command = cls.commandMap.get(_commandName, _commandName)
-		assetType = " ".join(ctx.options.get("type", "").lower().split())
-		platform = " ".join(ctx.options.get("platform", "").lower().split())
-
-		platforms = set()
-		for t, p in BaseCommand.sources.get(command).items():
-			if assetType != "" and assetType != t: continue
-			if platform == "": platforms.update(p)
-			else: platforms.update([e for e in p if e.lower().startswith(platform)])
-
-		return sorted(list(platforms))
 
 	async def get_timeframes(cls, ctx):
 		platform = ctx.options.get("platform", "")
