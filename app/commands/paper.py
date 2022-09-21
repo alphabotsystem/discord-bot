@@ -13,7 +13,7 @@ from google.cloud.firestore import Increment, DELETE_FIELD
 
 from helpers import constants
 from assets import static_storage
-from helpers.utils import Utils
+from helpers.utils import timestamp_to_date
 from Processor import Processor
 from TickerParser import TickerParser
 from DatabaseConnector import DatabaseConnector
@@ -226,7 +226,7 @@ class PaperCommand(BaseCommand):
 					valueText = "{:,.4f} USD".format(openOrdersValue)
 					embed.add_field(name="Locked up in open orders:", value=valueText, inline=True)
 
-				embed.description = "Holding {} asset{} with estimated total value of {:,.2f} USD and {:+,.2f} % ROI.{}".format(len(holdingAssets), "" if len(holdingAssets) == 1 else "s", totalValue, (totalValue / 10000 - 1) * 100, f" Trading since {Utils.timestamp_to_date(lastResetTimestamp)} with {resetCount} balance reset{'' if resetCount == 1 else 's'}." if resetCount != 0 else "")
+				embed.description = "Holding {} asset{} with estimated total value of {:,.2f} USD and {:+,.2f} % ROI.{}".format(len(holdingAssets), "" if len(holdingAssets) == 1 else "s", totalValue, (totalValue / 10000 - 1) * 100, f" Trading since {timestamp_to_date(lastResetTimestamp)} with {resetCount} balance reset{'' if resetCount == 1 else 's'}." if resetCount != 0 else "")
 				await ctx.interaction.edit_original_message(embed=embed)
 
 			else:
@@ -313,7 +313,7 @@ class PaperCommand(BaseCommand):
 						if order["orderType"] == "buy": side = "Bought"
 						elif order["orderType"] == "sell": side = "Sold"
 						elif order["orderType"].startswith("stop"): side = "Stop sold"
-						embed.add_field(name=f"{side} {order['amountText']} {ticker.get('base')} at {order['priceText']} {ticker.get('quote')}", value=f"{Utils.timestamp_to_date(order['timestamp'] / 1000)}", inline=False)
+						embed.add_field(name=f"{side} {order['amountText']} {ticker.get('base')} at {order['priceText']} {ticker.get('quote')}", value=f"{timestamp_to_date(order['timestamp'] / 1000)}", inline=False)
 
 					await ctx.interaction.edit_original_message(embed=embed)
 			
@@ -371,7 +371,7 @@ class PaperCommand(BaseCommand):
 			embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon)
 
 			for index, (balance, lastReset, authorId) in enumerate(topBalances[:10]):
-				embed.add_field(name=f"#{index + 1}: <@!{authorId}> with {balance} USD", value=f"Since {Utils.timestamp_to_date(lastReset)}", inline=False)
+				embed.add_field(name=f"#{index + 1}: <@!{authorId}> with {balance} USD", value=f"Since {timestamp_to_date(lastReset)}", inline=False)
 
 			await ctx.interaction.edit_original_message(embed=embed)
 

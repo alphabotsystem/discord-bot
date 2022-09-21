@@ -10,7 +10,7 @@ from google.cloud.firestore import Increment
 
 from helpers import constants
 from assets import static_storage
-from helpers.utils import Utils
+from helpers.utils import add_decimal_zeros
 from Processor import Processor
 
 from commands.base import BaseCommand
@@ -74,15 +74,15 @@ class DetailsCommand(BaseCommand):
 
 			assetPriceDetails = ""
 			if payload["price"].get("current") is not None:
-				assetPriceDetails += ("\nCurrent: ${:,.%df}" % Utils.add_decimal_zeros(payload["price"]["current"])).format(payload["price"]["current"])
+				assetPriceDetails += ("\nCurrent: ${:,.%df}" % add_decimal_zeros(payload["price"]["current"])).format(payload["price"]["current"])
 			if payload["price"].get("ath") is not None:
-				assetPriceDetails += ("\nAll-time high: ${:,.%df}" % Utils.add_decimal_zeros(payload["price"]["ath"])).format(payload["price"]["ath"])
+				assetPriceDetails += ("\nAll-time high: ${:,.%df}" % add_decimal_zeros(payload["price"]["ath"])).format(payload["price"]["ath"])
 			if payload["price"].get("atl") is not None:
-				assetPriceDetails += ("\nAll-time low: ${:,.%df}" % Utils.add_decimal_zeros(payload["price"]["atl"])).format(payload["price"]["atl"])
+				assetPriceDetails += ("\nAll-time low: ${:,.%df}" % add_decimal_zeros(payload["price"]["atl"])).format(payload["price"]["atl"])
 			if payload["price"].get("1y high") is not None:
-				assetPriceDetails += ("\n1-year high: ${:,.%df}" % Utils.add_decimal_zeros(payload["price"]["1y high"])).format(payload["price"]["1y high"])
+				assetPriceDetails += ("\n1-year high: ${:,.%df}" % add_decimal_zeros(payload["price"]["1y high"])).format(payload["price"]["1y high"])
 			if payload["price"].get("1y low") is not None:
-				assetPriceDetails += ("\n1-year low: ${:,.%df}" % Utils.add_decimal_zeros(payload["price"]["1y low"])).format(payload["price"]["1y low"])
+				assetPriceDetails += ("\n1-year low: ${:,.%df}" % add_decimal_zeros(payload["price"]["1y low"])).format(payload["price"]["1y low"])
 			if payload["price"].get("per") is not None:
 				assetPriceDetails += "\nPrice-to-earnings ratio: {:,.2f}".format(payload["price"]["per"])
 			if assetPriceDetails != "":

@@ -8,15 +8,14 @@ from requests import post
 from asyncio import CancelledError, sleep, gather, wait, create_task
 from traceback import format_exc
 
-import discord
 from discord import AutoShardedBot, Embed, Intents, Activity, Status, ActivityType, MessageType
+from discord.ext import tasks
 from google.cloud.firestore import AsyncClient as FirestoreAsyncClient
 from google.cloud.firestore import Client as FirestoreClient
 from google.cloud.firestore import Increment
 from google.cloud.error_reporting import Client as ErrorReportingClient
 
 from assets import static_storage
-from helpers.utils import Utils
 from helpers import constants
 
 from Processor import Processor
@@ -90,6 +89,7 @@ async def on_guild_remove(guild):
 		print(format_exc())
 		if environ["PRODUCTION"]: logging.report_exception(user=str(guild.id))
 
+@tasks.loop(minutes=15.0)
 async def update_guild_count():
 	if environ["PRODUCTION"] and len(bot.guilds) > 24000:
 		t = datetime.now().astimezone(utc)
@@ -203,6 +203,7 @@ async def send_alpha_messages(messageId, message):
 # Job functions
 # -------------------------
 
+@tasks.loop(minutes=60.0)
 async def security_check():
 	try:
 		guildIds = [e.id for e in bot.guilds]
@@ -260,6 +261,7 @@ async def security_check():
 		print(format_exc())
 		if environ["PRODUCTION"]: logging.report_exception()
 
+@tasks.loop(minutes=15.0)
 async def database_sanity_check():
 	if not environ["PRODUCTION"]: return
 	try:
@@ -473,30 +475,6 @@ async def deprecation_message(ctx, command):
 
 
 # -------------------------
-# Job queue
-# -------------------------
-
-async def job_queue():
-	while True:
-		try:
-			await sleep(Utils.seconds_until_cycle())
-			if not is_bot_ready() or not await guildProperties.check_status() or not await accountProperties.check_status(): continue
-			t = datetime.now().astimezone(utc)
-			timeframes = Utils.get_accepted_timeframes(t)
-
-			if "15m" in timeframes:
-				await database_sanity_check()
-				await update_guild_count()
-			if "1H" in timeframes:
-				await security_check()
-
-		except CancelledError: return
-		except Exception:
-			print(format_exc())
-			if environ["PRODUCTION"]: logging.report_exception()
-
-
-# -------------------------
 # Startup
 # -------------------------
 
@@ -533,6 +511,5 @@ def is_bot_ready():
 # Login
 # -------------------------
 
-bot.loop.create_task(job_queue())
 token = environ["DISCORD_PRODUCTION_TOKEN" if environ["PRODUCTION"] else "DISCORD_DEVELOPMENT_TOKEN"]
 bot.loop.run_until_complete(bot.start(token))

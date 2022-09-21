@@ -14,7 +14,6 @@ from pycoingecko import CoinGeckoAPI
 
 from helpers import constants
 from assets import static_storage
-from helpers.utils import Utils
 from Processor import Processor
 from TickerParser import TickerParser
 
