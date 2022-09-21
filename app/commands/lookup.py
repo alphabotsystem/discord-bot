@@ -46,9 +46,10 @@ class LookupCommand(BaseCommand):
 				await ctx.interaction.edit_original_message(embed=embed)
 				return
 
-			currentTask = task.get(task.get("currentPlatform"))
+			currentPlatform = task.get("currentPlatform")
+			currentTask = task.get(currentPlatform)
 			ticker = currentTask.get("ticker")
-			listings, total = await TickerParser.get_listings(ticker)
+			listings, total = await TickerParser.get_listings(ticker, currentPlatform)
 
 			if total != 0:
 				embed = Embed(color=constants.colors["deep purple"])
