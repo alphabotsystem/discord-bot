@@ -1,6 +1,3 @@
-commandWakephrases = ["c ", "x "]
-commandKeywords = ["c", "x"]
-
 colors = {
 	"red": 0xF44336,
 	"pink": 0xE91E63,
