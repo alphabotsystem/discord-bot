@@ -7,10 +7,7 @@ from discord.ui import View, button, Button
 
 from helpers import constants
 from assets import static_storage
-from Processor import Processor
-from TickerParser import TickerParser
-
-from DataRequest import ChartParameters
+from Processor import get_venues
 
 
 class BaseCommand(Cog):
@@ -85,14 +82,14 @@ class BaseCommand(Cog):
 		try: await ctx.interaction.edit_original_message(content=None, embed=embed, files=[])
 		except: return
 
-	async def get_types(cls, ctx):
+	async def autocomplete_types(cls, ctx):
 		_commandName = ctx.command.name if ctx.command.parent is None else ctx.command.parent.name
 		command = cls.commandMap.get(_commandName, _commandName)
 		assetType = " ".join(ctx.options.get("type", "").lower().split())
 		venue = " ".join(ctx.options.get("venue", "").lower().split())
 
 		if venue != "":
-			venues = await TickerParser.get_venues("", "")
+			venues = await get_venues("", "")
 			# print(venues)
 			venueType = [v for v in venues if v.lower().startswith(venue)]
 			# print(venueType)
@@ -100,7 +97,7 @@ class BaseCommand(Cog):
 
 		return sorted([s for s in cls.sources.get(command) if s.lower().startswith(assetType) and (venue == "" or s in venueType)])
 
-	async def get_venues(cls, ctx):
+	async def autocomplete_venues(cls, ctx):
 		if ctx.options.get("ticker", "") is None: return []
 
 		_commandName = ctx.command.name if ctx.command.parent is None else ctx.command.parent.name
@@ -109,7 +106,7 @@ class BaseCommand(Cog):
 		assetType = " ".join(ctx.options.get("type", "").lower().split())
 		venue = " ".join(ctx.options.get("venue", "").lower().split())
 
-		if assetType == "" and command == "ichibot": assetType = "crypto"
+		if command == "ichibot" and assetType == "": assetType = "crypto"
 		elif tickerId == "": return []
 
 		types = cls.sources.get(command)
@@ -118,39 +115,8 @@ class BaseCommand(Cog):
 		else:
 			platforms = types.get(assetType, [])
 
-		venues = await TickerParser.get_venues(tickerId, ",".join(platforms))
+		venues = await get_venues(tickerId, ",".join(platforms))
 		return sorted([v for v in venues if v.lower().startswith(venue)])
-
-	async def get_timeframes(cls, ctx):
-		platform = ctx.options.get("platform", "")
-
-		timeframes = []
-		for t in ChartParameters["timeframes"]:
-			if platform == "" or t.supports(platform):
-				timeframes.append(t.name)
-
-		return timeframes
-
-	async def get_indicators(cls, ctx):
-		platform = ctx.options.get("platform", "")
-		indicators = sub(" +", " ", ctx.options.get("indicators", "").replace(",", ", ").strip())
-
-		existing = indicators.split(", ")
-		added = ", ".join(existing[:-1])
-
-		indicatorList = []
-		for t in ChartParameters["indicators"]:
-			if (platform == "" or t.supports(platform)) and t.name.lower() not in indicators.lower() and all([p not in indicators.lower() for p in t.parsablePhrases]):
-				if indicators.endswith(","):
-					newSuggestion = indicators + " " + t.name + ", "
-					if len(newSuggestion) <= 100:
-						indicatorList.append(newSuggestion)
-				elif t.name.lower().startswith(existing[-1].lower()):
-					newSuggestion = added + " " + t.name + ", "
-					if len(newSuggestion) <= 100:
-						indicatorList.append(newSuggestion)
-
-		return indicatorList
 
 class Confirm(View):
 	def __init__(self, user=None):

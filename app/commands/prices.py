@@ -6,12 +6,11 @@ from traceback import format_exc
 from discord import Embed
 from discord.embeds import EmptyEmbed
 from discord.commands import slash_command, Option
-
 from google.cloud.firestore import Increment
 
 from helpers import constants
 from assets import static_storage
-from Processor import Processor
+from Processor import process_quote_arguments, process_task
 
 from commands.base import BaseCommand
 
@@ -26,7 +25,7 @@ class PriceCommand(BaseCommand):
 		embeds = []
 		for task in tasks:
 			currentTask = task.get(task.get("currentPlatform"))
-			payload, responseMessage = await Processor.process_task("quote", request.authorId, task)
+			payload, responseMessage = await process_task(task, "quote")
 
 			if payload is None or "quotePrice" not in payload:
 				errorMessage = f"Requested price for `{currentTask.get('ticker').get('name')}` is not available." if responseMessage is None else responseMessage
@@ -73,7 +72,7 @@ class PriceCommand(BaseCommand):
 				partArguments = part.lower().split()
 				if len(partArguments) == 0: continue
 
-				responseMessage, task = await Processor.process_quote_arguments(request, partArguments[1:], defaultPlatforms, tickerId=partArguments[0].upper())
+				responseMessage, task = await process_quote_arguments(request, partArguments[1:], defaultPlatforms, tickerId=partArguments[0].upper())
 
 				if responseMessage is not None:
 					embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/prices).", color=constants.colors["gray"])
@@ -96,8 +95,8 @@ class PriceCommand(BaseCommand):
 		self,
 		ctx,
 		tickerId: Option(str, "Ticker id of an asset.", name="ticker"),
-		assetType: Option(str, "Asset class of the ticker.", name="type", autocomplete=BaseCommand.get_types, required=False, default=""),
-		venue: Option(str, "Venue to pull the price from.", name="venue", autocomplete=BaseCommand.get_venues, required=False, default="")
+		assetType: Option(str, "Asset class of the ticker.", name="type", autocomplete=BaseCommand.autocomplete_types, required=False, default=""),
+		venue: Option(str, "Venue to pull the price from.", name="venue", autocomplete=BaseCommand.autocomplete_venues, required=False, default="")
 	):
 		try:
 			request = await self.create_request(ctx)
@@ -108,7 +107,7 @@ class PriceCommand(BaseCommand):
 			platforms = [e for e in defaultPlatforms if preferredPlatforms is None or e in preferredPlatforms]
 
 			arguments = [venue]
-			responseMessage, task = await Processor.process_quote_arguments(request, arguments, platforms, tickerId=tickerId.upper())
+			responseMessage, task = await process_quote_arguments(request, arguments, platforms, tickerId=tickerId.upper())
 
 			if responseMessage is not None:
 				embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/prices).", color=constants.colors["gray"])

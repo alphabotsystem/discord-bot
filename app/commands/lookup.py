@@ -8,14 +8,12 @@ from traceback import format_exc
 from discord import Embed, ButtonStyle, Interaction
 from discord.commands import SlashCommandGroup, Option
 from discord.ui import View, button, Button
-
 from google.cloud.firestore import Increment
 from pycoingecko import CoinGeckoAPI
 
 from helpers import constants
 from assets import static_storage
-from Processor import Processor
-from TickerParser import TickerParser
+from Processor import process_quote_arguments, get_listings
 
 from commands.base import BaseCommand, Confirm
 
@@ -38,7 +36,7 @@ class LookupCommand(BaseCommand):
 			request = await self.create_request(ctx)
 			if request is None: return
 
-			responseMessage, task = await Processor.process_quote_arguments(request, [], ["CCXT"], tickerId=tickerId.upper())
+			responseMessage, task = await process_quote_arguments(request, [], ["CCXT"], tickerId=tickerId.upper())
 
 			if responseMessage is not None:
 				embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features).", color=constants.colors["gray"])
@@ -49,7 +47,7 @@ class LookupCommand(BaseCommand):
 			currentPlatform = task.get("currentPlatform")
 			currentTask = task.get(currentPlatform)
 			ticker = currentTask.get("ticker")
-			listings, total = await TickerParser.get_listings(ticker, currentPlatform)
+			listings, total = await get_listings(ticker, currentPlatform)
 
 			if total != 0:
 				embed = Embed(color=constants.colors["deep purple"])

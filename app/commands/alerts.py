@@ -14,7 +14,7 @@ from google.cloud.firestore import Increment
 
 from helpers import constants
 from assets import static_storage
-from Processor import Processor
+from Processor import process_quote_arguments, process_task
 
 from commands.base import BaseCommand
 
@@ -28,8 +28,8 @@ class AlertCommand(BaseCommand):
 		ctx,
 		tickerId: Option(str, "Ticker id of an asset.", name="ticker"),
 		levels: Option(str, "Trigger price for the alert.", name="price"),
-		assetType: Option(str, "Asset class of the ticker.", name="type", autocomplete=BaseCommand.get_types, required=False, default=""),
-		venue: Option(str, "Venue to pull the data from.", name="venue", autocomplete=BaseCommand.get_venues, required=False, default=""),
+		assetType: Option(str, "Asset class of the ticker.", name="type", autocomplete=BaseCommand.autocomplete_types, required=False, default=""),
+		venue: Option(str, "Venue to pull the data from.", name="venue", autocomplete=BaseCommand.autocomplete_venues, required=False, default=""),
 		message: Option(str, "Public message to display on trigger.", name="message", required=False, default=None),
 		channel: Option(TextChannel, "Channel to display the alert in.", name="channel", required=False, default=None),
 		role: Option(Role, "Role to tag on trigger.", name="role", required=False, default=None)
@@ -52,7 +52,7 @@ class AlertCommand(BaseCommand):
 
 			if request.price_alerts_available():
 				arguments = [venue]
-				responseMessage, task = await Processor.process_quote_arguments(request, arguments, platforms, tickerId=tickerId.upper())
+				responseMessage, task = await process_quote_arguments(request, arguments, platforms, tickerId=tickerId.upper())
 
 				if responseMessage is not None:
 					embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/price-alerts).", color=constants.colors["gray"])
@@ -74,7 +74,7 @@ class AlertCommand(BaseCommand):
 					embed.set_author(name="Maximum number of price alerts reached", icon_url=static_storage.icon_bw)
 					await ctx.interaction.edit_original_message(embed=embed)
 
-				payload, responseMessage = await Processor.process_task("candle", request.authorId, task)
+				payload, responseMessage = await process_task(task, "candle")
 
 				if payload is None or len(payload.get("candles", [])) == 0:
 					errorMessage = f"Requested price alert for `{currentTask.get('ticker').get('name')}` is not available." if responseMessage is None else responseMessage

@@ -7,12 +7,11 @@ from traceback import format_exc
 from discord import Embed, File, ButtonStyle, SelectOption, Interaction, PartialEmoji
 from discord.commands import slash_command, SlashCommandGroup, Option
 from discord.ui import View, button, Button, Select
-
 from google.cloud.firestore import Increment
 
 from helpers import constants
 from assets import static_storage
-from Processor import Processor
+from Processor import process_chart_arguments, process_task, get_direct_ichibot_socket
 from DatabaseConnector import DatabaseConnector
 
 from commands.base import BaseCommand, ActionsView
@@ -37,7 +36,7 @@ class ChartCommand(BaseCommand):
 			timeframes = task.pop("timeframes")
 			for i in range(task.get("requestCount")):
 				for p, t in timeframes.items(): task[p]["currentTimeframe"] = t[i]
-				payload, responseMessage = await Processor.process_task("chart", request.authorId, task)
+				payload, responseMessage = await process_task(task, "chart")
 
 				if responseMessage == "requires pro":
 					embed = Embed(title=f"The requested chart for `{currentTask.get('ticker').get('name')}` is only available on TradingView Premium.", description="All TradingView Premium charts are bundled with the [Live Charting Data addon](https://www.alphabotsystem.com/pro/live-charting).", color=constants.colors["gray"])
@@ -80,7 +79,7 @@ class ChartCommand(BaseCommand):
 			tasks = []
 
 			if len(parts) > 5:
-				embed = Embed(title="Only up to 5 requests are allowed per command.", color=constants.colors["gray"])
+				embed = Embed(title="Only up to five requests are allowed per command.", color=constants.colors["gray"])
 				embed.set_author(name="Too many requests", icon_url=static_storage.icon_bw)
 				await ctx.interaction.edit_original_message(embed=embed)
 				return
@@ -89,7 +88,7 @@ class ChartCommand(BaseCommand):
 				partArguments = part.lower().split()
 				if len(partArguments) == 0: continue
 
-				responseMessage, task = await Processor.process_chart_arguments(request, partArguments[1:], defaultPlatforms, tickerId=partArguments[0].upper())
+				responseMessage, task = await process_chart_arguments(request, partArguments[1:], defaultPlatforms, tickerId=partArguments[0].upper())
 
 				if responseMessage is not None:
 					description = "[Live Charting Data addon](https://www.alphabotsystem.com/pro/live-charting) unlocks additional assets, indicators, timeframes and more." if responseMessage.endswith("add-on.") else "Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/charting)."
@@ -136,7 +135,7 @@ class IchibotView(ActionsView):
 		if origin in Ichibot.sockets:
 			socket = Ichibot.sockets.get(origin)
 		else:
-			socket = Processor.get_direct_ichibot_socket(origin)
+			socket = get_direct_ichibot_socket(origin)
 			Ichibot.sockets[origin] = socket
 			self.eventLoop.create_task(Ichibot.process_ichibot_messages(origin, interaction.user))
 

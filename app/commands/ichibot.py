@@ -13,7 +13,7 @@ from google.cloud.firestore import Increment
 
 from helpers import constants
 from assets import static_storage
-from Processor import Processor
+from Processor import get_direct_ichibot_socket
 
 from commands.base import BaseCommand
 
@@ -74,7 +74,7 @@ class IchibotCommand(BaseCommand):
 	async def login(
 		self,
 		ctx,
-		exchange: Option(str, "Crypto exchange to connect to.", name="exchange", autocomplete=BaseCommand.get_venues),
+		exchange: Option(str, "Crypto exchange to connect to.", name="exchange", autocomplete=BaseCommand.autocomplete_venues),
 	):
 		try:
 			request = await self.create_request(ctx)
@@ -94,7 +94,7 @@ class IchibotCommand(BaseCommand):
 				if origin in Ichibot.sockets:
 					socket = Ichibot.sockets.get(origin)
 				else:
-					socket = Processor.get_direct_ichibot_socket(origin)
+					socket = get_direct_ichibot_socket(origin)
 					Ichibot.sockets[origin] = socket
 					self.bot.loop.create_task(Ichibot.process_ichibot_messages(origin, ctx.author))
 

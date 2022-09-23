@@ -18,15 +18,14 @@ from google.cloud.error_reporting import Client as ErrorReportingClient
 from assets import static_storage
 from helpers import constants
 
-from Processor import Processor
 from DatabaseConnector import DatabaseConnector
-
 from CommandRequest import CommandRequest
 
 from commands.assistant import AlphaCommand
 from commands.alerts import AlertCommand
 from commands.charts import ChartCommand
 from commands.flow import FlowCommand
+from commands.schedule import ScheduleCommand
 from commands.heatmaps import HeatmapCommand
 from commands.depth import DepthCommand
 from commands.prices import PriceCommand
@@ -36,7 +35,6 @@ from commands.details import DetailsCommand
 from commands.lookup import LookupCommand
 from commands.paper import PaperCommand
 from commands.ichibot import IchibotCommand, Ichibot
-from commands.cope import CopeVoteCommand
 
 
 database = FirestoreAsyncClient()
@@ -382,7 +380,7 @@ async def process_ichibot_command(message, commandRequest, requestSlice):
 # Slash command request
 # -------------------------
 
-async def create_request(ctx, autodelete=-1):
+async def create_request(ctx, autodelete=-1, ephemeral=False):
 	authorId = ctx.author.id
 	guildId = ctx.guild.id if ctx.guild is not None else -1
 	channelId = ctx.channel.id if ctx.channel is not None else -1
@@ -396,7 +394,6 @@ async def create_request(ctx, autodelete=-1):
 		guildProperties.get(guildId, {})
 	)
 
-	ephemeral = False
 	if ctx.command.qualified_name == "alpha":
 		ephemeral = not guild.get("settings", {}).get("assistant", {}).get("enabled", True)
 
@@ -445,6 +442,7 @@ bot.add_cog(AlphaCommand(bot, create_request, database, logging))
 bot.add_cog(AlertCommand(bot, create_request, database, logging))
 bot.add_cog(ChartCommand(bot, create_request, database, logging))
 # bot.add_cog(FlowCommand(bot, create_request, database, logging))
+# bot.add_cog(ScheduleCommand(bot, create_request, database, logging))
 bot.add_cog(HeatmapCommand(bot, create_request, database, logging))
 bot.add_cog(DepthCommand(bot, create_request, database, logging))
 bot.add_cog(PriceCommand(bot, create_request, database, logging))
@@ -454,7 +452,6 @@ bot.add_cog(DetailsCommand(bot, create_request, database, logging))
 bot.add_cog(LookupCommand(bot, create_request, database, logging))
 bot.add_cog(PaperCommand(bot, create_request, database, logging))
 bot.add_cog(IchibotCommand(bot, create_request, database, logging))
-# bot.add_cog(CopeVoteCommand(bot, create_request, database, logging))
 
 
 # -------------------------

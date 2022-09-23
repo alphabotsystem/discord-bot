@@ -8,14 +8,12 @@ from traceback import format_exc
 from discord import Embed, ButtonStyle, Interaction
 from discord.commands import SlashCommandGroup, Option
 from discord.ui import View, button, Button
-
 from google.cloud.firestore import Increment, DELETE_FIELD
 
 from helpers import constants
 from assets import static_storage
 from helpers.utils import timestamp_to_date
-from Processor import Processor
-from TickerParser import TickerParser
+from Processor import process_quote_arguments, process_task, match_ticker, process_conversion, get_formatted_price_ccxt, get_formatted_amount_ccxt
 from DatabaseConnector import DatabaseConnector
 
 from commands.base import BaseCommand, Confirm
@@ -111,7 +109,7 @@ class PaperCommand(BaseCommand):
 					await ctx.interaction.edit_original_message(embed=embed)
 					return
 
-				responseMessage, task = await Processor.process_quote_arguments(request, [], platforms, tickerId=tickerId.upper())
+				responseMessage, task = await process_quote_arguments(request, [], platforms, tickerId=tickerId.upper())
 				if responseMessage is not None:
 					embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/paper-trading).", color=constants.colors["gray"])
 					embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
@@ -119,7 +117,7 @@ class PaperCommand(BaseCommand):
 					return
 
 				currentTask = task.get(task.get("currentPlatform"))
-				payload, responseMessage = await Processor.process_task("candle", request.authorId, task)
+				payload, responseMessage = await process_task(task, "candle")
 
 				if payload is None or len(payload.get("candles", [])) == 0:
 					errorMessage = f"Requested paper {orderType} order for `{currentTask.get('ticker').get('name')}` could not be executed." if responseMessage is None else responseMessage
@@ -148,7 +146,7 @@ class PaperCommand(BaseCommand):
 		tickerId: Option(str, "Ticker id of an asset.", name="ticker"),
 		amount: Option(float, "Trade amount in base currency.", name="amount"),
 		level: Option(float, "Limit order price for the trade.", name="price", required=False, default=None),
-		assetType: Option(str, "Asset class of the ticker.", name="type", autocomplete=BaseCommand.get_types, required=False, default="")
+		assetType: Option(str, "Asset class of the ticker.", name="type", autocomplete=BaseCommand.autocomplete_types, required=False, default="")
 	):
 		await self.paper_order_proxy(ctx, tickerId, amount, level, assetType, "buy")
 
@@ -159,7 +157,7 @@ class PaperCommand(BaseCommand):
 		tickerId: Option(str, "Ticker id of an asset.", name="ticker"),
 		amount: Option(float, "Trade amount in base currency.", name="amount"),
 		level: Option(float, "Limit order price for the trade.", name="price", required=False, default=None),
-		assetType: Option(str, "Asset class of the ticker.", name="type", autocomplete=BaseCommand.get_types, required=False, default="")
+		assetType: Option(str, "Asset class of the ticker.", name="type", autocomplete=BaseCommand.autocomplete_types, required=False, default="")
 	):
 		await self.paper_order_proxy(ctx, tickerId, amount, level, assetType, "sell")
 
@@ -186,13 +184,13 @@ class PaperCommand(BaseCommand):
 					if platform == "USD": continue
 					for asset, holding in balances.items():
 						if holding == 0: continue
-						ticker, error = await TickerParser.match_ticker(asset, None, platform, "traditional")
+						ticker, error = await match_ticker(asset, None, platform, "traditional")
 
 						balanceText = ""
 						valueText = "No conversion"
 
 						balanceText = "{:,.4f} {}".format(holding, asset)
-						payload, responseMessage = await Processor.process_conversion(request, asset, "USD", holding, [platform])
+						payload, responseMessage = await process_conversion(request, asset, "USD", holding, [platform])
 						convertedValue = payload["raw"]["quotePrice"][0] if payload is not None else 0
 						valueText = "≈ {:,.4f} {}".format(convertedValue, "USD") if payload is not None else "Unavailable"
 						totalValue += convertedValue
@@ -217,7 +215,7 @@ class PaperCommand(BaseCommand):
 						currentPlatform = order["request"].get("currentPlatform")
 						task = order["request"].get(currentPlatform)
 						ticker = task.get("ticker").get("quote") if order["orderType"] == "buy" else task.get("ticker").get("base")
-						payload, responseMessage = await Processor.process_conversion(request, ticker, "USD", order["amount"] * (order["price"] if order["orderType"] == "buy" else 1), [currentPlatform])
+						payload, responseMessage = await process_conversion(request, ticker, "USD", order["amount"] * (order["price"] if order["orderType"] == "buy" else 1), [currentPlatform])
 						openOrdersValue += payload["raw"]["quotePrice"][0] if responseMessage is None else 0
 						holdingAssets.add(currentPlatform + "_" + task.get("ticker").get("base"))
 
@@ -350,7 +348,7 @@ class PaperCommand(BaseCommand):
 					if platform == "USD": continue
 					for asset, holding in balances.items():
 						if holding == 0: continue
-						payload, responseMessage = await Processor.process_conversion(request, asset, "USD", holding, [platform])
+						payload, responseMessage = await process_conversion(request, asset, "USD", holding, [platform])
 						totalValue += payload["raw"]["quotePrice"][0] if responseMessage is None else 0
 
 				paperOrders = await self.database.collection(f"details/openPaperOrders/{account.id}").get()
@@ -360,7 +358,7 @@ class PaperCommand(BaseCommand):
 						currentPlatform = order["request"].get("currentPlatform")
 						task = order["request"].get(currentPlatform)
 						ticker = task.get("ticker").get("quote") if order["orderType"] == "buy" else task.get("ticker").get("base")
-						payload, responseMessage = await Processor.process_conversion(request, ticker, "USD", order["amount"] * (order["price"] if order["orderType"] == "buy" else 1), [currentPlatform])
+						payload, responseMessage = await process_conversion(request, ticker, "USD", order["amount"] * (order["price"] if order["orderType"] == "buy" else 1), [currentPlatform])
 						totalValue += payload["raw"]["quotePrice"][0] if responseMessage is None else 0
 
 				topBalances.append((totalValue, properties["paperTrader"]["globalLastReset"], properties["oauth"]["discord"]["userId"]))
@@ -474,9 +472,9 @@ class PaperCommand(BaseCommand):
 		else: execAmount = min((abs(quoteBalance) / execPrice), execAmount)
 
 		if currentPlatform == "CCXT":
-			execPriceText = await TickerParser.get_formatted_price_ccxt(ticker.get("exchange").get("id"), ticker.get("symbol"), execPrice)
+			execPriceText = await get_formatted_price_ccxt(ticker.get("exchange").get("id"), ticker.get("symbol"), execPrice)
 			execPrice = float(execPriceText.replace(",", ""))
-			execAmountText = await TickerParser.get_formatted_amount_ccxt(ticker.get("exchange").get("id"), ticker.get("symbol"), execAmount)
+			execAmountText = await get_formatted_amount_ccxt(ticker.get("exchange").get("id"), ticker.get("symbol"), execAmount)
 			thumbnailUrl = ticker.get("image")
 		else:
 			execPriceText = "{:,.6f}".format(execPrice)

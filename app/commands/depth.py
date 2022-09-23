@@ -12,7 +12,7 @@ from google.cloud.firestore import Increment
 
 from helpers import constants
 from assets import static_storage
-from Processor import Processor
+from Processor import process_quote_arguments, process_task
 
 from commands.base import BaseCommand
 
@@ -25,7 +25,7 @@ class DepthCommand(BaseCommand):
 		task
 	):
 		currentTask = task.get(task.get("currentPlatform"))
-		payload, responseMessage = await Processor.process_task("depth", request.authorId, task)
+		payload, responseMessage = await process_task(task, "depth")
 
 		if payload is None:
 			errorMessage = f"Requested orderbook visualization for `{currentTask.get('ticker').get('name')}` is not available." if responseMessage is None else responseMessage
@@ -42,8 +42,8 @@ class DepthCommand(BaseCommand):
 		self,
 		ctx,
 		tickerId: Option(str, "Ticker id of an asset.", name="ticker"),
-		assetType: Option(str, "Asset class of the ticker.", name="type", autocomplete=BaseCommand.get_types, required=False, default=""),
-		venue: Option(str, "Venue to pull the orderbook from.", name="venue", autocomplete=BaseCommand.get_venues, required=False, default="")
+		assetType: Option(str, "Asset class of the ticker.", name="type", autocomplete=BaseCommand.autocomplete_types, required=False, default=""),
+		venue: Option(str, "Venue to pull the orderbook from.", name="venue", autocomplete=BaseCommand.autocomplete_venues, required=False, default="")
 	):
 		try:
 			request = await self.create_request(ctx)
@@ -54,7 +54,7 @@ class DepthCommand(BaseCommand):
 			platforms = [e for e in defaultPlatforms if preferredPlatforms is None or e in preferredPlatforms]
 
 			arguments = [venue]
-			responseMessage, task = await Processor.process_quote_arguments(request, arguments, platforms, tickerId=tickerId.upper())
+			responseMessage, task = await process_quote_arguments(request, arguments, platforms, tickerId=tickerId.upper())
 
 			if responseMessage is not None:
 				embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/orderbook-visualizations).", color=constants.colors["gray"])

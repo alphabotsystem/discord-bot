@@ -7,12 +7,11 @@ from traceback import format_exc
 from discord import Embed, File, ButtonStyle, SelectOption, Interaction, PartialEmoji
 from discord.commands import slash_command, SlashCommandGroup, Option
 from discord.ui import View, button, Button, Select
-
 from google.cloud.firestore import Increment
 
 from helpers import constants
 from assets import static_storage
-from Processor import Processor
+from Processor import process_chart_arguments, process_task
 
 from commands.base import BaseCommand, ActionsView
 from commands.ichibot import Ichibot
@@ -32,7 +31,7 @@ class FlowCommand(BaseCommand):
 			timeframes = task.pop("timeframes")
 			for i in range(task.get("requestCount")):
 				for p, t in timeframes.items(): task[p]["currentTimeframe"] = t[i]
-				payload, responseMessage = await Processor.process_task("chart", request.authorId, task)
+				payload, responseMessage = await process_task(task, "chart")
 
 				if payload is None:
 					errorMessage = f"Requested orderflow data for `{currentTask.get('ticker').get('name')}` is not available." if responseMessage is None else responseMessage
@@ -62,7 +61,7 @@ class FlowCommand(BaseCommand):
 			return
 
 			arguments = []
-			responseMessage, task = await Processor.process_chart_arguments(request, arguments, ["Alpha Flow"], tickerId=tickerId)
+			responseMessage, task = await process_chart_arguments(request, arguments, ["Alpha Flow"], tickerId=tickerId)
 
 			if responseMessage is not None:
 				embed = discord.Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/pro/flow).", color=constants.colors["gray"])

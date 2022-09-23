@@ -4,12 +4,11 @@ from traceback import format_exc
 
 from discord import Embed
 from discord.commands import slash_command, Option
-
 from google.cloud.firestore import Increment
 
 from helpers import constants
 from assets import static_storage
-from Processor import Processor
+from Processor import process_conversion
 
 from commands.base import BaseCommand
 
@@ -29,7 +28,7 @@ class ConvertCommand(BaseCommand):
 
 			defaultPlatforms = request.get_platform_order_for("convert")
 
-			payload, responseMessage = await Processor.process_conversion(request, fromTicker.upper(), toTicker.upper(), amount, defaultPlatforms)
+			payload, responseMessage = await process_conversion(request, fromTicker.upper(), toTicker.upper(), amount, defaultPlatforms)
 
 			if payload is None:
 				errorMessage = "Requested conversion is not available." if responseMessage is None else responseMessage

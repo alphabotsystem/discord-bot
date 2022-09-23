@@ -11,7 +11,7 @@ from google.cloud.firestore import Increment
 from helpers import constants
 from assets import static_storage
 from helpers.utils import add_decimal_zeros
-from Processor import Processor
+from Processor import process_quote_arguments, process_task
 
 from commands.base import BaseCommand
 
@@ -24,7 +24,7 @@ class DetailsCommand(BaseCommand):
 		task
 	):
 		currentTask = task.get(task.get("currentPlatform"))
-		payload, responseMessage = await Processor.process_task("detail", request.authorId, task)
+		payload, responseMessage = await process_task(task, "detail")
 
 		if payload is None:
 			errorMessage = f"Requested details for `{currentTask.get('ticker').get('name')}` are not available." if responseMessage is None else responseMessage
@@ -101,7 +101,7 @@ class DetailsCommand(BaseCommand):
 			embed.set_footer(text=payload["sourceText"])
 
 			await ctx.interaction.edit_original_message(embed=embed)
-		
+
 		await self.database.document("discord/statistics").set({request.snapshot: {"info": Increment(1)}}, merge=True)
 
 	@slash_command(name="info", description="Pull up asset information of stocks and cryptocurrencies.")
@@ -109,8 +109,8 @@ class DetailsCommand(BaseCommand):
 		self,
 		ctx,
 		tickerId: Option(str, "Ticker id of an asset.", name="ticker"),
-		assetType: Option(str, "Asset class of the ticker.", name="type", autocomplete=BaseCommand.get_types, required=False, default=""),
-		venue: Option(str, "Venue to pull the information from.", name="venue", autocomplete=BaseCommand.get_venues, required=False, default="")
+		assetType: Option(str, "Asset class of the ticker.", name="type", autocomplete=BaseCommand.autocomplete_types, required=False, default=""),
+		venue: Option(str, "Venue to pull the information from.", name="venue", autocomplete=BaseCommand.autocomplete_venues, required=False, default="")
 	):
 		try:
 			request = await self.create_request(ctx)
@@ -121,7 +121,7 @@ class DetailsCommand(BaseCommand):
 			platforms = [e for e in defaultPlatforms if preferredPlatforms is None or e in preferredPlatforms]
 
 			arguments = [venue]
-			responseMessage, task = await Processor.process_quote_arguments(request, arguments, platforms, tickerId=tickerId.upper())
+			responseMessage, task = await process_quote_arguments(request, arguments, platforms, tickerId=tickerId.upper())
 
 			if responseMessage is not None:
 				embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/asset-details).", color=constants.colors["gray"])

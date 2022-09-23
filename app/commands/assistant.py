@@ -15,7 +15,6 @@ from google.assistant.embedded.v1alpha2 import embedded_assistant_pb2, embedded_
 
 from helpers import constants
 from assets import static_storage
-from Processor import Processor
 
 from commands.base import BaseCommand
 
