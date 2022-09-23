@@ -25,7 +25,7 @@ from commands.assistant import AlphaCommand
 from commands.alerts import AlertCommand
 from commands.charts import ChartCommand
 from commands.flow import FlowCommand
-from commands.schedule import ScheduleCommand
+# from commands.schedule import ScheduleCommand
 from commands.heatmaps import HeatmapCommand
 from commands.depth import DepthCommand
 from commands.prices import PriceCommand
