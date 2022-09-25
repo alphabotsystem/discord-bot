@@ -36,7 +36,7 @@ class LookupCommand(BaseCommand):
 			request = await self.create_request(ctx)
 			if request is None: return
 
-			responseMessage, task = await process_quote_arguments(request, [], ["CCXT"], tickerId=tickerId.upper())
+			responseMessage, task = await process_quote_arguments([], ["CCXT"], tickerId=tickerId.upper())
 
 			if responseMessage is not None:
 				embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features).", color=constants.colors["gray"])

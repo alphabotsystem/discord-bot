@@ -72,7 +72,7 @@ class PriceCommand(BaseCommand):
 				partArguments = part.lower().split()
 				if len(partArguments) == 0: continue
 
-				responseMessage, task = await process_quote_arguments(request, partArguments[1:], defaultPlatforms, tickerId=partArguments[0].upper())
+				responseMessage, task = await process_quote_arguments(partArguments[1:], defaultPlatforms, tickerId=partArguments[0].upper())
 
 				if responseMessage is not None:
 					embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/prices).", color=constants.colors["gray"])
@@ -95,19 +95,16 @@ class PriceCommand(BaseCommand):
 		self,
 		ctx,
 		tickerId: Option(str, "Ticker id of an asset.", name="ticker"),
-		assetType: Option(str, "Asset class of the ticker.", name="type", autocomplete=BaseCommand.autocomplete_types, required=False, default=""),
 		venue: Option(str, "Venue to pull the price from.", name="venue", autocomplete=BaseCommand.autocomplete_venues, required=False, default="")
 	):
 		try:
 			request = await self.create_request(ctx)
 			if request is None: return
 
-			defaultPlatforms = request.get_platform_order_for("p", assetType=assetType)
-			preferredPlatforms = BaseCommand.sources["p"].get(assetType)
-			platforms = [e for e in defaultPlatforms if preferredPlatforms is None or e in preferredPlatforms]
+			platforms = request.get_platform_order_for("p")
 
 			arguments = [venue]
-			responseMessage, task = await process_quote_arguments(request, arguments, platforms, tickerId=tickerId.upper())
+			responseMessage, task = await process_quote_arguments(arguments, platforms, tickerId=tickerId.upper())
 
 			if responseMessage is not None:
 				embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/prices).", color=constants.colors["gray"])
@@ -120,5 +117,5 @@ class PriceCommand(BaseCommand):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /price {tickerId} type:{assetType} venue:{venue}")
+			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /price {tickerId} venue:{venue}")
 			await self.unknown_error(ctx)

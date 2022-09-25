@@ -28,7 +28,6 @@ class AlertCommand(BaseCommand):
 		ctx,
 		tickerId: Option(str, "Ticker id of an asset.", name="ticker"),
 		levels: Option(str, "Trigger price for the alert.", name="price"),
-		assetType: Option(str, "Asset class of the ticker.", name="type", autocomplete=BaseCommand.autocomplete_types, required=False, default=""),
 		venue: Option(str, "Venue to pull the data from.", name="venue", autocomplete=BaseCommand.autocomplete_venues, required=False, default=""),
 		message: Option(str, "Public message to display on trigger.", name="message", required=False, default=None),
 		channel: Option(TextChannel, "Channel to display the alert in.", name="channel", required=False, default=None),
@@ -46,13 +45,11 @@ class AlertCommand(BaseCommand):
 				await ctx.interaction.edit_original_message(embed=embed)
 				return
 
-			defaultPlatforms = request.get_platform_order_for("alert", assetType=assetType)
-			preferredPlatforms = BaseCommand.sources["alert"].get(assetType)
-			platforms = [e for e in defaultPlatforms if preferredPlatforms is None or e in preferredPlatforms]
+			platforms = request.get_platform_order_for("alert")
 
 			if request.price_alerts_available():
 				arguments = [venue]
-				responseMessage, task = await process_quote_arguments(request, arguments, platforms, tickerId=tickerId.upper())
+				responseMessage, task = await process_quote_arguments(arguments, platforms, tickerId=tickerId.upper())
 
 				if responseMessage is not None:
 					embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/price-alerts).", color=constants.colors["gray"])
@@ -177,7 +174,7 @@ class AlertCommand(BaseCommand):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /alert set {tickerId} {levels} {assetType} {venue} {message} {channel}")
+			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /alert set {tickerId} {levels} {venue} {message} {channel}")
 			await self.unknown_error(ctx)
 
 	@alertGroup.command(name="list", description="List all price alerts.")

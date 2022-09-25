@@ -51,7 +51,7 @@ class HeatmapCommand(BaseCommand):
 	async def hmap(
 		self,
 		ctx,
-		assetType: Option(str, "Heatmap asset class.", name="type", autocomplete=BaseCommand.autocomplete_types, required=False, default=""),
+		assetType: Option(str, "Heatmap asset class.", name="type", autocomplete=lambda _: ["crypto", "stocks"], required=False, default=""),
 		timeframe: Option(str, "Timeframe for the heatmap.", name="timeframe", autocomplete=autocomplete_timeframe, required=False, default=""),
 		market: Option(str, "Heatmap market.", name="market", autocomplete=autocomplete_market, required=False, default=""),
 		category: Option(str, "Specific asset category.", name="category", autocomplete=autocomplete_category, required=False, default=""),
@@ -65,12 +65,10 @@ class HeatmapCommand(BaseCommand):
 			request = await self.create_request(ctx, autodelete=autodelete)
 			if request is None: return
 
-			defaultPlatforms = request.get_platform_order_for("hmap", assetType=assetType)
-			preferredPlatforms = BaseCommand.sources["hmap"].get(assetType)
-			platforms = [e for e in defaultPlatforms if preferredPlatforms is None or e in preferredPlatforms]
+			platforms = request.get_platform_order_for("hmap", assetType=assetType)
 
 			arguments = [assetType, timeframe, market, category, color, size, group, theme]
-			responseMessage, task = await process_heatmap_arguments(request, arguments, platforms)
+			responseMessage, task = await process_heatmap_arguments(arguments, platforms)
 
 			if responseMessage is not None:
 				embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/heatmaps).", color=constants.colors["gray"])

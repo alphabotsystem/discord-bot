@@ -40,7 +40,7 @@ class ChartCommand(BaseCommand):
 
 				if responseMessage == "requires pro":
 					embed = Embed(title=f"The requested chart for `{currentTask.get('ticker').get('name')}` is only available on TradingView Premium.", description="All TradingView Premium charts are bundled with the [Live Charting Data addon](https://www.alphabotsystem.com/pro/live-charting).", color=constants.colors["gray"])
-					embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
+					embed.set_author(name="TradingView Premium", icon_url=static_storage.icon_bw)
 					embeds.append(embed)
 				elif payload is None:
 					errorMessage = f"Requested chart for `{currentTask.get('ticker').get('name')}` is not available." if responseMessage is None else responseMessage
@@ -88,7 +88,7 @@ class ChartCommand(BaseCommand):
 				partArguments = part.lower().split()
 				if len(partArguments) == 0: continue
 
-				responseMessage, task = await process_chart_arguments(request, partArguments[1:], defaultPlatforms, tickerId=partArguments[0].upper())
+				responseMessage, task = await process_chart_arguments(partArguments[1:], defaultPlatforms, tickerId=partArguments[0].upper())
 
 				if responseMessage is not None:
 					description = "[Live Charting Data addon](https://www.alphabotsystem.com/pro/live-charting) unlocks additional assets, indicators, timeframes and more." if responseMessage.endswith("add-on.") else "Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/charting)."

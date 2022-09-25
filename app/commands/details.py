@@ -109,19 +109,16 @@ class DetailsCommand(BaseCommand):
 		self,
 		ctx,
 		tickerId: Option(str, "Ticker id of an asset.", name="ticker"),
-		assetType: Option(str, "Asset class of the ticker.", name="type", autocomplete=BaseCommand.autocomplete_types, required=False, default=""),
 		venue: Option(str, "Venue to pull the information from.", name="venue", autocomplete=BaseCommand.autocomplete_venues, required=False, default="")
 	):
 		try:
 			request = await self.create_request(ctx)
 			if request is None: return
 
-			defaultPlatforms = request.get_platform_order_for("info", assetType=assetType)
-			preferredPlatforms = BaseCommand.sources["info"].get(assetType)
-			platforms = [e for e in defaultPlatforms if preferredPlatforms is None or e in preferredPlatforms]
+			platforms = request.get_platform_order_for("info")
 
 			arguments = [venue]
-			responseMessage, task = await process_quote_arguments(request, arguments, platforms, tickerId=tickerId.upper())
+			responseMessage, task = await process_quote_arguments(arguments, platforms, tickerId=tickerId.upper())
 
 			if responseMessage is not None:
 				embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/asset-details).", color=constants.colors["gray"])
@@ -134,5 +131,5 @@ class DetailsCommand(BaseCommand):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /info {tickerId} type:{assetType} venue:{venue}")
+			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /info {tickerId} venue:{venue}")
 			await self.unknown_error(ctx)

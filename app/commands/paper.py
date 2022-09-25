@@ -92,16 +92,13 @@ class PaperCommand(BaseCommand):
 		tickerId,
 		amount,
 		level,
-		assetType,
 		orderType
 	):
 		try:
 			request = await self.create_request(ctx)
 			if request is None: return
 
-			defaultPlatforms = request.get_platform_order_for("paper", assetType=assetType)
-			preferredPlatforms = BaseCommand.sources["paper"].get(assetType)
-			platforms = [e for e in defaultPlatforms if preferredPlatforms is None or e in preferredPlatforms]
+			platforms = request.get_platform_order_for("paper")
 
 			if request.is_registered():
 				if level is not None:
@@ -109,7 +106,7 @@ class PaperCommand(BaseCommand):
 					await ctx.interaction.edit_original_message(embed=embed)
 					return
 
-				responseMessage, task = await process_quote_arguments(request, [], platforms, tickerId=tickerId.upper())
+				responseMessage, task = await process_quote_arguments([], platforms, tickerId=tickerId.upper())
 				if responseMessage is not None:
 					embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/paper-trading).", color=constants.colors["gray"])
 					embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
@@ -136,7 +133,7 @@ class PaperCommand(BaseCommand):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /paper {orderType} {tickerId} {amount} {level} {assetType}")
+			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /paper {orderType} {tickerId} {amount} {level}")
 			await self.unknown_error(ctx)
 
 	@paperGroup.command(name="buy", description="Execute a paper buy trade.")
@@ -146,9 +143,8 @@ class PaperCommand(BaseCommand):
 		tickerId: Option(str, "Ticker id of an asset.", name="ticker"),
 		amount: Option(float, "Trade amount in base currency.", name="amount"),
 		level: Option(float, "Limit order price for the trade.", name="price", required=False, default=None),
-		assetType: Option(str, "Asset class of the ticker.", name="type", autocomplete=BaseCommand.autocomplete_types, required=False, default="")
 	):
-		await self.paper_order_proxy(ctx, tickerId, amount, level, assetType, "buy")
+		await self.paper_order_proxy(ctx, tickerId, amount, level, "buy")
 
 	@paperGroup.command(name="sell", description="Execute a paper sell trade.")
 	async def paper_sell(
@@ -157,9 +153,8 @@ class PaperCommand(BaseCommand):
 		tickerId: Option(str, "Ticker id of an asset.", name="ticker"),
 		amount: Option(float, "Trade amount in base currency.", name="amount"),
 		level: Option(float, "Limit order price for the trade.", name="price", required=False, default=None),
-		assetType: Option(str, "Asset class of the ticker.", name="type", autocomplete=BaseCommand.autocomplete_types, required=False, default="")
 	):
-		await self.paper_order_proxy(ctx, tickerId, amount, level, assetType, "sell")
+		await self.paper_order_proxy(ctx, tickerId, amount, level, "sell")
 
 	@paperGroup.command(name="balance", description="Fetch paper trading balance.")
 	async def paper_balance(
@@ -184,7 +179,7 @@ class PaperCommand(BaseCommand):
 					if platform == "USD": continue
 					for asset, holding in balances.items():
 						if holding == 0: continue
-						ticker, error = await match_ticker(asset, None, platform, "traditional")
+						ticker, error = await match_ticker(asset, None, platform)
 
 						balanceText = ""
 						valueText = "No conversion"

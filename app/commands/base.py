@@ -19,47 +19,16 @@ class BaseCommand(Cog):
 	}
 
 	sources = {
-		"alert": {
-			"stocks": ["IEXC"],
-			"crypto": ["CCXT"]
-		},
-		"c": {
-			"stocks": ["TradingView", "GoCharting", "Finviz"],
-			"forex": ["TradingView", "Finviz"],
-			"other": ["TradingView", "Finviz"],
-			"crypto": ["TradingView", "TradingLite", "GoCharting", "Bookmap"]
-		},
-		"hmap": {
-			"stocks": ["TradingView Stock Heatmap"],
-			"crypto": ["TradingView Crypto Heatmap"]
-		},
-		"flow": {
-			"stocks": ["Alpha Flow"]
-		},
-		"p": {
-			"stocks": ["IEXC"],
-			"forex": ["IEXC", "CoinGecko"],
-			"crypto": ["CCXT", "CoinGecko"]
-		},
-		"v": {
-			"stocks": ["IEXC"],
-			"crypto": ["CoinGecko", "CCXT"]
-		},
-		"d": {
-			"stocks": ["IEXC"],
-			"crypto": ["CCXT"]
-		},
-		"info": {
-			"stocks": ["IEXC"],
-			"crypto": ["CoinGecko"]
-		},
-		"paper": {
-			"stocks": ["IEXC"],
-			"crypto": ["CCXT"]
-		},
-		"ichibot": {
-			"crypto": ["Ichibot"]
-		}
+		"alert": ["IEXC", "CCXT"],
+		"c": ["TradingView", "TradingView Premium", "Finviz", "TradingLite", "GoCharting", "Bookmap"],
+		"hmap": ["TradingView Stock Heatmap", "TradingView Crypto Heatmap"],
+		"flow": ["Alpha Flow"],
+		"p": ["IEXC", "CCXT", "CoinGecko"],
+		"v": ["IEXC", "CoinGecko", "CCXT"],
+		"d": ["IEXC", "CCXT"],
+		"info": ["IEXC", "CoinGecko"],
+		"paper": ["IEXC", "CCXT"],
+		"ichibot": ["Ichibot"]
 	}
 
 	def __init__(self, bot, create_request, database, logging):
@@ -82,39 +51,16 @@ class BaseCommand(Cog):
 		try: await ctx.interaction.edit_original_message(content=None, embed=embed, files=[])
 		except: return
 
-	async def autocomplete_types(cls, ctx):
-		_commandName = ctx.command.name if ctx.command.parent is None else ctx.command.parent.name
-		command = cls.commandMap.get(_commandName, _commandName)
-		assetType = " ".join(ctx.options.get("type", "").lower().split())
-		venue = " ".join(ctx.options.get("venue", "").lower().split())
-
-		if venue != "":
-			venues = await get_venues("", "")
-			# print(venues)
-			venueType = [v for v in venues if v.lower().startswith(venue)]
-			# print(venueType)
-		# print(cls.sources.get(command), assetType)
-
-		return sorted([s for s in cls.sources.get(command) if s.lower().startswith(assetType) and (venue == "" or s in venueType)])
-
 	async def autocomplete_venues(cls, ctx):
-		if ctx.options.get("ticker", "") is None: return []
-
 		_commandName = ctx.command.name if ctx.command.parent is None else ctx.command.parent.name
 		command = cls.commandMap.get(_commandName, _commandName)
 		tickerId = " ".join(ctx.options.get("ticker", "").lower().split())
-		assetType = " ".join(ctx.options.get("type", "").lower().split())
 		venue = " ".join(ctx.options.get("venue", "").lower().split())
 
-		if command == "ichibot" and assetType == "": assetType = "crypto"
+		if command == "ichibot": tickerId = "btcusd"
 		elif tickerId == "": return []
 
-		types = cls.sources.get(command)
-		if assetType not in types:
-			platforms = list(set([e for v in types.values() for e in v]))
-		else:
-			platforms = types.get(assetType, [])
-
+		platforms = cls.sources.get(command)
 		venues = await get_venues(tickerId, ",".join(platforms))
 		return sorted([v for v in venues if v.lower().startswith(venue)])
 
