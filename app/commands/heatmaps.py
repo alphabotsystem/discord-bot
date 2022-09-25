@@ -58,7 +58,7 @@ class HeatmapCommand(BaseCommand):
 		color: Option(str, "Method used to color the heatmap by.", name="color", autocomplete=autocomplete_color, required=False, default=""),
 		size: Option(str, "Method used to determine heatmap's block sizes.", name="size", autocomplete=autocomplete_size, required=False, default=""),
 		group: Option(str, "Asset grouping method.", name="group", autocomplete=autocomplete_group, required=False, default=""),
-		theme: Option(str, "Heatmap color theme.", name="theme", autocomplete=["light", "dark"], required=False, default=""),
+		theme: Option(str, "Heatmap color theme.", name="theme", autocomplete=lambda _: ["light", "dark"], required=False, default=""),
 		autodelete: Option(float, "Bot response self destruct timer in minutes.", name="autodelete", required=False, default=None)
 	):
 		try:
