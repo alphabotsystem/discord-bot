@@ -7,15 +7,13 @@ from discord.ui import View, button, Button
 
 from helpers import constants
 from assets import static_storage
-from Processor import get_venues
+from Processor import autocomplete_venues
 
 
 class BaseCommand(Cog):
 	commandMap = {
 		"chart": "c",
-		"price": "p",
-		"volume": "v",
-		"depth": "d"
+		"price": "p"
 	}
 
 	sources = {
@@ -24,8 +22,8 @@ class BaseCommand(Cog):
 		"hmap": ["TradingView Stock Heatmap", "TradingView Crypto Heatmap"],
 		"flow": ["Alpha Flow"],
 		"p": ["IEXC", "CCXT", "CoinGecko"],
-		"v": ["IEXC", "CoinGecko", "CCXT"],
-		"d": ["IEXC", "CCXT"],
+		"volume": ["IEXC", "CoinGecko", "CCXT"],
+		"depth": ["IEXC", "CCXT"],
 		"info": ["IEXC", "CoinGecko"],
 		"paper": ["IEXC", "CCXT"],
 		"ichibot": ["Ichibot"]
@@ -51,6 +49,17 @@ class BaseCommand(Cog):
 		try: await ctx.interaction.edit_original_message(content=None, embed=embed, files=[])
 		except: return
 
+	async def autocomplete_ticker(cls, ctx):
+		_commandName = ctx.command.name if ctx.command.parent is None else ctx.command.parent.name
+		command = cls.commandMap.get(_commandName, _commandName)
+		tickerId = " ".join(ctx.options.get("ticker", "").lower().split())
+
+		if tickerId == "": return []
+
+		platforms = cls.sources.get(command)
+		
+		return 
+
 	async def autocomplete_venues(cls, ctx):
 		_commandName = ctx.command.name if ctx.command.parent is None else ctx.command.parent.name
 		command = cls.commandMap.get(_commandName, _commandName)
@@ -61,7 +70,7 @@ class BaseCommand(Cog):
 		elif tickerId == "": return []
 
 		platforms = cls.sources.get(command)
-		venues = await get_venues(tickerId, ",".join(platforms))
+		venues = await autocomplete_venues(tickerId, ",".join(platforms))
 		return sorted([v for v in venues if v.lower().startswith(venue)])
 
 class Confirm(View):

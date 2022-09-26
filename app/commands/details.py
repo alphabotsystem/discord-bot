@@ -108,8 +108,7 @@ class DetailsCommand(BaseCommand):
 	async def info(
 		self,
 		ctx,
-		tickerId: Option(str, "Ticker id of an asset.", name="ticker"),
-		venue: Option(str, "Venue to pull the information from.", name="venue", autocomplete=BaseCommand.autocomplete_venues, required=False, default="")
+		tickerId: Option(str, "Ticker id of an asset.", name="ticker")
 	):
 		try:
 			request = await self.create_request(ctx)
