@@ -146,13 +146,31 @@ class AlertCommand(BaseCommand):
 						})
 
 					if len(newAlerts) == 1:
-						embed = Embed(title=f"Price alert set for {ticker.get('name')}{exchangeName} at {newAlerts[0]['levelText']}{pairQuoteName}.", color=constants.colors["deep purple"])
-						if currentPlatform == "IEXC": embed.description = "The alert might trigger with up to 15-minute delay due to data licencing requirements on different exchanges."
+						description = ""
+						if channel.permissions_for(ctx.author).send_messages:
+							if channel is None:
+								description += "No channel was specified, so the alert will be sent to your DMs. "
+							else:
+								description += "The alert will be sent to the channel you specified. "
+						if currentPlatform == "IEXC":
+							description += "The alert might trigger with up to 15-minute delay due to data licensing requirements on different exchanges."
+						if description == "":
+							description = None
+						embed = Embed(title=f"Price alert set for {ticker.get('name')}{exchangeName} at {newAlerts[0]['levelText']}{pairQuoteName}.", description=description, color=constants.colors["deep purple"])
 						embed.set_author(name="Alert successfully set", icon_url=static_storage.icon)
 					else:
+						description = ""
+						if channel.permissions_for(ctx.author).send_messages:
+							if channel is None:
+								description += "No channel was specified, so alerts will be sent to your DMs. "
+							else:
+								description += "Alerts will be sent to the channel you specified. "
+						if currentPlatform == "IEXC":
+							description += "Alerts might trigger with up to 15-minute delay due to data licensing requirements on different exchanges."
+						if description == "":
+							description = None
 						levelsText = ", ".join([e["levelText"] for e in newAlerts])
-						embed = Embed(title=f"Price alerts set for {ticker.get('name')}{exchangeName} at {levelsText}{pairQuoteName}.", color=constants.colors["deep purple"])
-						if currentPlatform == "IEXC": embed.description = "Alerts might trigger with up to 15-minute delay due to data licencing requirements on different exchanges."
+						embed = Embed(title=f"Price alerts set for {ticker.get('name')}{exchangeName} at {levelsText}{pairQuoteName}.", description=description, color=constants.colors["deep purple"])
 						embed.set_author(name="Alerts successfully set", icon_url=static_storage.icon)
 					await ctx.interaction.edit_original_message(embed=embed)
 
