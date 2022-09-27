@@ -51,12 +51,15 @@ class BaseCommand(Cog):
 		except: return
 
 	async def autocomplete_from_ticker(cls, ctx):
-		return await cls.autocomplete_ticker(ctx, "from")
+		return await cls._autocomplete_ticker(ctx, "from")
 
 	async def autocomplete_to_ticker(cls, ctx):
-		return await cls.autocomplete_ticker(ctx, "to")
+		return await cls._autocomplete_ticker(ctx, "to")
 
-	async def autocomplete_ticker(cls, ctx, mode="ticker"):
+	async def autocomplete_ticker(cls, ctx):
+		return await cls._autocomplete_ticker(ctx, "ticker")
+
+	async def _autocomplete_ticker(cls, ctx, mode):
 		_commandName = ctx.command.name if ctx.command.parent is None else ctx.command.parent.name
 		command = cls.commandMap.get(_commandName, _commandName)
 		tickerId = " ".join(ctx.options.get(mode, "").lower().split()).split("|")[0]
