@@ -18,8 +18,8 @@ class ConvertCommand(BaseCommand):
 	async def convert(
 		self,
 		ctx,
-		fromTicker: Option(str, "Ticker to convert from.", name="from"),
-		toTicker: Option(str, "Ticker to convert to.", name="to"),
+		fromTicker: Option(str, "Ticker to convert from.", name="from", autocomplete=BaseCommand.autocomplete_from_ticker),
+		toTicker: Option(str, "Ticker to convert to.", name="to", autocomplete=BaseCommand.autocomplete_to_ticker),
 		amount: Option(float, "Amount to convert.", name="amount")
 	):
 		try:

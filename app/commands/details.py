@@ -108,16 +108,14 @@ class DetailsCommand(BaseCommand):
 	async def info(
 		self,
 		ctx,
-		tickerId: Option(str, "Ticker id of an asset.", name="ticker")
+		tickerId: Option(str, "Ticker id of an asset.", name="ticker", autocomplete=BaseCommand.autocomplete_ticker)
 	):
 		try:
 			request = await self.create_request(ctx)
 			if request is None: return
 
 			platforms = request.get_platform_order_for("info")
-
-			arguments = [venue]
-			responseMessage, task = await process_quote_arguments(arguments, platforms, tickerId=tickerId.upper())
+			responseMessage, task = await process_quote_arguments([], platforms, tickerId=tickerId.upper())
 
 			if responseMessage is not None:
 				embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/asset-details).", color=constants.colors["gray"])

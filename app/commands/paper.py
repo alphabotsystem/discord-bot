@@ -140,7 +140,7 @@ class PaperCommand(BaseCommand):
 	async def paper_buy(
 		self,
 		ctx,
-		tickerId: Option(str, "Ticker id of an asset.", name="ticker"),
+		tickerId: Option(str, "Ticker id of an asset.", name="ticker", autocomplete=BaseCommand.autocomplete_ticker),
 		amount: Option(float, "Trade amount in base currency.", name="amount"),
 		level: Option(float, "Limit order price for the trade.", name="price", required=False, default=None),
 	):
@@ -150,7 +150,7 @@ class PaperCommand(BaseCommand):
 	async def paper_sell(
 		self,
 		ctx,
-		tickerId: Option(str, "Ticker id of an asset.", name="ticker"),
+		tickerId: Option(str, "Ticker id of an asset.", name="ticker", autocomplete=BaseCommand.autocomplete_ticker),
 		amount: Option(float, "Trade amount in base currency.", name="amount"),
 		level: Option(float, "Limit order price for the trade.", name="price", required=False, default=None),
 	):

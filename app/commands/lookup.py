@@ -30,7 +30,7 @@ class LookupCommand(BaseCommand):
 	async def markets(
 		self,
 		ctx,
-		tickerId: Option(str, "Ticker id of an asset.", name="ticker")
+		tickerId: Option(str, "Ticker id of an asset.", name="ticker", autocomplete=BaseCommand.autocomplete_ticker)
 	):
 		try:
 			request = await self.create_request(ctx)

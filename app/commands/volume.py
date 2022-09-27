@@ -42,7 +42,7 @@ class VolumeCommand(BaseCommand):
 	async def volume(
 		self,
 		ctx,
-		tickerId: Option(str, "Ticker id of an asset.", name="ticker"),
+		tickerId: Option(str, "Ticker id of an asset.", name="ticker", autocomplete=BaseCommand.autocomplete_ticker),
 		venue: Option(str, "Venue to pull the volume from.", name="venue", autocomplete=BaseCommand.autocomplete_venues, required=False, default="")
 	):
 		try:

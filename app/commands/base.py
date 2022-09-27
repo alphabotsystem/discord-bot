@@ -7,7 +7,7 @@ from discord.ui import View, button, Button
 
 from helpers import constants
 from assets import static_storage
-from Processor import autocomplete_venues
+from Processor import autocomplete_ticker, autocomplete_venues
 
 
 class BaseCommand(Cog):
@@ -22,6 +22,7 @@ class BaseCommand(Cog):
 		"hmap": ["TradingView Stock Heatmap", "TradingView Crypto Heatmap"],
 		"flow": ["Alpha Flow"],
 		"p": ["IEXC", "CCXT", "CoinGecko"],
+		"convert": ["IEXC", "CCXT", "CoinGecko"],
 		"volume": ["IEXC", "CoinGecko", "CCXT"],
 		"depth": ["IEXC", "CCXT"],
 		"info": ["IEXC", "CoinGecko"],
@@ -49,24 +50,30 @@ class BaseCommand(Cog):
 		try: await ctx.interaction.edit_original_message(content=None, embed=embed, files=[])
 		except: return
 
-	async def autocomplete_ticker(cls, ctx):
+	async def autocomplete_from_ticker(cls, ctx):
+		return await cls.autocomplete_ticker(ctx, "from")
+
+	async def autocomplete_to_ticker(cls, ctx):
+		return await cls.autocomplete_ticker(ctx, "to")
+
+	async def autocomplete_ticker(cls, ctx, mode="ticker"):
 		_commandName = ctx.command.name if ctx.command.parent is None else ctx.command.parent.name
 		command = cls.commandMap.get(_commandName, _commandName)
-		tickerId = " ".join(ctx.options.get("ticker", "").lower().split())
+		tickerId = " ".join(ctx.options.get(mode, "").lower().split()).split("|")[0]
 
 		if tickerId == "": return []
 
 		platforms = cls.sources.get(command)
-		
-		return 
+		tickers = await autocomplete_ticker(tickerId, ",".join(platforms))
+		return tickers
 
 	async def autocomplete_venues(cls, ctx):
 		_commandName = ctx.command.name if ctx.command.parent is None else ctx.command.parent.name
 		command = cls.commandMap.get(_commandName, _commandName)
-		tickerId = " ".join(ctx.options.get("ticker", "").lower().split())
+		tickerId = " ".join(ctx.options.get("ticker", "").lower().split()).split("|")[0]
 		venue = " ".join(ctx.options.get("venue", "").lower().split())
 
-		if command == "ichibot": tickerId = "btcusd"
+		if command == "ichibot": tickerId = "btc"
 		elif tickerId == "": return []
 
 		platforms = cls.sources.get(command)
