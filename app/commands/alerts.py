@@ -48,8 +48,7 @@ class AlertCommand(BaseCommand):
 			platforms = request.get_platform_order_for("alert")
 
 			if request.price_alerts_available():
-				arguments = [venue]
-				responseMessage, task = await process_quote_arguments(arguments, platforms, tickerId=tickerId.upper())
+				responseMessage, task = await process_quote_arguments([venue], platforms, tickerId=tickerId.upper())
 
 				if responseMessage is not None:
 					embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/price-alerts).", color=constants.colors["gray"])

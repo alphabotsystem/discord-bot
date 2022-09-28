@@ -36,6 +36,7 @@ class DepthCommand(BaseCommand):
 			await ctx.interaction.edit_original_message(file=File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, request.authorId, randint(1000, 9999))))
 
 		await self.database.document("discord/statistics").set({request.snapshot: {"d": Increment(1)}}, merge=True)
+		await self.log_request("depth", request, [task])
 
 	@slash_command(name="depth", description="Pull orderbook visualization snapshots of stocks and cryptocurrencies.")
 	async def depth(
@@ -49,9 +50,7 @@ class DepthCommand(BaseCommand):
 			if request is None: return
 
 			platforms = request.get_platform_order_for("d")
-
-			arguments = [venue]
-			responseMessage, task = await process_quote_arguments(arguments, platforms, tickerId=tickerId.upper())
+			responseMessage, task = await process_quote_arguments([venue], platforms, tickerId=tickerId.upper())
 
 			if responseMessage is not None:
 				embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/orderbook-visualizations).", color=constants.colors["gray"])

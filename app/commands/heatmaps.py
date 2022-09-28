@@ -14,6 +14,16 @@ from Processor import process_heatmap_arguments, process_task, autocomplete_time
 
 from commands.base import BaseCommand, ActionsView
 
+async def autocomplete_type(ctx):
+	options = ["crypto", "stocks"]
+	currentInput = " ".join(ctx.options.get("type", "").lower().split())
+	return [e for e in options if e.startswith(currentInput)]
+
+async def autocomplete_theme(ctx):
+	options = ["light", "dark"]
+	currentInput = " ".join(ctx.options.get("theme", "").lower().split())
+	return [e for e in options if e.startswith(currentInput)]
+
 
 class HeatmapCommand(BaseCommand):
 	async def respond(
@@ -45,20 +55,21 @@ class HeatmapCommand(BaseCommand):
 		await ctx.interaction.edit_original_message(embeds=embeds, files=files, view=actions)
 
 		await self.database.document("discord/statistics").set({request.snapshot: {"hmap": Increment(len(tasks))}}, merge=True)
+		await self.log_request("heatmaps", request, tasks)
 		await self.cleanup(ctx, request)
 
 	@slash_command(name="hmap", description="Pull market heatmaps from TradingView.")
 	async def hmap(
 		self,
 		ctx,
-		assetType: Option(str, "Heatmap asset class.", name="type", autocomplete=lambda _: ["crypto", "stocks"], required=False, default=""),
+		assetType: Option(str, "Heatmap asset class.", name="type", autocomplete=autocomplete_type, required=False, default=""),
 		timeframe: Option(str, "Timeframe for the heatmap.", name="timeframe", autocomplete=autocomplete_timeframe, required=False, default=""),
 		market: Option(str, "Heatmap market.", name="market", autocomplete=autocomplete_market, required=False, default=""),
 		category: Option(str, "Specific asset category.", name="category", autocomplete=autocomplete_category, required=False, default=""),
 		color: Option(str, "Method used to color the heatmap by.", name="color", autocomplete=autocomplete_color, required=False, default=""),
 		size: Option(str, "Method used to determine heatmap's block sizes.", name="size", autocomplete=autocomplete_size, required=False, default=""),
 		group: Option(str, "Asset grouping method.", name="group", autocomplete=autocomplete_group, required=False, default=""),
-		theme: Option(str, "Heatmap color theme.", name="theme", autocomplete=lambda _: ["light", "dark"], required=False, default=""),
+		theme: Option(str, "Heatmap color theme.", name="theme", autocomplete=autocomplete_theme, required=False, default=""),
 		autodelete: Option(float, "Bot response self destruct timer in minutes.", name="autodelete", required=False, default=None)
 	):
 		try:

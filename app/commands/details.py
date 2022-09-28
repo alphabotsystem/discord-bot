@@ -103,6 +103,7 @@ class DetailsCommand(BaseCommand):
 			await ctx.interaction.edit_original_message(embed=embed)
 
 		await self.database.document("discord/statistics").set({request.snapshot: {"info": Increment(1)}}, merge=True)
+		await self.log_request("details", request, [task])
 
 	@slash_command(name="info", description="Pull up asset information of stocks and cryptocurrencies.")
 	async def info(

@@ -46,6 +46,7 @@ class PriceCommand(BaseCommand):
 		
 		await ctx.interaction.edit_original_message(embeds=embeds)
 		await self.database.document("discord/statistics").set({request.snapshot: {"p": Increment(len(tasks))}}, merge=True)
+		await self.log_request("prices", request, tasks)
 
 	@slash_command(name="p", description="Fetch stock and crypto prices, forex rates, and other instrument data. Command for power users.")
 	async def p(
@@ -102,9 +103,7 @@ class PriceCommand(BaseCommand):
 			if request is None: return
 
 			platforms = request.get_platform_order_for("p")
-
-			arguments = [venue]
-			responseMessage, task = await process_quote_arguments(arguments, platforms, tickerId=tickerId.upper())
+			responseMessage, task = await process_quote_arguments([venue], platforms, tickerId=tickerId.upper())
 
 			if responseMessage is not None:
 				embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/prices).", color=constants.colors["gray"])

@@ -60,8 +60,7 @@ class FlowCommand(BaseCommand):
 			await ctx.interaction.edit_original_message(embed=embed)
 			return
 
-			arguments = []
-			responseMessage, task = await process_chart_arguments(arguments, ["Alpha Flow"], tickerId=tickerId)
+			responseMessage, task = await process_chart_arguments([], ["Alpha Flow"], tickerId=tickerId)
 
 			if responseMessage is not None:
 				embed = discord.Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/pro/flow).", color=constants.colors["gray"])

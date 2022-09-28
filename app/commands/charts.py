@@ -37,6 +37,8 @@ class ChartCommand(BaseCommand):
 			for i in range(task.get("requestCount")):
 				for p, t in timeframes.items(): task[p]["currentTimeframe"] = t[i]
 				payload, responseMessage = await process_task(task, "chart")
+				task["currentPlatform"] = payload.get("platform")
+				currentTask = task.get(task.get("currentPlatform"))
 
 				if responseMessage == "requires pro":
 					embed = Embed(title=f"The requested chart for `{currentTask.get('ticker').get('name')}` is only available on TradingView Premium.", description="All TradingView Premium charts are bundled with the [Live Charting Data addon](https://www.alphabotsystem.com/pro/live-charting).", color=constants.colors["gray"])
@@ -60,6 +62,7 @@ class ChartCommand(BaseCommand):
 		await ctx.interaction.edit_original_message(embeds=embeds, files=files, view=actions)
 
 		await self.database.document("discord/statistics").set({request.snapshot: {"c": Increment(len(tasks))}}, merge=True)
+		await self.log_request("charts", request, tasks)
 		await self.cleanup(ctx, request, removeView=True)
 
 	@slash_command(name="c", description="Pull charts from TradingView, TradingLite, GoCharting, and more. Command for power users.")

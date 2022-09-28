@@ -37,6 +37,7 @@ class VolumeCommand(BaseCommand):
 			await ctx.interaction.edit_original_message(embed=embed)
 		
 		await self.database.document("discord/statistics").set({request.snapshot: {"v": Increment(1)}}, merge=True)
+		await self.log_request("volume", request, [task])
 
 	@slash_command(name="volume", description="Fetch stock and crypto 24-hour volume.")
 	async def volume(
@@ -50,9 +51,7 @@ class VolumeCommand(BaseCommand):
 			if request is None: return
 
 			platforms = request.get_platform_order_for("v")
-
-			arguments = [venue]
-			responseMessage, task = await process_quote_arguments(arguments, platforms, tickerId=tickerId.upper())
+			responseMessage, task = await process_quote_arguments([venue], platforms, tickerId=tickerId.upper())
 
 			if responseMessage is not None:
 				embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/volume).", color=constants.colors["gray"])
