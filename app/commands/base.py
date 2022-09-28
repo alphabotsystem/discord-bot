@@ -41,7 +41,7 @@ class BaseCommand(Cog):
 		self.logging = logging
 
 	async def log_request(self, command, request, tasks):
-		async with InfluxDBClientAsync(url="http://influxdb:6900", token=environ["INFLUXDB_TOKEN"], org="Alpha Bot System") as client:
+		async with InfluxDBClientAsync(url="http://influxdb:6902", token=environ["INFLUXDB_TOKEN"], org="Alpha Bot System") as client:
 			writeApi = client.write_api()
 
 			points = []
