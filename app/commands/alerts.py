@@ -26,7 +26,7 @@ class AlertCommand(BaseCommand):
 	async def alert_set(
 		self,
 		ctx,
-		tickerId: Option(str, "Ticker id of an asset.", name="ticker"),
+		tickerId: Option(str, "Ticker id of an asset.", name="ticker", autocomplete=BaseCommand.autocomplete_ticker),
 		levels: Option(str, "Trigger price for the alert.", name="price"),
 		venue: Option(str, "Venue to pull the data from.", name="venue", autocomplete=BaseCommand.autocomplete_venues, required=False, default=""),
 		message: Option(str, "Public message to display on trigger.", name="message", required=False, default=None),
@@ -78,11 +78,11 @@ class AlertCommand(BaseCommand):
 					embed.set_author(name="Data not available", icon_url=static_storage.icon_bw)
 					await ctx.interaction.edit_original_message(embed=embed)
 				elif channel is not None and not channel.permissions_for(ctx.author).send_messages:
-					embed = Embed(title="You do not have the permission to send messages in this channel.", color=constants.colors["gray"])
+					embed = Embed(title="You do not have the permission to send messages in the specified channel.", color=constants.colors["gray"])
 					embed.set_author(name="Permission denied", icon_url=static_storage.icon_bw)
 					await ctx.interaction.edit_original_message(embed=embed)
 				elif channel is None and role is not None:
-					embed = Embed(title="You must provide a channel send the alert to when a role argument is provided.", color=constants.colors["gray"])
+					embed = Embed(title="You must provide a channel to send the alert to when a role argument is specified.", color=constants.colors["gray"])
 					embed.set_author(name="Missing channel", icon_url=static_storage.icon_bw)
 					await ctx.interaction.edit_original_message(embed=embed)
 				elif role is not None and not channel.permissions_for(ctx.author).manage_messages:

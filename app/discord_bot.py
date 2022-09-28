@@ -183,12 +183,14 @@ async def send_alpha_messages(messageId, message):
 			try:
 				mentionText = f"<@!{message['user']}>, you weren't reachable via DMs!" if destinationUser is None else None
 				await backupChannel.send(content=mentionText, embed=embed)
+				await database.document(f"discord/properties/messages/{messageId}").delete()
 				return
 			except:
 				print(format_exc())
 		elif backupUser is not None:
 			try:
 				await backupUser.send(content=f"The alert could not be sent into the channel that was initially requested. Reason: `{error}`", embed=embed)
+				await database.document(f"discord/properties/messages/{messageId}").delete()
 				return
 			except:
 				print(format_exc())
