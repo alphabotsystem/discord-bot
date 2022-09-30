@@ -37,8 +37,6 @@ class ChartCommand(BaseCommand):
 			for i in range(task.get("requestCount")):
 				for p, t in timeframes.items(): task[p]["currentTimeframe"] = t[i]
 				payload, responseMessage = await process_task(task, "chart")
-				task["currentPlatform"] = payload.get("platform")
-				currentTask = task.get(task.get("currentPlatform"))
 
 				if responseMessage == "requires pro":
 					embed = Embed(title=f"The requested chart for `{currentTask.get('ticker').get('name')}` is only available on TradingView Premium.", description="All TradingView Premium charts are bundled with the [Live Charting Data addon](https://www.alphabotsystem.com/pro/live-charting).", color=constants.colors["gray"])
@@ -50,6 +48,8 @@ class ChartCommand(BaseCommand):
 					embed.set_author(name="Chart not available", icon_url=static_storage.icon_bw)
 					embeds.append(embed)
 				else:
+					task["currentPlatform"] = payload.get("platform")
+					currentTask = task.get(task.get("currentPlatform"))
 					files.append(File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, request.authorId, randint(1000, 9999))))
 
 		actions = None
