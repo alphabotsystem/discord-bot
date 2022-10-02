@@ -93,11 +93,12 @@ class BaseCommand(Cog):
 	async def autocomplete_venues(cls, ctx):
 		_commandName = ctx.command.name if ctx.command.parent is None else ctx.command.parent.name
 		command = cls.commandMap.get(_commandName, _commandName)
-		tickerId = " ".join(ctx.options.get("ticker", "").lower().split()).split("|")[0]
+		tickerId = ctx.options.get("ticker", "")
 		venue = " ".join(ctx.options.get("venue", "").lower().split())
 
 		if command == "ichibot": tickerId = "btc"
 		elif tickerId == "": return []
+		else: tickerId = " ".join(tickerId.lower().split()).split("|")[0]
 
 		platforms = cls.sources.get(command)
 		venues = await autocomplete_venues(tickerId, ",".join(platforms))
