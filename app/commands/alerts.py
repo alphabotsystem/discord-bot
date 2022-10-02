@@ -146,11 +146,10 @@ class AlertCommand(BaseCommand):
 
 					if len(newAlerts) == 1:
 						description = ""
-						if channel.permissions_for(ctx.author).send_messages:
-							if channel is None:
-								description += "No channel was specified, so the alert will be sent to your DMs. "
-							else:
-								description += "The alert will be sent to the channel you specified. "
+						if channel is None:
+							description += "No channel was specified, so the alert will be sent to your DMs. "
+						else:
+							description += "The alert will be sent to the channel you specified. "
 						if currentPlatform == "IEXC":
 							description += "The alert might trigger with up to 15-minute delay due to data licensing requirements on different exchanges."
 						if description == "":
@@ -159,11 +158,10 @@ class AlertCommand(BaseCommand):
 						embed.set_author(name="Alert successfully set", icon_url=static_storage.icon)
 					else:
 						description = ""
-						if channel.permissions_for(ctx.author).send_messages:
-							if channel is None:
-								description += "No channel was specified, so alerts will be sent to your DMs. "
-							else:
-								description += "Alerts will be sent to the channel you specified. "
+						if channel is None:
+							description += "No channel was specified, so alerts will be sent to your DMs. "
+						else:
+							description += "Alerts will be sent to the channel you specified. "
 						if currentPlatform == "IEXC":
 							description += "Alerts might trigger with up to 15-minute delay due to data licensing requirements on different exchanges."
 						if description == "":
