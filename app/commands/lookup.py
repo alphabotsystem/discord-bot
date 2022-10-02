@@ -17,8 +17,8 @@ from Processor import process_quote_arguments, get_listings
 
 from commands.base import BaseCommand, Confirm
 
-async def get_categories(ctx):
-	options = ["gainers", "losers"]
+async def autocomplete_categories(ctx):
+	options = ["crypto gainers", "crypto losers"]
 	currentInput = " ".join(ctx.options.get("category", "").lower().split())
 	return [e for e in options if e.startswith(currentInput)]
 
@@ -36,7 +36,8 @@ class LookupCommand(BaseCommand):
 			request = await self.create_request(ctx)
 			if request is None: return
 
-			responseMessage, task = await process_quote_arguments([], ["CCXT"], tickerId=tickerId.upper())
+			platforms = request.get_platform_order_for("d")
+			responseMessage, task = await process_quote_arguments([], platforms, tickerId=tickerId.upper())
 
 			if responseMessage is not None:
 				embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features).", color=constants.colors["gray"])
@@ -69,18 +70,18 @@ class LookupCommand(BaseCommand):
 			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /lookup markets {tickerId}")
 			await self.unknown_error(ctx)
 
-	@lookupGroup.command(name="top", description="Look up top ganers and losers in the crypto space.")
+	@lookupGroup.command(name="top", description="Look up top gainers and losers in the market.")
 	async def markets(
 		self,
 		ctx,
-		category: Option(str, "Ranking type.", name="category", autocomplete=get_categories),
+		category: Option(str, "Ranking type.", name="category", autocomplete=autocomplete_categories),
 		limit: Option(int, "Asset count limit. Defaults to top 250 by market cap, maximum is 1000.", name="limit", required=False, default=250)
 	):
 		try:
 			request = await self.create_request(ctx)
 			if request is None: return
 
-			if category.lower() in ["gainers", "gain", "gains"]:
+			if category.lower().trim() == "crypto gainers":
 				rawData = []
 				cg = CoinGeckoAPI()
 				page = 1
@@ -103,7 +104,7 @@ class LookupCommand(BaseCommand):
 					embed.add_field(name=token["symbol"], value="Gained {:,.2f} %".format(token["change"]), inline=True)
 				await ctx.interaction.edit_original_message(embed=embed)
 
-			elif category.lower() in ["losers", "loosers", "loss", "losses"]:
+			elif category.lower().trim() == "crypto losers":
 				rawData = []
 				cg = CoinGeckoAPI()
 				page = 1
@@ -124,6 +125,9 @@ class LookupCommand(BaseCommand):
 				embed = Embed(title="Top losers", color=constants.colors["deep purple"])
 				for token in response:
 					embed.add_field(name=token["symbol"], value="Lost {:,.2f} %".format(token["change"]), inline=True)
+				await ctx.interaction.edit_original_message(embed=embed)
+			else:
+				embed = Embed(title="The specified category is invalid.", description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/lookup).", color=constants.colors["deep purple"])
 				await ctx.interaction.edit_original_message(embed=embed)
 
 			await self.database.document("discord/statistics").set({request.snapshot: {"t": Increment(1)}}, merge=True)

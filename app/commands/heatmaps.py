@@ -55,7 +55,6 @@ class HeatmapCommand(BaseCommand):
 		await ctx.interaction.edit_original_message(embeds=embeds, files=files, view=actions)
 
 		await self.database.document("discord/statistics").set({request.snapshot: {"hmap": Increment(len(tasks))}}, merge=True)
-		await self.log_request("heatmaps", request, tasks)
 		await self.cleanup(ctx, request)
 
 	@slash_command(name="hmap", description="Pull market heatmaps from TradingView.")
