@@ -25,7 +25,7 @@ from commands.assistant import AlphaCommand
 from commands.alerts import AlertCommand
 from commands.charts import ChartCommand
 from commands.flow import FlowCommand
-from commands.schedule import ScheduleCommand
+# from commands.schedule import ScheduleCommand
 from commands.heatmaps import HeatmapCommand
 from commands.depth import DepthCommand
 from commands.prices import PriceCommand
@@ -444,7 +444,7 @@ bot.add_cog(AlphaCommand(bot, create_request, database, logging))
 bot.add_cog(AlertCommand(bot, create_request, database, logging))
 bot.add_cog(ChartCommand(bot, create_request, database, logging))
 # bot.add_cog(FlowCommand(bot, create_request, database, logging))
-bot.add_cog(ScheduleCommand(bot, create_request, database, logging))
+# bot.add_cog(ScheduleCommand(bot, create_request, database, logging))
 bot.add_cog(HeatmapCommand(bot, create_request, database, logging))
 bot.add_cog(DepthCommand(bot, create_request, database, logging))
 bot.add_cog(PriceCommand(bot, create_request, database, logging))
