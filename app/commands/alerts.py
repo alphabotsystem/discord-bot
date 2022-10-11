@@ -42,7 +42,7 @@ class AlertCommand(BaseCommand):
 			except:
 				embed = Embed(title="Invalid price level requested.", description="Make sure the requested level is a valid number. If you're requesting multiple levels, make sure they are all valid and separated with a comma.", color=constants.colors["gray"])
 				embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
-				await ctx.interaction.edit_original_message(embed=embed)
+				await ctx.interaction.edit_original_response(embed=embed)
 				return
 
 			platforms = request.get_platform_order_for("alert")
@@ -53,7 +53,7 @@ class AlertCommand(BaseCommand):
 				if responseMessage is not None:
 					embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/price-alerts).", color=constants.colors["gray"])
 					embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
-					await ctx.interaction.edit_original_message(embed=embed)
+					await ctx.interaction.edit_original_response(embed=embed)
 					return
 
 				currentPlatform = task.get("currentPlatform")
@@ -68,7 +68,7 @@ class AlertCommand(BaseCommand):
 				if len(priceAlerts) >= 50:
 					embed = Embed(title="You can only create up to 50 price alerts.", color=constants.colors["gray"])
 					embed.set_author(name="Maximum number of price alerts reached", icon_url=static_storage.icon_bw)
-					await ctx.interaction.edit_original_message(embed=embed)
+					await ctx.interaction.edit_original_response(embed=embed)
 
 				payload, responseMessage = await process_task(task, "candle")
 
@@ -76,19 +76,19 @@ class AlertCommand(BaseCommand):
 					errorMessage = f"Requested price alert for `{currentTask.get('ticker').get('name')}` is not available." if responseMessage is None else responseMessage
 					embed = Embed(title=errorMessage, color=constants.colors["gray"])
 					embed.set_author(name="Data not available", icon_url=static_storage.icon_bw)
-					await ctx.interaction.edit_original_message(embed=embed)
+					await ctx.interaction.edit_original_response(embed=embed)
 				elif channel is not None and not channel.permissions_for(ctx.author).send_messages:
 					embed = Embed(title="You do not have the permission to send messages in the specified channel.", color=constants.colors["gray"])
 					embed.set_author(name="Permission denied", icon_url=static_storage.icon_bw)
-					await ctx.interaction.edit_original_message(embed=embed)
+					await ctx.interaction.edit_original_response(embed=embed)
 				elif channel is None and role is not None:
 					embed = Embed(title="You must provide a channel to send the alert to when a role argument is specified.", color=constants.colors["gray"])
 					embed.set_author(name="Missing channel", icon_url=static_storage.icon_bw)
-					await ctx.interaction.edit_original_message(embed=embed)
+					await ctx.interaction.edit_original_response(embed=embed)
 				elif role is not None and not channel.permissions_for(ctx.author).manage_messages:
 					embed = Embed(title="You do not have the sufficient permission to tag other server members.", description="To tag other server members, you must have the `manage messages` permission.", color=constants.colors["gray"])
 					embed.set_author(name="Permission denied", icon_url=static_storage.icon_bw)
-					await ctx.interaction.edit_original_message(embed=embed)
+					await ctx.interaction.edit_original_response(embed=embed)
 				else:
 					for platform in task.get("platforms"): task[platform]["ticker"].pop("tree")
 
@@ -112,12 +112,12 @@ class AlertCommand(BaseCommand):
 								if alert["level"] == level:
 									embed = Embed(title=f"Price alert for {ticker.get('name')}{exchangeName} at {levelText}{pairQuoteName} already exists.", color=constants.colors["gray"])
 									embed.set_author(name="Alert already exists", icon_url=static_storage.icon_bw)
-									await ctx.interaction.edit_original_message(embed=embed)
+									await ctx.interaction.edit_original_response(embed=embed)
 									return
 								elif alert["level"] * 0.999 < level < alert["level"] * 1.001:
 									embed = Embed(title="Price alert within 0.1% already exists.", color=constants.colors["gray"])
 									embed.set_author(name="Alert already exists", icon_url=static_storage.icon_bw)
-									await ctx.interaction.edit_original_message(embed=embed)
+									await ctx.interaction.edit_original_response(embed=embed)
 									return
 
 						currentLevel = payload["candles"][-1][4]
@@ -126,7 +126,7 @@ class AlertCommand(BaseCommand):
 							embed = Embed(title=f"Your desired alert trigger level at {levelText} {ticker.get('quote')} is too far from the current price of {currentLevelText} {ticker.get('quote')}.", color=constants.colors["gray"])
 							embed.set_author(name="Price Alerts", icon_url=static_storage.icon_bw)
 							embed.set_footer(text=payload.get("sourceText"))
-							await ctx.interaction.edit_original_message(embed=embed)
+							await ctx.interaction.edit_original_response(embed=embed)
 							return
 
 						newAlerts.append({
@@ -169,7 +169,7 @@ class AlertCommand(BaseCommand):
 						levelsText = ", ".join([e["levelText"] for e in newAlerts])
 						embed = Embed(title=f"Price alerts set for {ticker.get('name')}{exchangeName} at {levelsText}{pairQuoteName}.", description=description, color=constants.colors["deep purple"])
 						embed.set_author(name="Alerts successfully set", icon_url=static_storage.icon)
-					await ctx.interaction.edit_original_message(embed=embed)
+					await ctx.interaction.edit_original_response(embed=embed)
 
 					for newAlert in newAlerts:
 						alertId = str(uuid4())
@@ -184,7 +184,7 @@ class AlertCommand(BaseCommand):
 			else:
 				embed = Embed(title=":gem: Price Alerts are available as an Alpha Pro Subscription for individuals or communities for only $2.00 per month.", description="If you'd like to start your 30-day free trial, visit [our website](https://www.alphabotsystem.com/pro/price-alerts).", color=constants.colors["deep purple"])
 				# embed.set_image(url="https://www.alphabotsystem.com/files/uploads/pro-hero.jpg")
-				await ctx.interaction.edit_original_message(embed=embed)
+				await ctx.interaction.edit_original_response(embed=embed)
 
 		except CancelledError: pass
 		except Exception:
@@ -211,11 +211,11 @@ class AlertCommand(BaseCommand):
 			if totalAlertCount == 0:
 				embed = Embed(title="You haven't set any alerts yet.", color=constants.colors["gray"])
 				embed.set_author(name="Price Alerts", icon_url=static_storage.icon_bw)
-				await ctx.interaction.edit_original_message(embed=embed)
+				await ctx.interaction.edit_original_response(embed=embed)
 
 			else:
 				embed = Embed(title=f"You've scheduled {totalAlertCount} price alert{'' if totalAlertCount == 1 else 's'}.", color=constants.colors["light blue"])
-				await ctx.interaction.edit_original_message(embed=embed)
+				await ctx.interaction.edit_original_response(embed=embed)
 
 				for key, alert, matchedId in priceAlerts:
 					ticker = alert["request"].get("ticker")

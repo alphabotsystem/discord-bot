@@ -34,11 +34,11 @@ class ConvertCommand(BaseCommand):
 				errorMessage = "Requested conversion is not available." if responseMessage is None else responseMessage
 				embed = Embed(title=errorMessage, color=constants.colors["gray"])
 				embed.set_author(name="Conversion not available", icon_url=static_storage.icon_bw)
-				await ctx.interaction.edit_original_message(embed=embed)
+				await ctx.interaction.edit_original_response(embed=embed)
 			else:
 				embed = Embed(title=f"{payload['quotePrice']} ≈ {payload['quoteConvertedPrice']}", color=constants.colors[payload["messageColor"]])
 				embed.set_author(name="Conversion", icon_url=static_storage.icon)
-				await ctx.interaction.edit_original_message(embed=embed)
+				await ctx.interaction.edit_original_response(embed=embed)
 
 			await self.database.document("discord/statistics").set({request.snapshot: {"convert": Increment(1)}}, merge=True)
 

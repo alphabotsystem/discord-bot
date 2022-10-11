@@ -44,7 +44,7 @@ class PriceCommand(BaseCommand):
 
 			embeds.append(embed)
 		
-		await ctx.interaction.edit_original_message(embeds=embeds)
+		await ctx.interaction.edit_original_response(embeds=embeds)
 		await self.database.document("discord/statistics").set({request.snapshot: {"p": Increment(len(tasks))}}, merge=True)
 		await self.log_request("prices", request, tasks)
 
@@ -66,7 +66,7 @@ class PriceCommand(BaseCommand):
 			if len(parts) > 5:
 				embed = Embed(title="Only up to 5 requests are allowed per command.", color=constants.colors["gray"])
 				embed.set_author(name="Too many requests", icon_url=static_storage.icon_bw)
-				await ctx.interaction.edit_original_message(embed=embed)
+				await ctx.interaction.edit_original_response(embed=embed)
 				return
 
 			for part in parts:
@@ -78,7 +78,7 @@ class PriceCommand(BaseCommand):
 				if responseMessage is not None:
 					embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/prices).", color=constants.colors["gray"])
 					embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
-					await ctx.interaction.edit_original_message(embed=embed)
+					await ctx.interaction.edit_original_response(embed=embed)
 					return
 				
 				tasks.append(task)
@@ -108,7 +108,7 @@ class PriceCommand(BaseCommand):
 			if responseMessage is not None:
 				embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/prices).", color=constants.colors["gray"])
 				embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
-				await ctx.interaction.edit_original_message(embed=embed)
+				await ctx.interaction.edit_original_response(embed=embed)
 				return
 
 			await self.respond(ctx, request, [task])

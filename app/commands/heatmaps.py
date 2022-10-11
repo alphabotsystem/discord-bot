@@ -52,7 +52,7 @@ class HeatmapCommand(BaseCommand):
 		if len(files) != 0:
 			actions = ActionsView(user=ctx.author)
 
-		await ctx.interaction.edit_original_message(embeds=embeds, files=files, view=actions)
+		await ctx.interaction.edit_original_response(embeds=embeds, files=files, view=actions)
 
 		await self.database.document("discord/statistics").set({request.snapshot: {"hmap": Increment(len(tasks))}}, merge=True)
 		await self.cleanup(ctx, request)
@@ -83,11 +83,11 @@ class HeatmapCommand(BaseCommand):
 			if responseMessage is not None:
 				embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/heatmaps).", color=constants.colors["gray"])
 				embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
-				await ctx.interaction.edit_original_message(embed=embed)
+				await ctx.interaction.edit_original_response(embed=embed)
 				return
 			elif autodelete is not None and (autodelete < 1 or autodelete > 10):
 				embed = Embed(title="Response autodelete duration must be between one and ten minutes.", color=constants.colors["gray"])
-				await ctx.interaction.edit_original_message(embed=embed)
+				await ctx.interaction.edit_original_response(embed=embed)
 				return
 
 			await self.respond(ctx, request, [task])

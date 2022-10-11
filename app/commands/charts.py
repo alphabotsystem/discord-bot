@@ -59,7 +59,7 @@ class ChartCommand(BaseCommand):
 			else:
 				actions = ActionsView(user=ctx.author)
 
-		await ctx.interaction.edit_original_message(embeds=embeds, files=files, view=actions)
+		await ctx.interaction.edit_original_response(embeds=embeds, files=files, view=actions)
 
 		await self.database.document("discord/statistics").set({request.snapshot: {"c": Increment(len(tasks))}}, merge=True)
 		await self.log_request("charts", request, tasks)
@@ -84,7 +84,7 @@ class ChartCommand(BaseCommand):
 			if len(parts) > 5:
 				embed = Embed(title="Only up to five requests are allowed per command.", color=constants.colors["gray"])
 				embed.set_author(name="Too many requests", icon_url=static_storage.icon_bw)
-				await ctx.interaction.edit_original_message(embed=embed)
+				await ctx.interaction.edit_original_response(embed=embed)
 				return
 
 			for part in parts:
@@ -97,11 +97,11 @@ class ChartCommand(BaseCommand):
 					description = "[Live Charting Data addon](https://www.alphabotsystem.com/pro/live-charting) unlocks additional assets, indicators, timeframes and more." if responseMessage.endswith("add-on.") else "Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/charting)."
 					embed = Embed(title=responseMessage, description=description, color=constants.colors["gray"])
 					embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
-					await ctx.interaction.edit_original_message(embed=embed)
+					await ctx.interaction.edit_original_response(embed=embed)
 					return
 				elif autodelete is not None and (autodelete < 1 or autodelete > 10):
 					embed = Embed(title="Response autodelete duration must be between one and ten minutes.", color=constants.colors["gray"])
-					await ctx.interaction.edit_original_message(embed=embed)
+					await ctx.interaction.edit_original_response(embed=embed)
 					return
 
 				tasks.append(task)

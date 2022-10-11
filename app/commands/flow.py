@@ -37,11 +37,11 @@ class FlowCommand(BaseCommand):
 					errorMessage = f"Requested orderflow data for `{currentTask.get('ticker').get('name')}` is not available." if responseMessage is None else responseMessage
 					embed = discord.Embed(title=errorMessage, color=constants.colors["gray"])
 					embed.set_author(name="Data not available", icon_url=static_storage.icon_bw)
-					await ctx.interaction.edit_original_message(embed=embed)
+					await ctx.interaction.edit_original_response(embed=embed)
 				else:
 					currentTask = task.get(payload.get("platform"))
 					actions = ActionsView(user=ctx.author)
-					await ctx.interaction.edit_original_message(file=discord.File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, request.authorId, randint(1000, 9999))), view=actions)
+					await ctx.interaction.edit_original_response(file=discord.File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, request.authorId, randint(1000, 9999))), view=actions)
 
 			await self.database.document("discord/statistics").set({request.snapshot: {"flow": Increment(1)}}, merge=True)
 			await self.cleanup(ctx, request, removeView=True)
@@ -49,7 +49,7 @@ class FlowCommand(BaseCommand):
 		else:
 			embed = discord.Embed(title=":gem: Options and crypto orderflow are available as an Alpha Pro Subscription for individuals or communities for only $15.00 per month.", description="If you'd like to start your 30-day free trial, visit [our website](https://www.alphabotsystem.com/pro).", color=constants.colors["deep purple"])
 			# embed.set_image(url="https://www.alphabotsystem.com/files/uploads/pro-hero.jpg")
-			await ctx.interaction.edit_original_message(embed=embed)
+			await ctx.interaction.edit_original_response(embed=embed)
 
 	async def flow_proxy(self, ctx, tickerId, autodelete):
 		try:
@@ -57,7 +57,7 @@ class FlowCommand(BaseCommand):
 			if request is None: return
 
 			embed = Embed(title="Flow command is being updated, and is currently unavailable.", description="An updated flow command is coming after slash commands are stable, which is the priority. All Alpha Pro subscribers using Alpha Flow during August and September 2021 will receive reimbursment in form of credit, or a refund if requested. No charges were made since then. All trials will also be reset.", color=constants.colors["gray"])
-			await ctx.interaction.edit_original_message(embed=embed)
+			await ctx.interaction.edit_original_response(embed=embed)
 			return
 
 			responseMessage, task = await process_chart_arguments([], ["Alpha Flow"], tickerId=tickerId)
@@ -65,11 +65,11 @@ class FlowCommand(BaseCommand):
 			if responseMessage is not None:
 				embed = discord.Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/pro/flow).", color=constants.colors["gray"])
 				embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
-				await ctx.interaction.edit_original_message(embed=embed)
+				await ctx.interaction.edit_original_response(embed=embed)
 				return
 			elif autodelete is not None and (autodelete < 1 or autodelete > 10):
 				embed = Embed(title="Response autodelete duration must be between one and ten minutes.", color=constants.colors["gray"])
-				await ctx.interaction.edit_original_message(embed=embed)
+				await ctx.interaction.edit_original_response(embed=embed)
 				return
 
 			self.respond(ctx, request, task)

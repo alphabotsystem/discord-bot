@@ -25,7 +25,7 @@ from commands.assistant import AlphaCommand
 from commands.alerts import AlertCommand
 from commands.charts import ChartCommand
 from commands.flow import FlowCommand
-# from commands.schedule import ScheduleCommand
+from commands.schedule import ScheduleCommand
 from commands.heatmaps import HeatmapCommand
 from commands.depth import DepthCommand
 from commands.prices import PriceCommand
@@ -417,7 +417,7 @@ async def create_request(ctx, autodelete=-1, ephemeral=False):
 			embed = Embed(title="This Discord community guild was flagged for re-branding Alpha and is therefore violating the Terms of Service. Inability to comply will result in termination of all Alpha branded services.", color=0x000000)
 			embed.add_field(name="Terms of service", value="[Read now](https://www.alphabotsystem.com/terms-of-service)", inline=True)
 			embed.add_field(name="Alpha support Discord server", value="[Join now](https://discord.gg/GQeDE85)", inline=True)
-			await ctx.interaction.edit_original_message(embed=embed)
+			await ctx.interaction.edit_original_response(embed=embed)
 			return None
 		elif not request.guildProperties["settings"]["setup"]["completed"]:
 			forceFetch = await database.document(f"discord/properties/guilds/{request.guildId}").get()
@@ -427,10 +427,10 @@ async def create_request(ctx, autodelete=-1, ephemeral=False):
 				return request
 			elif not ctx.bot and ctx.interaction.channel.permissions_for(ctx.author).administrator:
 				embed = Embed(title="Hello world!", description="Thanks for adding Alpha Bot to your Discord community, we're thrilled to have you onboard. We think you're going to love everything Alpha Bot can do. Before you start using it, you must complete a short setup process. Sign into your [Alpha Account](https://www.alphabotsystem.com/communities) and visit your [Communities Dashboard](https://www.alphabotsystem.com/communities) to begin.", color=constants.colors["pink"])
-				await ctx.interaction.edit_original_message(embed=embed)
+				await ctx.interaction.edit_original_response(embed=embed)
 			else:
 				embed = Embed(title="Hello world!", description="This is Alpha Bot, the most advanced financial bot on Discord. A short setup process hasn't been completed in this Discord community yet. Ask administrators to complete it by signing into their [Alpha Account](https://www.alphabotsystem.com/communities) and visiting their [Communities Dashboard](https://www.alphabotsystem.com/communities).", color=constants.colors["pink"])
-				await ctx.interaction.edit_original_message(embed=embed)
+				await ctx.interaction.edit_original_response(embed=embed)
 			return None
 
 	return request
@@ -444,7 +444,7 @@ bot.add_cog(AlphaCommand(bot, create_request, database, logging))
 bot.add_cog(AlertCommand(bot, create_request, database, logging))
 bot.add_cog(ChartCommand(bot, create_request, database, logging))
 # bot.add_cog(FlowCommand(bot, create_request, database, logging))
-# bot.add_cog(ScheduleCommand(bot, create_request, database, logging))
+bot.add_cog(ScheduleCommand(bot, create_request, database, logging))
 bot.add_cog(HeatmapCommand(bot, create_request, database, logging))
 bot.add_cog(DepthCommand(bot, create_request, database, logging))
 bot.add_cog(PriceCommand(bot, create_request, database, logging))

@@ -43,24 +43,24 @@ class PaperCommand(BaseCommand):
 		if pendingOrder is None:
 			embed = Embed(title=responseMessage, color=constants.colors["gray"])
 			embed.set_author(name=outputTitle, icon_url=static_storage.icon_bw)
-			await ctx.interaction.edit_original_message(embed=embed)
+			await ctx.interaction.edit_original_response(embed=embed)
 			return
 
 		confirmation = Confirm(user=ctx.author)
 		confirmationText = f"Do you want to place a paper {orderType} order of {pendingOrder.amountText} {ticker.get('base')} at {pendingOrder.priceText}?"
 		embed = Embed(title=confirmationText, description=pendingOrder.conversionText, color=constants.colors["pink"])
 		embed.set_author(name="Paper order confirmation", icon_url=pendingOrder.parameters.get("thumbnailUrl"))
-		await ctx.interaction.edit_original_message(embed=embed, view=confirmation)
+		await ctx.interaction.edit_original_response(embed=embed, view=confirmation)
 		await confirmation.wait()
 
 		if confirmation.value is None or not confirmation.value:
 			embed = Embed(title="Paper order has been canceled.", description=f"~~{confirmationText}~~", color=constants.colors["gray"])
 			embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon_bw)
-			await ctx.interaction.edit_original_message(embed=embed, view=None)
+			await ctx.interaction.edit_original_response(embed=embed, view=None)
 
 		else:
 			embed = Embed(description="Executing your paper order ...", color=constants.colors["deep purple"])
-			await ctx.interaction.edit_original_message(embed=embed, view=None)
+			await ctx.interaction.edit_original_response(embed=embed, view=None)
 
 			for platform in task.get("platforms"): task[platform]["ticker"].pop("tree")
 			paper = self.post_trade(paper, orderType, currentPlatform, currentTask, payload, pendingOrder)
@@ -73,7 +73,7 @@ class PaperCommand(BaseCommand):
 				if len(openOrders) >= 50:
 					embed = Embed(title="You can only create up to 50 pending paper trades.", color=constants.colors["gray"])
 					embed.set_author(name="Maximum number of open paper orders reached", icon_url=static_storage.icon_bw)
-					await ctx.interaction.edit_original_message(embed=embed)
+					await ctx.interaction.edit_original_response(embed=embed)
 					return
 				await self.database.document(f"details/openPaperOrders/{request.accountId}/{str(uuid4())}").set(pendingOrder.parameters)
 			else:
@@ -82,7 +82,7 @@ class PaperCommand(BaseCommand):
 			successMessage = f"Paper {orderType} order of {pendingOrder.amountText} {ticker.get('base')} at {pendingOrder.priceText} was successfully {'placed' if pendingOrder.parameters['isLimit'] else 'executed'}."
 			embed = Embed(title=successMessage, color=constants.colors["deep purple"])
 			embed.set_author(name="Alpha Paper Trader", icon_url=pendingOrder.parameters.get("thumbnailUrl"))
-			await ctx.interaction.edit_original_message(embed=embed)
+			await ctx.interaction.edit_original_response(embed=embed)
 
 		await self.database.document("discord/statistics").set({request.snapshot: {"paper": Increment(1)}}, merge=True)
 
@@ -103,14 +103,14 @@ class PaperCommand(BaseCommand):
 			if request.is_registered():
 				if level is not None:
 					embed = Embed(title="Limit orders are temporarily unavailable.", color=constants.colors["gray"])
-					await ctx.interaction.edit_original_message(embed=embed)
+					await ctx.interaction.edit_original_response(embed=embed)
 					return
 
 				responseMessage, task = await process_quote_arguments([], platforms, tickerId=tickerId.upper())
 				if responseMessage is not None:
 					embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/paper-trading).", color=constants.colors["gray"])
 					embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
-					await ctx.interaction.edit_original_message(embed=embed)
+					await ctx.interaction.edit_original_response(embed=embed)
 					return
 
 				currentTask = task.get(task.get("currentPlatform"))
@@ -120,7 +120,7 @@ class PaperCommand(BaseCommand):
 					errorMessage = f"Requested paper {orderType} order for `{currentTask.get('ticker').get('name')}` could not be executed." if responseMessage is None else responseMessage
 					embed = Embed(title=errorMessage, color=constants.colors["gray"])
 					embed.set_author(name="Data not available", icon_url=static_storage.icon_bw)
-					await ctx.interaction.edit_original_message(embed=embed)
+					await ctx.interaction.edit_original_response(embed=embed)
 					return
 
 				await self.respond(ctx, request, task, payload, amount, level, orderType)
@@ -128,7 +128,7 @@ class PaperCommand(BaseCommand):
 			else:
 				embed = Embed(title=":joystick: You must have an Alpha Account connected to your Discord to use Alpha Paper Trader.", description="[Sign up for a free account on our website](https://www.alphabotsystem.com/signup). If you already signed up, [sign in](https://www.alphabotsystem.com/login), and connect your account with your Discord profile.", color=constants.colors["deep purple"])
 				embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon)
-				await ctx.interaction.edit_original_message(embed=embed)
+				await ctx.interaction.edit_original_response(embed=embed)
 
 		except CancelledError: pass
 		except Exception:
@@ -220,12 +220,12 @@ class PaperCommand(BaseCommand):
 					embed.add_field(name="Locked up in open orders:", value=valueText, inline=True)
 
 				embed.description = "Holding {} asset{} with estimated total value of {:,.2f} USD and {:+,.2f} % ROI.{}".format(len(holdingAssets), "" if len(holdingAssets) == 1 else "s", totalValue, (totalValue / 10000 - 1) * 100, f" Trading since {timestamp_to_date(lastResetTimestamp)} with {resetCount} balance reset{'' if resetCount == 1 else 's'}." if resetCount != 0 else "")
-				await ctx.interaction.edit_original_message(embed=embed)
+				await ctx.interaction.edit_original_response(embed=embed)
 
 			else:
 				embed = Embed(title=":joystick: You must have an Alpha Account connected to your Discord to use Alpha Paper Trader.", description="[Sign up for a free account on our website](https://www.alphabotsystem.com/signup). If you already signed up, [sign in](https://www.alphabotsystem.com/login), and connect your account with your Discord profile.", color=constants.colors["deep purple"])
 				embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon)
-				await ctx.interaction.edit_original_message(embed=embed)
+				await ctx.interaction.edit_original_response(embed=embed)
 
 		except CancelledError: pass
 		except Exception:
@@ -248,11 +248,11 @@ class PaperCommand(BaseCommand):
 				if totalOrderCount == 0:
 					embed = Embed(title="No open paper orders.", color=constants.colors["deep purple"])
 					embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon)
-					await ctx.interaction.edit_original_message(embed=embed)
+					await ctx.interaction.edit_original_response(embed=embed)
 
 				else:
 					embed = Embed(title=f"You've set {totalOrderCount} paper order{'' if totalOrderCount == 1 else 's'}.", color=constants.colors["light blue"])
-					await ctx.interaction.edit_original_message(embed=embed)
+					await ctx.interaction.edit_original_response(embed=embed)
 
 					for i, element in enumerate(paperOrders):
 						order = element.to_dict()
@@ -269,7 +269,7 @@ class PaperCommand(BaseCommand):
 			else:
 				embed = Embed(title=":joystick: You must have an Alpha Account connected to your Discord to use Alpha Paper Trader.", description="[Sign up for a free account on our website](https://www.alphabotsystem.com/signup). If you already signed up, [sign in](https://www.alphabotsystem.com/login), and connect your account with your Discord profile.", color=constants.colors["deep purple"])
 				embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon)
-				await ctx.interaction.edit_original_message(embed=embed)
+				await ctx.interaction.edit_original_response(embed=embed)
 
 		except CancelledError: pass
 		except Exception:
@@ -291,7 +291,7 @@ class PaperCommand(BaseCommand):
 				if len(paperHistory) == 0:
 					embed = Embed(title="No paper trading history.", color=constants.colors["deep purple"])
 					embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon)
-					await ctx.interaction.edit_original_message(embed=embed)
+					await ctx.interaction.edit_original_response(embed=embed)
 				else:
 					embed = Embed(title="Paper trading history:", color=constants.colors["deep purple"])
 					embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon)
@@ -308,12 +308,12 @@ class PaperCommand(BaseCommand):
 						elif order["orderType"].startswith("stop"): side = "Stop sold"
 						embed.add_field(name=f"{side} {order['amountText']} {ticker.get('base')} at {order['priceText']} {ticker.get('quote')}", value=f"{timestamp_to_date(order['timestamp'] / 1000)}", inline=False)
 
-					await ctx.interaction.edit_original_message(embed=embed)
+					await ctx.interaction.edit_original_response(embed=embed)
 			
 			else:
 				embed = Embed(title=":joystick: You must have an Alpha Account connected to your Discord to use Alpha Paper Trader.", description="[Sign up for a free account on our website](https://www.alphabotsystem.com/signup). If you already signed up, [sign in](https://www.alphabotsystem.com/login), and connect your account with your Discord profile.", color=constants.colors["deep purple"])
 				embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon)
-				await ctx.interaction.edit_original_message(embed=embed)
+				await ctx.interaction.edit_original_response(embed=embed)
 
 		except CancelledError: pass
 		except Exception:
@@ -366,7 +366,7 @@ class PaperCommand(BaseCommand):
 			for index, (balance, lastReset, authorId) in enumerate(topBalances[:10]):
 				embed.add_field(name=f"#{index + 1}: <@!{authorId}> with {balance} USD", value=f"Since {timestamp_to_date(lastReset)}", inline=False)
 
-			await ctx.interaction.edit_original_message(embed=embed)
+			await ctx.interaction.edit_original_response(embed=embed)
 
 		except CancelledError: pass
 		except Exception:
@@ -386,28 +386,28 @@ class PaperCommand(BaseCommand):
 			if not request.is_registered():
 				embed = Embed(title=":joystick: You must have an Alpha Account connected to your Discord to use Alpha Paper Trader.", description="[Sign up for a free account on our website](https://www.alphabotsystem.com/signup). If you already signed up, [sign in](https://www.alphabotsystem.com/login), and connect your account with your Discord profile.", color=constants.colors["deep purple"])
 				embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon)
-				await ctx.interaction.edit_original_message(embed=embed)
+				await ctx.interaction.edit_original_response(embed=embed)
 
 			elif request.accountProperties["paperTrader"]["globalLastReset"] == 0 and request.accountProperties["paperTrader"]["globalResetCount"] == 0:
 				embed = Embed(title="You have to start trading before you can reset your paper balance.", color=constants.colors["gray"])
 				embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon_bw)
-				await ctx.interaction.edit_original_message(embed=embed)
+				await ctx.interaction.edit_original_response(embed=embed)
 
 			elif request.accountProperties["paperTrader"]["globalLastReset"] + 604800 < time():
 				confirmation = Confirm(user=ctx.author)
 				embed = Embed(title="Do you really want to reset your paper balance? This cannot be undone.", description="Paper balance can only be reset once every seven days. Your last public reset date will be publicly visible.", color=constants.colors["pink"])
 				embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon)
-				await ctx.interaction.edit_original_message(embed=embed, view=confirmation)
+				await ctx.interaction.edit_original_response(embed=embed, view=confirmation)
 				await confirmation.wait()
 
 				if confirmation.value is None or not confirmation.value:
 					embed = Embed(title="Paper balance reset canceled.", description="~~Do you really want to reset your paper balance? This cannot be undone.~~", color=constants.colors["gray"])
 					embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon_bw)
-					await ctx.interaction.edit_original_message(embed=embed, view=None)
+					await ctx.interaction.edit_original_response(embed=embed, view=None)
 
 				else:
 					embed = Embed(description="Deleting your paper trading history ...", color=constants.colors["deep purple"])
-					await ctx.interaction.edit_original_message(embed=embed, view=None)
+					await ctx.interaction.edit_original_response(embed=embed, view=None)
 
 					async def delete_collection(collectionRef, batchSize):
 						docs = await collectionRef.limit(batchSize).get()
@@ -432,12 +432,12 @@ class PaperCommand(BaseCommand):
 
 					embed = Embed(title="Paper balance has been reset successfully.", color=constants.colors["deep purple"])
 					embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon)
-					await ctx.interaction.edit_original_message(embed=embed)
+					await ctx.interaction.edit_original_response(embed=embed)
 
 			else:
 				embed = Embed(title="Paper balance can only be reset once every seven days.", color=constants.colors["gray"])
 				embed.set_author(name="Alpha Paper Trader", icon_url=static_storage.icon_bw)
-				await ctx.interaction.edit_original_message(embed=embed)
+				await ctx.interaction.edit_original_response(embed=embed)
 
 		except CancelledError: pass
 		except Exception:

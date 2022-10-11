@@ -42,9 +42,9 @@ class AlphaCommand(BaseCommand):
 			response = await self.bot.loop.run_in_executor(None, self.process_reply, question, request.guildProperties.get("settings", {}).get("assistant", {}).get("enabled", True))
 
 			if response is not None:
-				await ctx.interaction.edit_original_message(content=response)
+				await ctx.interaction.edit_original_response(content=response)
 			else:
-				await ctx.interaction.edit_original_message(content="Sorry, I can't help you with that.")
+				await ctx.interaction.edit_original_response(content="Sorry, I can't help you with that.")
 
 			await self.database.document("discord/statistics").set({request.snapshot: {"alpha": Increment(1)}}, merge=True)
 

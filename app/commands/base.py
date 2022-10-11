@@ -22,7 +22,7 @@ class BaseCommand(Cog):
 
 	sources = {
 		"alert": ["IEXC", "CCXT"],
-		"c": ["TradingView", "TradingView Premium", "Finviz", "TradingLite", "GoCharting", "Bookmap"],
+		"c": ["TradingView", "TradingView Premium", "TradingLite", "GoCharting", "Bookmap"],
 		"hmap": ["TradingView Stock Heatmap", "TradingView Crypto Heatmap"],
 		"flow": ["Alpha Flow"],
 		"p": ["IEXC", "CCXT", "CoinGecko"],
@@ -61,13 +61,13 @@ class BaseCommand(Cog):
 			await ctx.interaction.delete_original_message(delay=request.autodelete * 60)
 		if removeView:
 			await sleep(600)
-			try: await ctx.interaction.edit_original_message(view=None)
+			try: await ctx.interaction.edit_original_response(view=None)
 			except: pass
 
 	async def unknown_error(self, ctx):
 		embed = Embed(title="Looks like something went wrong. The issue has been reported.", color=constants.colors["gray"])
 		embed.set_author(name="Something went wrong", icon_url=static_storage.icon_bw)
-		try: await ctx.interaction.edit_original_message(content=None, embed=embed, files=[])
+		try: await ctx.interaction.edit_original_response(content=None, embed=embed, files=[])
 		except: return
 
 	async def autocomplete_from_ticker(cls, ctx):
