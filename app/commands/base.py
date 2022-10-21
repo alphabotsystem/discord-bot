@@ -97,7 +97,7 @@ class BaseCommand(Cog):
 		venue = " ".join(ctx.options.get("venue", "").lower().split())
 
 		if command == "ichibot": tickerId = "btc"
-		elif tickerId == "": return []
+		elif tickerId == "" or tickerId is None: return []
 		else: tickerId = " ".join(tickerId.lower().split()).split("|")[0]
 
 		platforms = cls.sources.get(command)
