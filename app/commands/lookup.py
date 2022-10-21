@@ -81,7 +81,8 @@ class LookupCommand(BaseCommand):
 			request = await self.create_request(ctx)
 			if request is None: return
 
-			if category.lower().trim() == "crypto gainers":
+			category = " ".join(category.lower().split())
+			if category == "crypto gainers":
 				rawData = []
 				cg = CoinGeckoAPI()
 				page = 1
@@ -104,7 +105,7 @@ class LookupCommand(BaseCommand):
 					embed.add_field(name=token["symbol"], value="Gained {:,.2f} %".format(token["change"]), inline=True)
 				await ctx.interaction.edit_original_response(embed=embed)
 
-			elif category.lower().trim() == "crypto losers":
+			elif category == "crypto losers":
 				rawData = []
 				cg = CoinGeckoAPI()
 				page = 1

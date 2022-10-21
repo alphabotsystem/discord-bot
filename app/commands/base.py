@@ -49,8 +49,8 @@ class BaseCommand(Cog):
 				for task in tasks:
 					currentTask = task.get(task.get("currentPlatform"))
 					base = currentTask.get("ticker").get("base")
-					if base is None: base = "Complex ticker"
-					point = Point("discord").tag("command", command).tag("user", request.authorId).tag("guild", request.guildId).tag("channel", request.channelId).tag("base", base).tag("platform", task.get("currentPlatform")).field("count", task.get("requestCount"))
+					if base is None: base = currentTask.get("ticker").get("id")
+					point = Point("discord").tag("command", command).tag("user", request.authorId).tag("guild", request.guildId).tag("channel", request.channelId).tag("base", base).tag("platform", task.get("currentPlatform")).field("count", task.get("requestCount", 1))
 					points.append(point)
 
 			try: await writeApi.write(bucket="requests", record=points)
