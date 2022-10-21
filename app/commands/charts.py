@@ -39,7 +39,7 @@ class ChartCommand(BaseCommand):
 				payload, responseMessage = await process_task(task, "chart")
 
 				if responseMessage == "requires pro":
-					embed = Embed(title=f"The requested chart for `{currentTask.get('ticker').get('name')}` is only available on TradingView Premium.", description="All TradingView Premium charts are bundled with the [Live Charting Data addon](https://www.alphabotsystem.com/pro/live-charting).", color=constants.colors["gray"])
+					embed = Embed(title=f"The requested chart for `{currentTask.get('ticker').get('name')}` is only available on TradingView Premium.", description="All TradingView Premium charts are bundled with the [Advanced Charting add-on](https://www.alphabotsystem.com/pro/advanced-charting).", color=constants.colors["gray"])
 					embed.set_author(name="TradingView Premium", icon_url=static_storage.icon_bw)
 					embeds.append(embed)
 				elif payload is None:
@@ -94,7 +94,7 @@ class ChartCommand(BaseCommand):
 				responseMessage, task = await process_chart_arguments(partArguments[1:], defaultPlatforms, tickerId=partArguments[0].upper())
 
 				if responseMessage is not None:
-					description = "[Live Charting Data addon](https://www.alphabotsystem.com/pro/live-charting) unlocks additional assets, indicators, timeframes and more." if responseMessage.endswith("add-on.") else "Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/charting)."
+					description = "[Advanced Charting add-on](https://www.alphabotsystem.com/pro/advanced-charting) unlocks additional assets, indicators, timeframes and more." if responseMessage.endswith("add-on.") else "Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/charting)."
 					embed = Embed(title=responseMessage, description=description, color=constants.colors["gray"])
 					embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
 					await ctx.interaction.edit_original_response(embed=embed)
