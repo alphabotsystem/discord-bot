@@ -26,7 +26,7 @@ async def autocomplete_categories(ctx):
 class LookupCommand(BaseCommand):
 	lookupGroup = SlashCommandGroup("lookup", "Look up or screen the market for various properties.")
 
-	@lookupGroup.command(name="markets", description="Look up available markets for a particular crypto asset.")
+	@lookupGroup.command(name="markets", description="Look up available markets for a particular asset.")
 	async def markets(
 		self,
 		ctx,
@@ -36,7 +36,7 @@ class LookupCommand(BaseCommand):
 			request = await self.create_request(ctx)
 			if request is None: return
 
-			platforms = request.get_platform_order_for("d")
+			platforms = request.get_platform_order_for("lookup")
 			responseMessage, task = await process_quote_arguments([], platforms, tickerId=tickerId.upper())
 
 			if responseMessage is not None:

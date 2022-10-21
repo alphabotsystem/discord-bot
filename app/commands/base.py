@@ -30,6 +30,7 @@ class BaseCommand(Cog):
 		"volume": ["IEXC", "CoinGecko", "CCXT"],
 		"depth": ["IEXC", "CCXT"],
 		"info": ["IEXC", "CoinGecko"],
+		"lookup": ["IEXC", "CCXT", "CoinGecko", "TradingView", "TradingView Premium", "TradingLite", "GoCharting", "Bookmap"],
 		"paper": ["IEXC", "CCXT"],
 		"ichibot": ["Ichibot"]
 	}
@@ -86,7 +87,7 @@ class BaseCommand(Cog):
 
 		if tickerId == "": return []
 
-		platforms = cls.sources.get(command)
+		platforms = cls.sources[command]
 		tickers = await autocomplete_ticker(tickerId, ",".join(platforms))
 		return tickers
 
