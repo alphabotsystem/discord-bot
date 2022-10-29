@@ -1,11 +1,10 @@
-py-cord[speed]>=2.0.1
-# git+https://github.com/Rapptz/discord.py.git
-google-cloud-error-reporting>=0.33.0
-google-cloud-firestore>=1.9.0
+py-cord[speed]>=2.2.2
+google-cloud-error-reporting>=1.6.3
+google-cloud-firestore>=2.7.2
 google-assistant-grpc>=0.3.0
 google-assistant-sdk>=0.6.0
-pycoingecko>=0.3.0
-pytz>=2019.2
-pyzmq>=18.1.1
-orjson>=3.6.0
-influxdb-client>=1.32.0
+pycoingecko>=3.0.0
+pytz>=2022.5
+pyzmq>=24.0.1
+orjson>=3.8.1
+influxdb-client>=1.33.0
