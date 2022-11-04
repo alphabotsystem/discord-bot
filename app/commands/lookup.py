@@ -42,7 +42,8 @@ class LookupCommand(BaseCommand):
 			if responseMessage is not None:
 				embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features).", color=constants.colors["gray"])
 				embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
-				await ctx.interaction.edit_original_response(embed=embed)
+				try: await ctx.interaction.edit_original_response(embed=embed)
+				except NotFound: pass
 				return
 
 			currentPlatform = task.get("currentPlatform")
@@ -56,11 +57,13 @@ class LookupCommand(BaseCommand):
 				for quote, exchanges in listings:
 					if len(exchanges) == 0: continue
 					embed.add_field(name=f"{quote} pair found on {len(exchanges)} exchanges", value=", ".join(exchanges), inline=False)
-				await ctx.interaction.edit_original_response(embed=embed)
+				try: await ctx.interaction.edit_original_response(embed=embed)
+				except NotFound: pass
 			else:
 				embed = Embed(title=f"`{currentTask.get('ticker').get('name')}` is not listed on any crypto exchange.", color=constants.colors["gray"])
 				embed.set_author(name="No listings", icon_url=static_storage.icon_bw)
-				await ctx.interaction.edit_original_response(embed=embed)
+				try: await ctx.interaction.edit_original_response(embed=embed)
+				except NotFound: pass
 
 			await self.database.document("discord/statistics").set({request.snapshot: {"mk": Increment(1)}}, merge=True)
 
@@ -103,7 +106,8 @@ class LookupCommand(BaseCommand):
 				embed = Embed(title="Top gainers", color=constants.colors["deep purple"])
 				for token in response:
 					embed.add_field(name=token["symbol"], value="Gained {:,.2f} %".format(token["change"]), inline=True)
-				await ctx.interaction.edit_original_response(embed=embed)
+				try: await ctx.interaction.edit_original_response(embed=embed)
+				except NotFound: pass
 
 			elif category == "crypto losers":
 				rawData = []
@@ -126,10 +130,12 @@ class LookupCommand(BaseCommand):
 				embed = Embed(title="Top losers", color=constants.colors["deep purple"])
 				for token in response:
 					embed.add_field(name=token["symbol"], value="Lost {:,.2f} %".format(token["change"]), inline=True)
-				await ctx.interaction.edit_original_response(embed=embed)
+				try: await ctx.interaction.edit_original_response(embed=embed)
+				except NotFound: pass
 			else:
 				embed = Embed(title="The specified category is invalid.", description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/lookup).", color=constants.colors["deep purple"])
-				await ctx.interaction.edit_original_response(embed=embed)
+				try: await ctx.interaction.edit_original_response(embed=embed)
+				except NotFound: pass
 
 			await self.database.document("discord/statistics").set({request.snapshot: {"t": Increment(1)}}, merge=True)
 

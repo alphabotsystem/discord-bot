@@ -31,9 +31,11 @@ class DepthCommand(BaseCommand):
 			errorMessage = f"Requested orderbook visualization for `{currentTask.get('ticker').get('name')}` is not available." if responseMessage is None else responseMessage
 			embed = Embed(title=errorMessage, color=constants.colors["gray"])
 			embed.set_author(name="Chart not available", icon_url=static_storage.icon_bw)
-			await ctx.interaction.edit_original_response(embed=embed)
+			try: await ctx.interaction.edit_original_response(embed=embed)
+			except NotFound: pass
 		else:
-			await ctx.interaction.edit_original_response(file=File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, request.authorId, randint(1000, 9999))))
+			try: await ctx.interaction.edit_original_response(file=File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, request.authorId, randint(1000, 9999))))
+			except NotFound: pass
 
 		await self.database.document("discord/statistics").set({request.snapshot: {"d": Increment(1)}}, merge=True)
 		await self.log_request("depth", request, [task])
@@ -55,7 +57,8 @@ class DepthCommand(BaseCommand):
 			if responseMessage is not None:
 				embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/orderbook-visualizations).", color=constants.colors["gray"])
 				embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
-				await ctx.interaction.edit_original_response(embed=embed)
+				try: await ctx.interaction.edit_original_response(embed=embed)
+				except NotFound: pass
 				return
 
 			await self.respond(ctx, request, task)

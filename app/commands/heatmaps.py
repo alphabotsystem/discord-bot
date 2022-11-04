@@ -6,6 +6,7 @@ from traceback import format_exc
 
 from discord import Embed, File
 from discord.commands import slash_command, Option
+from discord.errors import NotFound
 from google.cloud.firestore import Increment
 
 from helpers import constants
@@ -52,7 +53,8 @@ class HeatmapCommand(BaseCommand):
 		if len(files) != 0:
 			actions = ActionsView(user=ctx.author)
 
-		await ctx.interaction.edit_original_response(embeds=embeds, files=files, view=actions)
+		try: await ctx.interaction.edit_original_response(embeds=embeds, files=files, view=actions)
+		except NotFound: pass
 
 		await self.database.document("discord/statistics").set({request.snapshot: {"hmap": Increment(len(tasks))}}, merge=True)
 		await self.cleanup(ctx, request)
@@ -83,11 +85,13 @@ class HeatmapCommand(BaseCommand):
 			if responseMessage is not None:
 				embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/heatmaps).", color=constants.colors["gray"])
 				embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
-				await ctx.interaction.edit_original_response(embed=embed)
+				try: await ctx.interaction.edit_original_response(embed=embed)
+				except NotFound: pass
 				return
 			elif autodelete is not None and (autodelete < 1 or autodelete > 10):
 				embed = Embed(title="Response autodelete duration must be between one and ten minutes.", color=constants.colors["gray"])
-				await ctx.interaction.edit_original_response(embed=embed)
+				try: await ctx.interaction.edit_original_response(embed=embed)
+				except NotFound: pass
 				return
 
 			await self.respond(ctx, request, [task])

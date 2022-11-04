@@ -86,7 +86,8 @@ class IchibotCommand(BaseCommand):
 				if exchangeId not in SUPPORTED_EXCHANGES:
 					embed = Embed(title=f"`{exchange[:229]}` is not a valid argument", description="Detailed guide with examples is available on [our website](https://gitlab.com/Ichimikichiki/ichibot-client-app/-/wikis/home).", color=constants.colors["gray"])
 					embed.set_author(name="Invalid argument", icon_url=static_storage.ichibot)
-					await ctx.interaction.edit_original_response(embed=embed)
+					try: await ctx.interaction.edit_original_response(embed=embed)
+					except NotFound: pass
 					return
 
 				origin = f"{request.accountId}_{request.authorId}_ichibot"
@@ -103,16 +104,19 @@ class IchibotCommand(BaseCommand):
 				try:
 					embed = Embed(title="Ichibot connection is being initiated.", color=constants.colors["deep purple"])
 					embed.set_author(name="Ichibot", icon_url=static_storage.ichibot)
-					await ctx.interaction.edit_original_response(embed=embed)
+					try: await ctx.interaction.edit_original_response(embed=embed)
+					except NotFound: pass
 				except Forbidden:
 					embed = Embed(title="Ichibot connection is being initiated, however the bot cannot DM you.", description="A common reason for this is that the bot is blocked, or that your DMs are disabled. Before you can start trading you must enable open your Direct Messages with Alpha Bot.", color=constants.colors["deep purple"])
 					embed.set_author(name="Ichibot", icon_url=static_storage.ichibot)
-					await ctx.interaction.edit_original_response(embed=embed)
+					try: await ctx.interaction.edit_original_response(embed=embed)
+					except NotFound: pass
 
 			else:
 				embed = Embed(title=":dart: You must have an Alpha Account connected to your Discord to execute live trades.", description="[Sign up for a free account on our website](https://www.alphabotsystem.com/signup). If you already signed up, [sign in](https://www.alphabotsystem.com/login), connect your account with your Discord profile, and add an API key.", color=constants.colors["deep purple"])
 				embed.set_author(name="Ichibot", icon_url=static_storage.ichibot)
-				await ctx.interaction.edit_original_response(embed=embed)
+				try: await ctx.interaction.edit_original_response(embed=embed)
+				except NotFound: pass
 
 		except CancelledError: pass
 		except Exception:

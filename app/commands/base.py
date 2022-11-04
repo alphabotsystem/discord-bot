@@ -59,7 +59,8 @@ class BaseCommand(Cog):
 
 	async def cleanup(self, ctx, request, removeView=False):
 		if request.autodelete is not None:
-			await ctx.interaction.delete_original_message(delay=request.autodelete * 60)
+			try: await ctx.interaction.delete_original_message(delay=request.autodelete * 60)
+			except: pass
 		if removeView:
 			await sleep(600)
 			try: await ctx.interaction.edit_original_response(view=None)

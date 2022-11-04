@@ -28,13 +28,15 @@ class VolumeCommand(BaseCommand):
 			errorMessage = f"Requested volume for `{currentTask.get('ticker').get('name')}` is not available." if responseMessage is None else responseMessage
 			embed = Embed(title=errorMessage, color=constants.colors["gray"])
 			embed.set_author(name="Data not available", icon_url=static_storage.icon_bw)
-			await ctx.interaction.edit_original_response(embed=embed)
+			try: await ctx.interaction.edit_original_response(embed=embed)
+			except NotFound: pass
 		else:
 			currentTask = task.get(payload.get("platform"))
 			embed = Embed(title=payload["quoteVolume"], description=payload.get("quoteConvertedVolume", EmptyEmbed), color=constants.colors["orange"])
 			embed.set_author(name=payload["title"], icon_url=payload.get("thumbnailUrl"))
 			embed.set_footer(text=payload["sourceText"])
-			await ctx.interaction.edit_original_response(embed=embed)
+			try: await ctx.interaction.edit_original_response(embed=embed)
+			except NotFound: pass
 		
 		await self.database.document("discord/statistics").set({request.snapshot: {"v": Increment(1)}}, merge=True)
 		await self.log_request("volume", request, [task])
@@ -56,7 +58,8 @@ class VolumeCommand(BaseCommand):
 			if responseMessage is not None:
 				embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/volume).", color=constants.colors["gray"])
 				embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
-				await ctx.interaction.edit_original_response(embed=embed)
+				try: await ctx.interaction.edit_original_response(embed=embed)
+				except NotFound: pass
 				return
 
 			await self.respond(ctx, request, task)
