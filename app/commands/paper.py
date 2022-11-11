@@ -8,6 +8,7 @@ from traceback import format_exc
 from discord import Embed, ButtonStyle, Interaction
 from discord.commands import SlashCommandGroup, Option
 from discord.ui import View, button, Button
+from discord.errors import NotFound
 from google.cloud.firestore import Increment, DELETE_FIELD
 
 from helpers import constants

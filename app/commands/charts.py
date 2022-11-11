@@ -7,6 +7,7 @@ from traceback import format_exc
 from discord import Embed, File, ButtonStyle, SelectOption, Interaction, PartialEmoji
 from discord.commands import slash_command, SlashCommandGroup, Option
 from discord.ui import View, button, Button, Select
+from discord.errors import NotFound
 from google.cloud.firestore import Increment
 
 from helpers import constants

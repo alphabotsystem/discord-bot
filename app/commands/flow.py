@@ -7,6 +7,7 @@ from traceback import format_exc
 from discord import Embed, File, ButtonStyle, SelectOption, Interaction, PartialEmoji
 from discord.commands import slash_command, SlashCommandGroup, Option
 from discord.ui import View, button, Button, Select
+from discord.errors import NotFound
 from google.cloud.firestore import Increment
 
 from helpers import constants
@@ -49,7 +50,7 @@ class FlowCommand(BaseCommand):
 			await self.cleanup(ctx, request, removeView=True)
 
 		else:
-			embed = discord.Embed(title=":gem: Options and crypto orderflow are available as an Alpha Pro Subscription for individuals or communities for only $15.00 per month.", description="If you'd like to start your 30-day free trial, visit [our website](https://www.alphabotsystem.com/pro).", color=constants.colors["deep purple"])
+			embed = discord.Embed(title=":gem: Options and crypto orderflow are available as a add-on subscription for communities or individuals for only $15.00 per month.", description="If you'd like to start your 30-day free trial, visit [our website](https://www.alphabotsystem.com/pro).", color=constants.colors["deep purple"])
 			# embed.set_image(url="https://www.alphabotsystem.com/files/uploads/pro-hero.jpg")
 			try: await ctx.interaction.edit_original_response(embed=embed)
 			except NotFound: pass
@@ -58,11 +59,6 @@ class FlowCommand(BaseCommand):
 		try:
 			request = await self.create_request(ctx, autodelete=autodelete)
 			if request is None: return
-
-			embed = Embed(title="Flow command is being updated, and is currently unavailable.", description="An updated flow command is coming after slash commands are stable, which is the priority. All Alpha Pro subscribers using Alpha Flow during August and September 2021 will receive reimbursment in form of credit, or a refund if requested. No charges were made since then. All trials will also be reset.", color=constants.colors["gray"])
-			try: await ctx.interaction.edit_original_response(embed=embed)
-			except NotFound: pass
-			return
 
 			responseMessage, task = await process_chart_arguments([], ["Alpha Flow"], tickerId=tickerId)
 

@@ -9,6 +9,7 @@ from traceback import format_exc
 from discord import Embed, ButtonStyle, Interaction, TextChannel, Role
 from discord.commands import slash_command, SlashCommandGroup, Option
 from discord.ui import View, button, Button
+from discord.errors import NotFound
 
 from google.cloud.firestore import Increment
 
@@ -193,7 +194,7 @@ class AlertCommand(BaseCommand):
 					await self.cleanup(ctx, request)
 
 			else:
-				embed = Embed(title=":gem: Price Alerts are available as an Alpha Pro Subscription for individuals or communities for only $2.00 per month.", description="If you'd like to start your 30-day free trial, visit [our website](https://www.alphabotsystem.com/pro/price-alerts).", color=constants.colors["deep purple"])
+				embed = Embed(title=":gem: Price Alerts are available as an add-on subscription for communities or individuals for only $2.00 per month.", description="If you'd like to start your 30-day free trial, visit [our website](https://www.alphabotsystem.com/pro/price-alerts).", color=constants.colors["deep purple"])
 				# embed.set_image(url="https://www.alphabotsystem.com/files/uploads/pro-hero.jpg")
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass

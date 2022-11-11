@@ -10,6 +10,7 @@ from traceback import format_exc
 
 from discord import AutoShardedBot, Embed, Intents, Activity, Status, ActivityType, MessageType
 from discord.ext import tasks
+from discord.errors import NotFound
 from google.cloud.firestore import AsyncClient as FirestoreAsyncClient
 from google.cloud.firestore import Client as FirestoreClient
 from google.cloud.firestore import Increment

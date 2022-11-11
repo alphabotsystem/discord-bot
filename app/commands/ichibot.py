@@ -7,7 +7,7 @@ from zmq import NOBLOCK
 from discord import Embed
 from discord.commands import slash_command, SlashCommandGroup, Option
 from discord.channel import DMChannel
-from discord.errors import Forbidden
+from discord.errors import Forbidden, NotFound
 
 from google.cloud.firestore import Increment
 

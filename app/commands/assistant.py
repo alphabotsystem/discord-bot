@@ -5,6 +5,7 @@ from asyncio import CancelledError
 from traceback import format_exc
 
 from discord.commands import slash_command, Option
+from discord.errors import NotFound
 
 from google.cloud.firestore import Increment
 

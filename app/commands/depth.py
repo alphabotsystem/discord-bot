@@ -7,6 +7,7 @@ from traceback import format_exc
 from discord import Embed, File
 from discord.embeds import EmptyEmbed
 from discord.commands import slash_command, Option
+from discord.errors import NotFound
 
 from google.cloud.firestore import Increment
 
