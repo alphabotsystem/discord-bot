@@ -18,7 +18,14 @@ from Processor import get_direct_ichibot_socket
 from commands.base import BaseCommand
 
 
-SUPPORTED_EXCHANGES = ["ftx", "binance", "binancefutures"]
+SUPPORTED_EXCHANGES = {
+	"binance": "binance",
+	"bin": "binance",
+	"bins": "binance",
+	"binanceusdⓢ-m": "binancefutures",
+	"binf": "binancefutures",
+	"fbin": "binancefutures",
+}
 
 
 class Ichibot(object):
@@ -80,10 +87,10 @@ class IchibotCommand(BaseCommand):
 			request = await self.create_request(ctx)
 			if request is None: return
 
-			exchangeId = exchange.lower().replace(" ", "")
+			exchangeId = SUPPORTED_EXCHANGES.get(exchange.lower().replace(" ", ""))
 
 			if request.is_registered():
-				if exchangeId not in SUPPORTED_EXCHANGES:
+				if exchangeId is None:
 					embed = Embed(title=f"`{exchange[:229]}` is not a valid argument", description="Detailed guide with examples is available on [our website](https://gitlab.com/Ichimikichiki/ichibot-client-app/-/wikis/home).", color=constants.colors["gray"])
 					embed.set_author(name="Invalid argument", icon_url=static_storage.ichibot)
 					try: await ctx.interaction.edit_original_response(embed=embed)

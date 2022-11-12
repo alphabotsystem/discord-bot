@@ -151,7 +151,7 @@ class IchibotView(ActionsView):
 		availableKeys = [key for key in accountProperties.get("apiKeys", {}).keys() if key in matches]
 
 		if len(availableKeys) == 0:
-			_e = {"ftx": "FTX", "binance": "Binance", "binanceusdm": "Binance Futures"}
+			_e = {"binance": "Binance", "binanceusdm": "Binance Futures"}
 			orText = ", ".join([_e[e] for e in matches[:-1]]) + " or " + matches[-1]
 			andText = ", ".join([_e[e] for e in matches[:-1]]) + " and " + matches[-1]
 			embed = Embed(title=f"Add API keys for {orText}.", description=f"`{self.task.get('ticker').get('name')}` is only available on {andText} for which you haven't added API keys yet.", color=constants.colors["gray"])
@@ -216,7 +216,6 @@ class ExchangesDropdown(Select):
 		self.command = command
 		self._callback = callback
 		_map = {
-			"ftx": ["FTX", "<:ftx:929376008107356160>", "ftx"],
 			"binanceusdm": ["Binance Futures", "<:binance:929376117108916314>", "binancefutures"],
 			"binance": ["Binance", "<:binance:929376117108916314>", "binance"]
 		}
