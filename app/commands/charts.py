@@ -134,7 +134,7 @@ class IchibotView(ActionsView):
 			accountProperties = await self.accountProperties.get(accountId, {})
 
 		if not accountProperties.get("apiKeys", {}):
-			embed = Embed(title="Before you can execute trades via Ichibot, you have to add exchange API keys.", description="You can add API keys for FTX, Binance and Binance Futures to you Alpha Account in your [Ichibot Preferences](https://www.alphabotsystem.com/account/trading).", color=constants.colors["gray"])
+			embed = Embed(title="Before you can execute trades via Ichibot, you have to add exchange API keys.", description="You can add API keys for Binance and Binance Futures to you Alpha Account in your [Ichibot Preferences](https://www.alphabotsystem.com/account/trading).", color=constants.colors["gray"])
 			embed.set_author(name="Ichibot", icon_url=static_storage.ichibot)
 			await interaction.response.send_message(embed=embed, ephemeral=True)
 			return accountId, None, None
