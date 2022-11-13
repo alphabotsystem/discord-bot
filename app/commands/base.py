@@ -22,7 +22,7 @@ class BaseCommand(Cog):
 
 	sources = {
 		"alert": ["IEXC", "CCXT"],
-		"c": ["TradingView", "TradingView Premium", "TradingLite", "GoCharting", "Bookmap"],
+		"c": ["TradingView", "TradingView Premium", "TradingLite", "Bookmap"],
 		"hmap": ["TradingView Stock Heatmap", "TradingView Crypto Heatmap"],
 		"flow": ["Alpha Flow"],
 		"p": ["IEXC", "CCXT", "CoinGecko"],
@@ -30,7 +30,7 @@ class BaseCommand(Cog):
 		"volume": ["IEXC", "CoinGecko", "CCXT"],
 		"depth": ["IEXC", "CCXT"],
 		"info": ["IEXC", "CoinGecko"],
-		"lookup": ["IEXC", "CCXT", "CoinGecko", "TradingView", "TradingView Premium", "TradingLite", "GoCharting", "Bookmap"],
+		"lookup": ["IEXC", "CCXT", "CoinGecko", "TradingView", "TradingView Premium", "TradingLite", "Bookmap"],
 		"paper": ["IEXC", "CCXT"],
 		"ichibot": ["Ichibot"]
 	}

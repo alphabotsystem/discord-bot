@@ -67,7 +67,7 @@ class ChartCommand(BaseCommand):
 		await self.log_request("charts", request, tasks)
 		await self.cleanup(ctx, request, removeView=True)
 
-	@slash_command(name="c", description="Pull charts from TradingView, TradingLite, GoCharting, and more. Command for power users.")
+	@slash_command(name="c", description="Pull charts from TradingView, TradingLite, and more. Command for power users.")
 	async def c(
 		self,
 		ctx,
