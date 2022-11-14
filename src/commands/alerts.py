@@ -67,7 +67,7 @@ class AlertCommand(BaseCommand):
 					response1 = await self.database.collection(f"details/marketAlerts/{request.accountId}").get()
 				response2 = await self.database.collection(f"details/marketAlerts/{request.authorId}").get()
 				priceAlerts = [e.to_dict() for e in response1] + [e.to_dict() for e in response2]
-				
+
 				if request.is_registered():
 					if len(priceAlerts) >= 500:
 						embed = Embed(title="You can only create up to 500 price alerts. Remove some before creating new ones by calling </alert list:928980578739568651>", color=constants.colors["gray"])

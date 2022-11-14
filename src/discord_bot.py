@@ -261,7 +261,8 @@ async def database_sanity_check():
 				if not properties:
 					tasks.append(database.document(f"discord/properties/guilds/{guildId}").set(CommandRequest.create_guild_settings({})))
 
-		await wait(tasks)
+		if len(tasks) > 0:
+			await wait(tasks)
 
 	except Exception:
 		print(format_exc())
