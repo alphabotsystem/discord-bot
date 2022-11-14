@@ -255,13 +255,13 @@ async def database_sanity_check():
 		tasks = []
 		for guildId in difference:
 			if guildId not in guilds:
-				tasks.append(database.document(f"discord/properties/guilds/{guildId}").set({"stale": {"count": Increment(1), "timestamp": time()}}, merge=True))
+				tasks.append(create_task(database.document(f"discord/properties/guilds/{guildId}").set({"stale": {"count": Increment(1), "timestamp": time()}}, merge=True)))
 
 		for guildId in difference:
 			if guildId not in databaseKeys:
 				properties = await guild_secure_fetch(guildId)
 				if not properties:
-					tasks.append(database.document(f"discord/properties/guilds/{guildId}").set(CommandRequest.create_guild_settings({})))
+					tasks.append(create_task(database.document(f"discord/properties/guilds/{guildId}").set(CommandRequest.create_guild_settings({}))))
 
 		if len(tasks) > 0:
 			await wait(tasks)
