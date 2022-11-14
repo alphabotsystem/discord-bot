@@ -50,7 +50,7 @@ jobs:
     # Build the Docker image
     - name: Build
       run: |-
-        docker image build -t ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.SERVICE }}/production:latest -f ./build/dockerfile ./
+        docker image build -t ${{ env.GAR_LOCATION }}-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE:$GITHUB_SHA -f ./build/dockerfile ./
 
     # Push the Docker image to Google Artifact Registry
     - name: Publish
@@ -61,5 +61,5 @@ jobs:
     # Deploy the Docker image to the GKE cluster
     - name: Deploy
       run: |-
-        kubectl delete deployments/${{ env.SERVICE }} --namespace=alpha-bot || :
+        kubectl delete deployments/${{ env.DEPLOYMENT_NAME }} --namespace=alpha-bot || :
         kubectl apply -f build/deployment.yaml
