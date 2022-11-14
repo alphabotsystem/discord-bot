@@ -204,7 +204,7 @@ async def send_alpha_messages(messageId, message):
 # Job functions
 # -------------------------
 
-@tasks.loop(minutes=60.0)
+@tasks.loop(minutes=6.0)
 async def security_check():
 	try:
 		guildIds = [str(e.id) for e in bot.guilds]
@@ -222,9 +222,11 @@ async def security_check():
 				if guildId in alphaSettings["nicknames"]:
 					if guild.me.nick is None:
 						alphaSettings["nicknames"].pop(guildId)
-					
 					elif guild.me.nick != alphaSettings["nicknames"][guildId]["nickname"]:
 						alphaSettings["nicknames"][guildId]["allowed"] = None
+				elif guild.me.nick is not None:
+					alphaSettings["nicknames"][guildId] = {"nickname": None, "server name": guild.name, "allowed": None}
+
 
 		if environ["PRODUCTION"]:
 			await database.document("discord/settings").set(alphaSettings)

@@ -110,7 +110,7 @@ class ChartCommand(BaseCommand):
 					return
 
 				tasks.append(task)
-			
+
 			await self.respond(ctx, request, tasks)
 
 		except CancelledError: pass
