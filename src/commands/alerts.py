@@ -68,11 +68,12 @@ class AlertCommand(BaseCommand):
 				response2 = await self.database.collection(f"details/marketAlerts/{request.authorId}").get()
 				priceAlerts = [e.to_dict() for e in response1] + [e.to_dict() for e in response2]
 
-				if len(priceAlerts) >= 50:
-					embed = Embed(title="You can only create up to 50 price alerts. Remove some before creating new ones by calling </alert list:928980578739568651>", color=constants.colors["gray"])
+				if len(priceAlerts) >= 1000:
+					embed = Embed(title="You can only create up to 1000 price alerts. Remove some before creating new ones by calling </alert list:928980578739568651>", color=constants.colors["gray"])
 					embed.set_author(name="Maximum number of price alerts reached", icon_url=static_storage.icon_bw)
 					try: await ctx.interaction.edit_original_response(embed=embed)
 					except NotFound: pass
+					return
 
 				payload, responseMessage = await process_task(task, "candle")
 
