@@ -216,6 +216,10 @@ async def security_check():
 		for guild in bot.guilds:
 			if guild.id in constants.bannedGuilds:
 				await guild.leave()
+			if guild.member_count < 10:
+				if guildId in alphaSettings["nicknames"]:
+					alphaSettings["nicknames"].pop(guildId)
+				continue
 
 			guildId = str(guild.id)
 			if guild.me is not None:
