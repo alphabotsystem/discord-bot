@@ -15,7 +15,7 @@ RUN pip install ./dependencies/py/processor
 RUN rm -r ./dependencies
 
 # Copy source code
-COPY ./app ./
+COPY ./src ./
 
 # Run
 ENTRYPOINT ["python", "discord_bot.py"]
