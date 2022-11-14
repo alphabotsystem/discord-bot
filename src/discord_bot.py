@@ -88,7 +88,7 @@ async def on_guild_remove(guild):
 		print(format_exc())
 		if environ["PRODUCTION"]: logging.report_exception(user=str(guild.id))
 
-@tasks.loop(minutes=15.0)
+@tasks.loop(minutes=60.0)
 async def update_guild_count():
 	if environ["PRODUCTION"] and len(bot.guilds) > 24000:
 		t = datetime.now().astimezone(utc)
@@ -204,7 +204,7 @@ async def send_alpha_messages(messageId, message):
 # Job functions
 # -------------------------
 
-@tasks.loop(minutes=6.0)
+@tasks.loop(minutes=60.0)
 async def security_check():
 	try:
 		guildIds = [str(e.id) for e in bot.guilds]
@@ -228,7 +228,6 @@ async def security_check():
 					alphaSettings["nicknames"][guildId] = {"nickname": None, "server name": guild.name, "allowed": None}
 			elif guildId in alphaSettings["nicknames"]:
 				alphaSettings["nicknames"].pop(guildId)
-
 
 		if environ["PRODUCTION"]:
 			await database.document("discord/settings").set(alphaSettings)
