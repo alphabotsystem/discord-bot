@@ -69,15 +69,15 @@ class AlertCommand(BaseCommand):
 				priceAlerts = [e.to_dict() for e in response1] + [e.to_dict() for e in response2]
 				
 				if request.is_registered():
-					if len(priceAlerts) >= 1000:
-						embed = Embed(title="You can only create up to 1000 price alerts. Remove some before creating new ones by calling </alert list:928980578739568651>", color=constants.colors["gray"])
+					if len(priceAlerts) >= 500:
+						embed = Embed(title="You can only create up to 500 price alerts. Remove some before creating new ones by calling </alert list:928980578739568651>", color=constants.colors["gray"])
 						embed.set_author(name="Maximum number of price alerts reached", icon_url=static_storage.icon_bw)
 						try: await ctx.interaction.edit_original_response(embed=embed)
 						except NotFound: pass
 						return
 				else:
-					if len(priceAlerts) >= 100:
-						embed = Embed(title="You can only create up to 1000 price alerts. Remove some before creating new ones by calling </alert list:928980578739568651>", description="You can increase your limit to 1000 by signing up for a [free Alpha Account](https://www.alphabotsystem.com/sign-up", color=constants.colors["gray"])
+					if len(priceAlerts) >= 50:
+						embed = Embed(title="You can only create up to 50 price alerts. Remove some before creating new ones by calling </alert list:928980578739568651>", description="You can increase your limit to 1000 by signing up for a [free Alpha Account](https://www.alphabotsystem.com/sign-up", color=constants.colors["gray"])
 						embed.set_author(name="Maximum number of price alerts reached", icon_url=static_storage.icon_bw)
 						try: await ctx.interaction.edit_original_response(embed=embed)
 						except NotFound: pass
