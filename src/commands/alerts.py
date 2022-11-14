@@ -58,6 +58,13 @@ class AlertCommand(BaseCommand):
 					try: await ctx.interaction.edit_original_response(embed=embed)
 					except NotFound: pass
 					return
+				elif len(levels) > 10:
+					embed = Embed(title="You can only set up to 10 alerts at a time.", color=constants.colors["gray"])
+					embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
+					try: await ctx.interaction.edit_original_response(embed=embed)
+					except NotFound: pass
+					return
+
 
 				currentPlatform = task.get("currentPlatform")
 				currentTask = task.get(currentPlatform)

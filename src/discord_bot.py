@@ -88,7 +88,7 @@ async def on_guild_remove(guild):
 		print(format_exc())
 		if environ["PRODUCTION"]: logging.report_exception(user=str(guild.id))
 
-@tasks.loop(minutes=60.0)
+@tasks.loop(hours=8.0)
 async def update_guild_count():
 	if environ["PRODUCTION"] and len(bot.guilds) > 24000:
 		t = datetime.now().astimezone(utc)
@@ -245,18 +245,20 @@ async def security_check():
 async def database_sanity_check():
 	if not environ["PRODUCTION"]: return
 	try:
-		guilds = await guildProperties.keys()
-		if guilds is None: return
+		databaseKeys = set(await guildProperties.keys())
+		if databaseKeys is None: return
 
-		guildIds = [str(g.id) for g in bot.guilds]
+		guilds = set([str(g.id) for g in bot.guilds])
+
+		difference = guilds.symmetric_difference(databaseKeys)
 
 		tasks = []
-		for guildId in guilds:
-			if guildId not in guildIds:
+		for guildId in difference:
+			if guildId not in guilds:
 				tasks.append(database.document(f"discord/properties/guilds/{guildId}").set({"stale": {"count": Increment(1), "timestamp": time()}}, merge=True))
 
-		for guildId in guildIds:
-			if guildId not in guilds:
+		for guildId in difference:
+			if guildId not in databaseKeys:
 				properties = await guild_secure_fetch(guildId)
 				if not properties:
 					tasks.append(database.document(f"discord/properties/guilds/{guildId}").set(CommandRequest.create_guild_settings({})))
@@ -288,7 +290,7 @@ async def on_message(message):
 		# Skip messages in servers, messages with empty content field, messages from self, or all messages when in startup mode
 		if message.guild is not None or message.clean_content == "" or message.type != MessageType.default or message.author == bot.user or not is_bot_ready(): return
 
-		# Ignore if user or server is banned
+		# Ignore if user is banned
 		if message.author.id in constants.blockedUsers: return
 
 		[accountId, user] = await gather(
