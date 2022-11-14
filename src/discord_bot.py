@@ -396,7 +396,7 @@ async def create_request(ctx, autodelete=-1, ephemeral=False):
 	if request.guildId != -1:
 		branding = alphaSettings["nicknames"].get(str(request.guildId), {"allowed": True, "nickname": None})
 		if branding["allowed"] == False and ctx.guild.me.nick == branding["nickname"]:
-			embed = Embed(title="This Discord community guild was flagged for re-branding Alpha Bot and is therefore violating the Terms of Service. Inability to comply will result in termination of all Alpha branded services.", description="If you wish to present the bot with your own branding, you have to purchase a [Bot License](https://www.alphabotsystem.com/pro/bot-license)", color=0x000000)
+			embed = Embed(title="This Discord community guild was flagged for re-branding Alpha Bot and is therefore violating the Terms of Service.", description="Note that you are allowed to change the nickname of the bot as long as it is neutral. If you wish to present the bot with your own branding, you have to purchase a [Bot License](https://www.alphabotsystem.com/pro/bot-license). Alpha Bot will continue to operate normally, if you remove the nickname.", color=0x000000)
 			embed.add_field(name="Terms of service", value="[Read now](https://www.alphabotsystem.com/terms-of-service)", inline=True)
 			embed.add_field(name="Alpha Bot support Discord server", value="[Join now](https://discord.gg/GQeDE85)", inline=True)
 			try: await ctx.interaction.edit_original_response(embed=embed)
