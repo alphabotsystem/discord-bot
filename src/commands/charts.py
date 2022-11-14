@@ -55,7 +55,7 @@ class ChartCommand(BaseCommand):
 
 		actions = None
 		if len(files) != 0:
-			if len(tasks) == 1 and currentTask.get("ticker", {}).get("tradable") and request.guildId in ICHIBOT_TESTING:
+			if len(tasks) == 1 and currentTask.get("ticker", {}).get("tradable") is not None and request.guildId in ICHIBOT_TESTING:
 				actions = IchibotView(self.bot.loop, currentTask, user=ctx.author)
 			else:
 				actions = ActionsView(user=ctx.author)
@@ -147,7 +147,8 @@ class IchibotView(ActionsView):
 			Ichibot.sockets[origin] = socket
 			self.eventLoop.create_task(Ichibot.process_ichibot_messages(origin, interaction.user))
 
-		matches = list(self.task.get("ticker").get("tradable").keys())
+		tradableMarket = self.task.get("ticker").get("tradable")
+
 		availableKeys = [key for key in accountProperties.get("apiKeys", {}).keys() if key in matches]
 
 		if len(availableKeys) == 0:
