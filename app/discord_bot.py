@@ -384,10 +384,11 @@ async def create_request(ctx, autodelete=-1, ephemeral=False):
 	)
 
 	if request.guildId != -1:
-		if str(ctx.interaction.guild.id) in alphaSettings["tosWatchlist"]["nicknames"]["blacklist"]:
-			embed = Embed(title="This Discord community guild was flagged for re-branding Alpha and is therefore violating the Terms of Service. Inability to comply will result in termination of all Alpha branded services.", color=0x000000)
+		branding = alphaSettings["nicknames"].get(str(request.guildId), {"allowed": True, "nickname": None})
+		if not branding["allowed"] and ctx.guild.me.nick == branding["nickname"]:
+			embed = Embed(title="This Discord community guild was flagged for re-branding Alpha Bot and is therefore violating the Terms of Service. Inability to comply will result in termination of all Alpha branded services.", description="If you wish to present the bot with your own branding, you have to purchase a [Bot License](https://www.alphabotsystem.com/pro/bot-license)", color=0x000000)
 			embed.add_field(name="Terms of service", value="[Read now](https://www.alphabotsystem.com/terms-of-service)", inline=True)
-			embed.add_field(name="Alpha support Discord server", value="[Join now](https://discord.gg/GQeDE85)", inline=True)
+			embed.add_field(name="Alpha Bot support Discord server", value="[Join now](https://discord.gg/GQeDE85)", inline=True)
 			try: await ctx.interaction.edit_original_response(embed=embed)
 			except NotFound: pass
 			return None
@@ -402,7 +403,7 @@ async def create_request(ctx, autodelete=-1, ephemeral=False):
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 			else:
-				embed = Embed(title="Hello world!", description="This is Alpha Bot, the most advanced financial bot on Discord. A short setup process hasn't been completed in this Discord community yet. Ask administrators to complete it by signing into their [Alpha Account](https://www.alphabotsystem.com/communities) and visiting their [Communities Dashboard](https://www.alphabotsystem.com/communities).", color=constants.colors["pink"])
+				embed = Embed(title="Hello world!", description="This is Alpha Bot, the most popular financial bot on Discord. A short setup process hasn't been completed in this Discord community yet. Ask administrators to complete it by signing into their [Alpha Account](https://www.alphabotsystem.com/communities) and visiting their [Communities Dashboard](https://www.alphabotsystem.com/communities).", color=constants.colors["pink"])
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 			return None
