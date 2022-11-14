@@ -204,7 +204,7 @@ async def send_alpha_messages(messageId, message):
 # Job functions
 # -------------------------
 
-@tasks.loop(minutes=6.0)
+@tasks.loop(minutes=60.0)
 async def security_check():
 	try:
 		guildIds = [str(e.id) for e in bot.guilds]
