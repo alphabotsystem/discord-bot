@@ -38,18 +38,18 @@ class AlertCommand(BaseCommand):
 			request = await self.create_request(ctx)
 			if request is None: return
 
-			try:
-				levels = [float(e) for e in split(", |,", levels)]
-			except:
-				embed = Embed(title="Invalid price level requested.", description="Make sure the requested level is a valid number. If you're requesting multiple levels, make sure they are all valid and separated with a comma.", color=constants.colors["gray"])
-				embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
-				try: await ctx.interaction.edit_original_response(embed=embed)
-				except NotFound: pass
-				return
-
-			platforms = request.get_platform_order_for("alert")
-
 			if request.price_alerts_available():
+				try:
+					levels = [float(e) for e in split(", |,", levels)]
+				except:
+					embed = Embed(title="Invalid price level requested.", description="Make sure the requested level is a valid number. If you're requesting multiple levels, make sure they are all valid and separated with a comma.", color=constants.colors["gray"])
+					embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
+					try: await ctx.interaction.edit_original_response(embed=embed)
+					except NotFound: pass
+					return
+
+				platforms = request.get_platform_order_for("alert")
+
 				responseMessage, task = await process_quote_arguments([venue], platforms, tickerId=tickerId.upper())
 
 				if responseMessage is not None:
@@ -69,7 +69,7 @@ class AlertCommand(BaseCommand):
 				priceAlerts = [e.to_dict() for e in response1] + [e.to_dict() for e in response2]
 
 				if len(priceAlerts) >= 50:
-					embed = Embed(title="You can only create up to 50 price alerts.", color=constants.colors["gray"])
+					embed = Embed(title="You can only create up to 50 price alerts. Remove some before creating new ones by calling </alert list:928980578739568651>", color=constants.colors["gray"])
 					embed.set_author(name="Maximum number of price alerts reached", icon_url=static_storage.icon_bw)
 					try: await ctx.interaction.edit_original_response(embed=embed)
 					except NotFound: pass
@@ -93,7 +93,7 @@ class AlertCommand(BaseCommand):
 					try: await ctx.interaction.edit_original_response(embed=embed)
 					except NotFound: pass
 				elif role is not None and not channel.permissions_for(ctx.author).manage_messages:
-					embed = Embed(title="You do not have the sufficient permission to tag other server members.", description="To tag other server members, you must have the `manage messages` permission.", color=constants.colors["gray"])
+					embed = Embed(title="You do not have the sufficient permission to tag other server members.", description="To be able to tag other server members with an alert, you must have the `manage messages` permission.", color=constants.colors["gray"])
 					embed.set_author(name="Permission denied", icon_url=static_storage.icon_bw)
 					try: await ctx.interaction.edit_original_response(embed=embed)
 					except NotFound: pass
@@ -116,7 +116,6 @@ class AlertCommand(BaseCommand):
 							alertTicker = alert["request"].get("ticker")
 
 							if dumps(alertTicker, option=OPT_SORT_KEYS) == tickerDump:
-								print(alert["level"], level)
 								if alert["level"] == level:
 									embed = Embed(title=f"Price alert for {ticker.get('name')}{exchangeName} at {levelText}{pairQuoteName} already exists.", color=constants.colors["gray"])
 									embed.set_author(name="Alert already exists", icon_url=static_storage.icon_bw)
@@ -238,7 +237,7 @@ class AlertCommand(BaseCommand):
 					pairQuoteName = " " + ticker.get("quote") if ticker.get("quote") else ""
 
 					embed = Embed(title=f"{ticker.get('name')}{exchangeName} price alert at {alert.get('levelText', alert['level'])}{pairQuoteName}.", color=constants.colors["deep purple"])
-					await ctx.followup.send(embed=embed, view=DeleteView(database=self.database, pathId=matchedId, alertId=key, userId=request.authorId), ephemeral=True)
+					await ctx.followup.send(embed=embed, view=DeleteView(database=self.database, pathId=f"details/marketAlerts/{matchedId}/{key}", userId=request.authorId), ephemeral=True)
 
 		except CancelledError: pass
 		except Exception:
@@ -247,16 +246,15 @@ class AlertCommand(BaseCommand):
 
 
 class DeleteView(View):
-	def __init__(self, database, pathId, alertId, userId=None):
+	def __init__(self, database, pathId, userId=None):
 		super().__init__(timeout=None)
 		self.database = database
 		self.pathId = pathId
-		self.alertId = alertId
 		self.userId = userId
 
 	@button(label="Delete", style=ButtonStyle.danger)
 	async def delete(self, button: Button, interaction: Interaction):
 		if self.userId != interaction.user.id: return
-		await self.database.document(f"details/marketAlerts/{self.pathId}/{self.alertId}").delete()
+		await self.database.document(self.pathId).delete()
 		embed = Embed(title="Alert deleted", color=constants.colors["gray"])
 		await interaction.response.edit_message(embed=embed, view=None)

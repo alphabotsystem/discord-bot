@@ -26,7 +26,7 @@ from commands.assistant import AlphaCommand
 from commands.alerts import AlertCommand
 from commands.charts import ChartCommand
 from commands.flow import FlowCommand
-# from commands.schedule import ScheduleCommand
+from commands.schedule import ScheduleCommand
 from commands.heatmaps import HeatmapCommand
 from commands.depth import DepthCommand
 from commands.prices import PriceCommand
@@ -207,55 +207,27 @@ async def send_alpha_messages(messageId, message):
 @tasks.loop(minutes=60.0)
 async def security_check():
 	try:
-		guildIds = [e.id for e in bot.guilds]
-		guildsToRemove = []
-		for key in ["blacklist", "whitelist"]:
-			for guild in alphaSettings["tosWatchlist"]["nicknames"][key]:
-				if guild not in guildIds: guildsToRemove.append(guild)
-			for guild in guildsToRemove:
-				if guild in alphaSettings["tosWatchlist"]["nicknames"][key]: alphaSettings["tosWatchlist"]["nicknames"][key].pop(guild)
+		guildIds = [str(e.id) for e in bot.guilds]
 
-		botNicknames = []
+		for guildId in list(alphaSettings["nicknames"].keys()):
+			if guildId not in guildIds:
+				alphaSettings["nicknames"].pop(guildId)
+
 		for guild in bot.guilds:
 			if guild.id in constants.bannedGuilds:
 				await guild.leave()
 
+			guildId = str(guild.id)
 			if guild.me is not None:
-				isBlacklisted = str(guild.id) in alphaSettings["tosWatchlist"]["nicknames"]["blacklist"]
-				isWhitelisted = str(guild.id) in alphaSettings["tosWatchlist"]["nicknames"]["whitelist"]
-
-				if guild.me.nick is not None:
-					if isBlacklisted:
-						if guild.me.nick == alphaSettings["tosWatchlist"]["nicknames"]["blacklist"][str(guild.id)]:
-							if guild.me.guild_permissions.change_nickname:
-								try:
-									await guild.me.edit(nick=None)
-									alphaSettings["tosWatchlist"]["nicknames"]["blacklist"].pop(str(guild.id))
-								except: pass
-							continue
-						else: alphaSettings["tosWatchlist"]["nicknames"]["blacklist"].pop(str(guild.id))
-					if isWhitelisted:
-						if guild.me.nick == alphaSettings["tosWatchlist"]["nicknames"]["whitelist"][str(guild.id)]: continue
-						else: alphaSettings["tosWatchlist"]["nicknames"]["whitelist"].pop(str(guild.id))
-
-					for i in range(0, len(guild.me.nick.replace(" ", "")) - 2):
-						nameSlice = guild.me.nick.lower().replace(" ", "")[i:i+3]
-						if nameSlice in guild.name.lower() and nameSlice not in ["the"]:
-							botNicknames.append(f"```{guild.name} ({guild.id}): {guild.me.nick}```")
-							break
-				else:
-					if isBlacklisted: alphaSettings["tosWatchlist"]["nicknames"]["blacklist"].pop(str(guild.id))
-					if isWhitelisted: alphaSettings["tosWatchlist"]["nicknames"]["whitelist"].pop(str(guild.id))
-
-		botNicknamesText = "No bot nicknames to review"
-		if len(botNicknames) > 0: botNicknamesText = f"These guilds might be re-branding Alpha Bot: {''.join(botNicknames)}"
+				if guildId in alphaSettings["nicknames"]:
+					if guild.me.nick is None:
+						alphaSettings["nicknames"].pop(guildId)
+					
+					elif guild.me.nick != alphaSettings["nicknames"][guildId]["nickname"]:
+						alphaSettings["nicknames"][guildId]["allowed"] = None
 
 		if environ["PRODUCTION"]:
-			usageReviewChannel = bot.get_channel(571786092077121536)
-			botNicknamesMessage = await usageReviewChannel.fetch_message(709335020174573620)
-			await botNicknamesMessage.edit(content=botNicknamesText[:2000])
-
-			await database.document("discord/settings").set({"tosWatchlist": alphaSettings["tosWatchlist"]}, merge=True)
+			await database.document("discord/settings").set(alphaSettings)
 
 	except CancelledError: pass
 	except Exception:
@@ -353,8 +325,6 @@ async def process_ichibot_command(message, commandRequest, requestSlice):
 			if origin in Ichibot.sockets:
 				socket = Ichibot.sockets.get(origin)
 				await socket.send_multipart([commandRequest.accountId.encode(), b"", commandRequest.raw.split(" ", 1)[1].encode()])
-				try: await message.add_reaction("✅")
-				except: pass
 
 				if requestSlice in ["q", "quit", "exit", "logout"]:
 					Ichibot.sockets.pop(origin)
@@ -362,7 +332,7 @@ async def process_ichibot_command(message, commandRequest, requestSlice):
 					embed.set_author(name="Ichibot", icon_url=static_storage.ichibot)
 					await message.channel.send(embed=embed)
 			else:
-				embed = Embed(title="Ichibot connection is not open.", description="You can initiate a connection with `/ichibot login`.", color=constants.colors["pink"])
+				embed = Embed(title="Ichibot connection is not open.", description="You can initiate a connection with </ichibot login:930915616188166225>.", color=constants.colors["pink"])
 				embed.set_author(name="Ichibot", icon_url=static_storage.ichibot)
 				missingExchangeMessage = await message.channel.send(embed=embed)
 
@@ -448,7 +418,7 @@ bot.add_cog(AlphaCommand(bot, create_request, database, logging))
 bot.add_cog(AlertCommand(bot, create_request, database, logging))
 bot.add_cog(ChartCommand(bot, create_request, database, logging))
 # bot.add_cog(FlowCommand(bot, create_request, database, logging))
-# bot.add_cog(ScheduleCommand(bot, create_request, database, logging))
+bot.add_cog(ScheduleCommand(bot, create_request, database, logging))
 bot.add_cog(HeatmapCommand(bot, create_request, database, logging))
 bot.add_cog(DepthCommand(bot, create_request, database, logging))
 bot.add_cog(PriceCommand(bot, create_request, database, logging))
@@ -467,12 +437,6 @@ bot.add_cog(IchibotCommand(bot, create_request, database, logging))
 async def unknown_error(ctx, authorId):
 	embed = Embed(title="Looks like something went wrong. The issue has been reported.", color=constants.colors["gray"])
 	embed.set_author(name="Something went wrong", icon_url=static_storage.icon_bw)
-	try: await ctx.channel.send(embed=embed)
-	except: return
-
-async def deprecation_message(ctx, command):
-	embed = Embed(title=f"Alpha is transitioning to slash commands as is required by upcoming Discord changes. Use `/{command}` instead of the old syntax.", color=constants.colors["red"])
-	embed.set_image(url="https://firebasestorage.googleapis.com/v0/b/nlc-bot-36685.appspot.com/o/alpha%2Fassets%2Fdiscord%2Fslash-commands.gif?alt=media&token=32e05ba1-9b06-47b1-a037-d37036b382a6")
 	try: await ctx.channel.send(embed=embed)
 	except: return
 
