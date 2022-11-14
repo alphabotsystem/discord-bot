@@ -223,9 +223,9 @@ async def security_check():
 					if guild.me.nick is None:
 						alphaSettings["nicknames"].pop(guildId)
 					elif alphaSettings["nicknames"][guildId]["nickname"] != guild.me.nick or alphaSettings["nicknames"][guildId]["server name"] != guild.name:
-						alphaSettings["nicknames"][guildId] = {"nickname": None, "server name": guild.name, "allowed": None}
+						alphaSettings["nicknames"][guildId] = {"nickname": guild.me.nick, "server name": guild.name, "allowed": None}
 				elif guild.me.nick is not None:
-					alphaSettings["nicknames"][guildId] = {"nickname": None, "server name": guild.name, "allowed": None}
+					alphaSettings["nicknames"][guildId] = {"nickname": guild.me.nick, "server name": guild.name, "allowed": None}
 			elif guildId in alphaSettings["nicknames"]:
 				alphaSettings["nicknames"].pop(guildId)
 
