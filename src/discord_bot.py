@@ -222,10 +222,12 @@ async def security_check():
 				if guildId in alphaSettings["nicknames"]:
 					if guild.me.nick is None:
 						alphaSettings["nicknames"].pop(guildId)
-					elif guild.me.nick != alphaSettings["nicknames"][guildId]["nickname"]:
-						alphaSettings["nicknames"][guildId]["allowed"] = None
+					elif alphaSettings["nicknames"][guildId]["nickname"] != guild.me.nick or alphaSettings["nicknames"][guildId]["server name"] != guild.name:
+						alphaSettings["nicknames"][guildId] = {"nickname": None, "server name": guild.name, "allowed": None}
 				elif guild.me.nick is not None:
 					alphaSettings["nicknames"][guildId] = {"nickname": None, "server name": guild.name, "allowed": None}
+			elif guildId in alphaSettings["nicknames"]:
+				alphaSettings["nicknames"].pop(guildId)
 
 
 		if environ["PRODUCTION"]:
@@ -471,6 +473,14 @@ async def on_ready():
 		print(format_exc())
 		if environ["PRODUCTION"]: logging.report_exception()
 		_exit(1)
+
+	if not update_guild_count.is_running():
+		update_guild_count.start()
+	if not security_check.is_running():
+		security_check.start()
+	if not database_sanity_check.is_running():
+		database_sanity_check.start()
+
 	print("[Startup]: Alpha Bot startup complete")
 
 def is_bot_ready():
