@@ -74,7 +74,13 @@ class ScheduleCommand(BaseCommand):
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 
-			if totalPostCount >= 10:
+			elif not ctx.channel.permissions_for(ctx.guild.me).send_messages or not ctx.channel.permissions_for(ctx.guild.me).attach_files:
+				embed = Embed(title="Alpha doesn't have the permission to send messages on its own in this channel.", description="Grant the `view channel`, `send messages` and `attach files` permission to Alpha in this channel before scheduling a post.", color=constants.colors["red"])
+				embed.set_author(name="Maximum number of scheduled posts reached", icon_url=static_storage.icon_bw)
+				try: await ctx.interaction.edit_original_response(embed=embed)
+				except NotFound: pass
+
+			elif totalPostCount >= 10:
 				embed = Embed(title="You can only create up to 10 scheduled posts per community. Remove some before creating new ones by calling </schedule list:1041362666872131675>", color=constants.colors["red"])
 				embed.set_author(name="Maximum number of scheduled posts reached", icon_url=static_storage.icon_bw)
 				try: await ctx.interaction.edit_original_response(embed=embed)
