@@ -33,7 +33,7 @@ jobs:
       uses: 'google-github-actions/auth@v0'
       with:
         token_format: 'access_token'
-        workload_identity_provider: 'projects/742548057431/locations/global/workloadIdentityPools/github-identity-pool/providers/github-identity-pool'
+        workload_identity_provider: 'projects/742548057431/locations/global/workloadIdentityPools/github-identity-pool/providers/github-identity-provider'
         service_account: 'github-actions-sa@nlc-bot-36685.iam.gserviceaccount.com'
 
     - name: Docker configuration
