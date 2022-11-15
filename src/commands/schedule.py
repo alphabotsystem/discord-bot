@@ -74,9 +74,9 @@ class ScheduleCommand(BaseCommand):
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 
-			elif not ctx.channel.permissions_for(ctx.guild.me).send_messages or not ctx.channel.permissions_for(ctx.guild.me).attach_files:
-				embed = Embed(title="Alpha doesn't have the permission to send messages on its own in this channel.", description="Grant the `view channel`, `send messages` and `attach files` permission to Alpha in this channel before scheduling a post.", color=constants.colors["red"])
-				embed.set_author(name="Maximum number of scheduled posts reached", icon_url=static_storage.icon_bw)
+			elif not ctx.channel.permissions_for(ctx.guild.me).manage_webhooks:
+				embed = Embed(title="Alpha doesn't have the permission to send messages via Webhooks.", description="Grant the `manage webhooks` permission to Alpha in this channel before scheduling a post.", color=constants.colors["red"])
+				embed.set_author(name="Missing permissions", icon_url=static_storage.icon_bw)
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 
@@ -162,13 +162,19 @@ class ScheduleCommand(BaseCommand):
 					except NotFound: pass
 					return
 
+				webhooks = await ctx.channel.webhooks()
+				webhook = next((w for w in webhooks if w.user.id == self.bot.user.id), None)
+				if webhook is None:
+					webhook = await ctx.channel.create_webhook(name="Alpha")
+
 				await self.database.document(f"details/scheduledPosts/{request.guildId}/{str(uuid4())}").set({
 					"command": "chart",
 					"arguments": arguments,
 					"authorId": request.authorId,
 					"channelId": request.channelId,
 					"period": PERIOD_TO_TIME[period],
-					"start": timestamp
+					"start": timestamp,
+					"url": webhook.url
 				})
 
 				try: await ctx.interaction.edit_original_response(view=None)
