@@ -75,7 +75,7 @@ class ScheduleCommand(BaseCommand):
 				except NotFound: pass
 
 			elif not ctx.channel.permissions_for(ctx.guild.me).manage_webhooks:
-				embed = Embed(title="Alpha doesn't have the permission to send messages via Webhooks.", description="Grant the `manage webhooks` permission to Alpha in this channel before scheduling a post.", color=constants.colors["red"])
+				embed = Embed(title="Alpha doesn't have the permission to send messages via Webhooks.", description="Grant `view channel` and `manage webhooks` permissions to Alpha in this channel to be able to schedule a post.", color=constants.colors["red"])
 				embed.set_author(name="Missing permissions", icon_url=static_storage.icon_bw)
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
