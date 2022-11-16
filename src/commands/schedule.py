@@ -16,11 +16,11 @@ from google.cloud.firestore import Increment
 
 from helpers import constants
 from assets import static_storage
-from Processor import process_chart_arguments, process_task
+from Processor import process_chart_arguments, process_heatmap_arguments, process_task, autocomplete_timeframe, autocomplete_market, autocomplete_category, autocomplete_size, autocomplete_group
+from commands.heatmaps import autocomplete_type, autocomplete_theme
 from DatabaseConnector import DatabaseConnector
 
 from commands.base import BaseCommand, Confirm
-from commands.ichibot import Ichibot
 
 
 cal = Calendar()
@@ -89,7 +89,6 @@ class ScheduleCommand(BaseCommand):
 				except NotFound: pass
 
 			elif request.scheduled_posting_available():
-				defaultPlatforms = request.get_platform_order_for("c")
 				period = period.lower()
 
 				if len(arguments.split(",")) > 1:
@@ -117,8 +116,9 @@ class ScheduleCommand(BaseCommand):
 				while timestamp < time():
 					timestamp += PERIOD_TO_TIME[period] * 60
 
+				platforms = request.get_platform_order_for("c")
 				arguments = arguments.lower().split()
-				responseMessage, task = await process_chart_arguments(arguments[1:], defaultPlatforms, tickerId=arguments[0].upper())
+				responseMessage, task = await process_chart_arguments(arguments[1:], platforms, tickerId=arguments[0].upper())
 
 				if responseMessage is not None:
 					description = "[Advanced Charting add-on](https://www.alphabotsystem.com/pro/advanced-charting) unlocks additional assets, indicators, timeframes and more." if responseMessage.endswith("add-on.") else "Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/charting)."
@@ -197,6 +197,147 @@ class ScheduleCommand(BaseCommand):
 		except Exception:
 			print(format_exc())
 			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /schedule chart {arguments} period:{period} start:{start}")
+			await self.unknown_error(ctx)
+
+	@scheduleGroup.command(name="heatmap", description="Schedule a heatmap to post periodically.")
+	async def heatmap(
+		self,
+		ctx,
+		period: Option(str, "Period of time every which the heatmap will be posted.", name="period", autocomplete=autocomplete_period),
+		assetType: Option(str, "Heatmap asset class.", name="type", autocomplete=autocomplete_type, required=False, default=""),
+		timeframe: Option(str, "Timeframe and coloring method for the heatmap.", name="color", autocomplete=autocomplete_timeframe, required=False, default=""),
+		market: Option(str, "Heatmap market.", name="market", autocomplete=autocomplete_market, required=False, default=""),
+		category: Option(str, "Specific asset category.", name="category", autocomplete=autocomplete_category, required=False, default=""),
+		size: Option(str, "Method used to determine heatmap's block sizes.", name="size", autocomplete=autocomplete_size, required=False, default=""),
+		group: Option(str, "Asset grouping method.", name="group", autocomplete=autocomplete_group, required=False, default=""),
+		theme: Option(str, "Heatmap color theme.", name="theme", autocomplete=autocomplete_theme, required=False, default=""),
+		start: Option(str, "Time at which the first heatmap will be posted.", name="start", autocomplete=autocomplete_date, required=False, default=datetime.now().strftime("%d/%m/%Y %H:%M") + " UTC"),
+		message: Option(str, "Message to post with the heatmap.", name="message", required=False, default=None),
+		role: Option(Role, "Role to tag on trigger.", name="role", required=False, default=None)
+	):
+		try:
+			request = await self.create_request(ctx, ephemeral=True)
+			if request is None: return
+
+			posts = await self.database.collection(f"details/scheduledPosts/{request.guildId}").get()
+			totalPostCount = len(posts)
+
+			if not ctx.channel.permissions_for(ctx.author).manage_messages:
+				embed = Embed(title="You do not have the sufficient permission to create a scheduled post.", description="To be able to create a scheduled post, you must have the `manage messages` permission.", color=constants.colors["red"])
+				embed.set_author(name="Permission denied", icon_url=static_storage.icon_bw)
+				try: await ctx.interaction.edit_original_response(embed=embed)
+				except NotFound: pass
+
+			elif not ctx.channel.permissions_for(ctx.guild.me).manage_webhooks:
+				embed = Embed(title="Alpha doesn't have the permission to send messages via Webhooks.", description="Grant `view channel` and `manage webhooks` permissions to Alpha in this channel to be able to schedule a post.", color=constants.colors["red"])
+				embed.set_author(name="Missing permissions", icon_url=static_storage.icon_bw)
+				try: await ctx.interaction.edit_original_response(embed=embed)
+				except NotFound: pass
+
+			elif totalPostCount >= 10:
+				embed = Embed(title="You can only create up to 10 scheduled posts per community. Remove some before creating new ones by calling </schedule list:1041362666872131675>", color=constants.colors["red"])
+				embed.set_author(name="Maximum number of scheduled posts reached", icon_url=static_storage.icon_bw)
+				try: await ctx.interaction.edit_original_response(embed=embed)
+				except NotFound: pass
+
+			elif request.scheduled_posting_available():
+				period = period.lower()
+
+				if period not in PERIODS:
+					embed = Embed(title="The provided period is not valid. Please pick one of the available periods.", color=constants.colors["gray"])
+					embed.set_author(name="Invalid period", icon_url=static_storage.icon_bw)
+					try: await ctx.interaction.edit_original_response(embed=embed)
+					except NotFound: pass
+					return
+
+				try:
+					timestamp = datetime.strptime(start, "%d/%m/%Y %H:%M UTC").timestamp()
+				except:
+					embed = Embed(title="The provided start date is not valid. Please provide a valid date and time.", color=constants.colors["gray"])
+					embed.set_author(name="Invalid start time", icon_url=static_storage.icon_bw)
+					try: await ctx.interaction.edit_original_response(embed=embed)
+					except NotFound: pass
+					return
+
+				while timestamp < time():
+					timestamp += PERIOD_TO_TIME[period] * 60
+
+				platforms = request.get_platform_order_for("hmap", assetType=assetType)
+				arguments = [assetType, timeframe, market, category, size, group, theme]
+				responseMessage, task = await process_heatmap_arguments(arguments, platforms)
+
+				if responseMessage is not None:
+					embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/heatmaps).", color=constants.colors["gray"])
+					embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
+					try: await ctx.interaction.edit_original_response(embed=embed)
+					except NotFound: pass
+					return
+				elif task.get("requestCount") > 1:
+					embed = Embed(title="Only one timeframe is allowed per request when scheduling a post.", color=constants.colors["gray"])
+					embed.set_author(name="Too many requests", icon_url=static_storage.icon_bw)
+					try: await ctx.interaction.edit_original_response(embed=embed)
+					except NotFound: pass
+					return
+
+				currentTask = task.get(task.get("currentPlatform"))
+				timeframes = task.pop("timeframes")
+				for p, t in timeframes.items(): task[p]["currentTimeframe"] = t[0]
+				payload, responseMessage = await process_task(task, "heatmap")
+
+				files, embeds = [], []
+				if payload is None:
+					errorMessage = "Requested heatmap is not available." if responseMessage is None else responseMessage
+					embed = Embed(title=errorMessage, color=constants.colors["gray"])
+					embed.set_author(name="Heatmap not available", icon_url=static_storage.icon_bw)
+					embeds.append(embed)
+				else:
+					files.append(File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, request.authorId, randint(1000, 9999))))
+
+				confirmation = None if payload.get("data") is None else Confirm(user=ctx.author)
+				try: await ctx.interaction.edit_original_response(embeds=embeds, files=files, view=confirmation)
+				except NotFound: pass
+				await confirmation.wait()
+
+				if confirmation is None:
+					return
+				if confirmation.value is None or not confirmation.value:
+					try: await ctx.interaction.delete_original_response()
+					except NotFound: pass
+					return
+
+				webhooks = await ctx.channel.webhooks()
+				webhook = next((w for w in webhooks if w.user.id == self.bot.user.id), None)
+				if webhook is None:
+					webhook = await ctx.channel.create_webhook(name="Alpha")
+
+				await self.database.document(f"details/scheduledPosts/{request.guildId}/{str(uuid4())}").set({
+					"arguments": arguments,
+					"authorId": request.authorId,
+					"channelId": request.channelId,
+					"command": "heatmap",
+					"message": message,
+					"period": PERIOD_TO_TIME[period],
+					"role": None if role is None else role.id,
+					"start": timestamp,
+					"url": webhook.url
+				})
+
+				try: await ctx.interaction.edit_original_response(view=None)
+				except NotFound: pass
+
+				embed = Embed(title="Scheduled post has been created.", description=f"The scheduled heatmap will be posted every `{period.removeprefix('1 ')}` in this channel, starting at `{start}`.", color=constants.colors["purple"])
+				embed.set_author(name="Chart scheduled", icon_url=static_storage.icon)
+				await ctx.followup.send(embed=embed, ephemeral=True)
+			else:
+				embed = Embed(title=":gem: Scheduled Posting functionality is available as an add-on subscription for communities for only $2.00 per month.", description="If you'd like to start your 30-day free trial, visit [our website](https://www.alphabotsystem.com/pro/scheduled-posting).", color=constants.colors["deep purple"])
+				# embed.set_image(url="https://www.alphabotsystem.com/files/uploads/pro-hero.jpg")
+				try: await ctx.interaction.edit_original_response(embed=embed)
+				except NotFound: pass
+
+		except CancelledError: pass
+		except Exception:
+			print(format_exc())
+			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /schedule heatmap {arguments} period:{period} start:{start}")
 			await self.unknown_error(ctx)
 
 	@scheduleGroup.command(name="list", description="List all scheduled posts.")
