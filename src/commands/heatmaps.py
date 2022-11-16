@@ -11,7 +11,7 @@ from google.cloud.firestore import Increment
 
 from helpers import constants
 from assets import static_storage
-from Processor import process_heatmap_arguments, process_task, autocomplete_timeframe, autocomplete_market, autocomplete_category, autocomplete_color, autocomplete_size, autocomplete_group
+from Processor import process_heatmap_arguments, process_task, autocomplete_timeframe, autocomplete_market, autocomplete_category, autocomplete_size, autocomplete_group
 
 from commands.base import BaseCommand, ActionsView
 
@@ -64,10 +64,9 @@ class HeatmapCommand(BaseCommand):
 		self,
 		ctx,
 		assetType: Option(str, "Heatmap asset class.", name="type", autocomplete=autocomplete_type, required=False, default=""),
-		timeframe: Option(str, "Timeframe for the heatmap.", name="timeframe", autocomplete=autocomplete_timeframe, required=False, default=""),
+		timeframe: Option(str, "Timeframe and coloring method for the heatmap.", name="color", autocomplete=autocomplete_timeframe, required=False, default=""),
 		market: Option(str, "Heatmap market.", name="market", autocomplete=autocomplete_market, required=False, default=""),
 		category: Option(str, "Specific asset category.", name="category", autocomplete=autocomplete_category, required=False, default=""),
-		color: Option(str, "Method used to color the heatmap by.", name="color", autocomplete=autocomplete_color, required=False, default=""),
 		size: Option(str, "Method used to determine heatmap's block sizes.", name="size", autocomplete=autocomplete_size, required=False, default=""),
 		group: Option(str, "Asset grouping method.", name="group", autocomplete=autocomplete_group, required=False, default=""),
 		theme: Option(str, "Heatmap color theme.", name="theme", autocomplete=autocomplete_theme, required=False, default=""),
@@ -79,7 +78,7 @@ class HeatmapCommand(BaseCommand):
 
 			platforms = request.get_platform_order_for("hmap", assetType=assetType)
 
-			arguments = [assetType, timeframe, market, category, color, size, group, theme]
+			arguments = [assetType, timeframe, market, category, size, group, theme]
 			responseMessage, task = await process_heatmap_arguments(arguments, platforms)
 
 			if responseMessage is not None:

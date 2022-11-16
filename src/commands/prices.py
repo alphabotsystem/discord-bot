@@ -60,8 +60,7 @@ class PriceCommand(BaseCommand):
 			request = await self.create_request(ctx)
 			if request is None: return
 
-			defaultPlatforms = request.get_platform_order_for("p")
-
+			platforms = request.get_platform_order_for("p")
 			parts = arguments.split(",")
 			tasks = []
 
@@ -76,7 +75,7 @@ class PriceCommand(BaseCommand):
 				partArguments = part.lower().split()
 				if len(partArguments) == 0: continue
 
-				responseMessage, task = await process_quote_arguments(partArguments[1:], defaultPlatforms, tickerId=partArguments[0].upper())
+				responseMessage, task = await process_quote_arguments(partArguments[1:], platforms, tickerId=partArguments[0].upper())
 
 				if responseMessage is not None:
 					embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/prices).", color=constants.colors["gray"])

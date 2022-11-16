@@ -78,8 +78,7 @@ class ChartCommand(BaseCommand):
 			request = await self.create_request(ctx, autodelete=autodelete)
 			if request is None: return
 
-			defaultPlatforms = request.get_platform_order_for("c")
-
+			platforms = request.get_platform_order_for("c")
 			parts = arguments.split(",")
 			tasks = []
 
@@ -94,7 +93,7 @@ class ChartCommand(BaseCommand):
 				partArguments = part.lower().split()
 				if len(partArguments) == 0: continue
 
-				responseMessage, task = await process_chart_arguments(partArguments[1:], defaultPlatforms, tickerId=partArguments[0].upper())
+				responseMessage, task = await process_chart_arguments(partArguments[1:], platforms, tickerId=partArguments[0].upper())
 
 				if responseMessage is not None:
 					description = "[Advanced Charting add-on](https://www.alphabotsystem.com/pro/advanced-charting) unlocks additional assets, indicators, timeframes and more." if responseMessage.endswith("add-on.") else "Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/charting)."
