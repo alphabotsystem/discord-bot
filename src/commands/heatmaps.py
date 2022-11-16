@@ -77,7 +77,6 @@ class HeatmapCommand(BaseCommand):
 			if request is None: return
 
 			platforms = request.get_platform_order_for("hmap", assetType=assetType)
-
 			arguments = [assetType, timeframe, market, category, size, group, theme]
 			responseMessage, task = await process_heatmap_arguments(arguments, platforms)
 
