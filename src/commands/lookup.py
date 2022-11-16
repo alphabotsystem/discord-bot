@@ -53,14 +53,14 @@ class LookupCommand(BaseCommand):
 
 			if total != 0:
 				embed = Embed(color=constants.colors["deep purple"])
-				embed.set_author(name=f"{ticker.get('base')} listings")
+				embed.set_author(name=f"{ticker.get('name')} listings")
 				for quote, exchanges in listings:
 					if len(exchanges) == 0: continue
 					embed.add_field(name=f"{quote} pair found on {len(exchanges)} exchanges", value=", ".join(exchanges), inline=False)
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 			else:
-				embed = Embed(title=f"`{currentTask.get('ticker').get('name')}` is not listed on any crypto exchange.", color=constants.colors["gray"])
+				embed = Embed(title=f"`{ticker.get('name')}` is not listed on any crypto exchange.", color=constants.colors["gray"])
 				embed.set_author(name="No listings", icon_url=static_storage.icon_bw)
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
@@ -74,7 +74,7 @@ class LookupCommand(BaseCommand):
 			await self.unknown_error(ctx)
 
 	@lookupGroup.command(name="top", description="Look up top gainers and losers in the market.")
-	async def markets(
+	async def top(
 		self,
 		ctx,
 		category: Option(str, "Ranking type.", name="category", autocomplete=autocomplete_categories),
