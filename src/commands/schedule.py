@@ -8,7 +8,7 @@ from random import randint
 from asyncio import CancelledError, sleep
 from traceback import format_exc
 
-from discord import Embed, File, ButtonStyle, SelectOption, Interaction, PartialEmoji
+from discord import Embed, File, ButtonStyle, SelectOption, Interaction, Role
 from discord.commands import slash_command, SlashCommandGroup, Option
 from discord.ui import View, button, Button, Select
 from discord.errors import NotFound
@@ -59,7 +59,9 @@ class ScheduleCommand(BaseCommand):
 		ctx,
 		arguments: Option(str, "Request arguments starting with ticker id.", name="arguments"),
 		period: Option(str, "Period of time every which the chart will be posted.", name="period", autocomplete=autocomplete_period),
-		start: Option(str, "Time at which the first chart will be posted.", name="start", autocomplete=autocomplete_date, required=False, default=datetime.now().strftime("%d/%m/%Y %H:%M") + " UTC")
+		start: Option(str, "Time at which the first chart will be posted.", name="start", autocomplete=autocomplete_date, required=False, default=datetime.now().strftime("%d/%m/%Y %H:%M") + " UTC"),
+		message: Option(str, "Message to post with the chart.", name="message", required=False, default=None),
+		role: Option(Role, "Role to tag on trigger.", name="role", required=False, default=None)
 	):
 		try:
 			request = await self.create_request(ctx, ephemeral=True)
@@ -168,11 +170,13 @@ class ScheduleCommand(BaseCommand):
 					webhook = await ctx.channel.create_webhook(name="Alpha")
 
 				await self.database.document(f"details/scheduledPosts/{request.guildId}/{str(uuid4())}").set({
-					"command": "chart",
 					"arguments": arguments,
 					"authorId": request.authorId,
 					"channelId": request.channelId,
+					"command": "chart",
+					"message": message,
 					"period": PERIOD_TO_TIME[period],
+					"role": None if role is None else role.id,
 					"start": timestamp,
 					"url": webhook.url
 				})
