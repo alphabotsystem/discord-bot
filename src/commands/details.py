@@ -41,16 +41,16 @@ class DetailsCommand(BaseCommand):
 			if payload.get("image") is not None:
 				embed.set_thumbnail(url=payload["image"])
 
-			assetFundementals = ""
+			assetFundamentals = ""
 			assetInfo = ""
 			assetSupply = ""
 			assetScore = ""
 			if payload.get("marketcap") is not None:
-				assetFundementals += "\nMarket cap: {:,.0f} {}{}".format(payload["marketcap"], "USD", "" if payload.get("rank") is None else " (ranked #{})".format(payload["rank"]))
+				assetFundamentals += "\nMarket cap: {:,.0f} {}{}".format(payload["marketcap"], "USD", "" if payload.get("rank") is None else " (ranked #{})".format(payload["rank"]))
 			if payload.get("volume") is not None:
-				assetFundementals += "\nTotal volume: {:,.0f} {}".format(payload["volume"], "USD")
+				assetFundamentals += "\nTotal volume: {:,.0f} {}".format(payload["volume"], "USD")
 			if payload.get("industry") is not None:
-				assetFundementals += f"\nIndustry: {payload['industry']}"
+				assetFundamentals += f"\nIndustry: {payload['industry']}"
 			if payload.get("info") is not None:
 				if payload["info"].get("location") is not None:
 					assetInfo += f"\nLocation: {payload['info']['location']}"
@@ -70,7 +70,7 @@ class DetailsCommand(BaseCommand):
 					assetScore += "\nLiquidity score: {:,.1f}/100".format(payload["score"]["liquidity"])
 				if payload["score"].get("public interest") is not None:
 					assetScore += "\nPublic interest: {:,.3f}".format(payload["score"]["public interest"])
-			detailsText = assetFundementals[1:] + assetInfo + assetSupply + assetScore
+			detailsText = assetFundamentals[1:] + assetInfo + assetSupply + assetScore
 			if detailsText != "":
 				embed.add_field(name="Details", value=detailsText, inline=False)
 
@@ -94,11 +94,11 @@ class DetailsCommand(BaseCommand):
 			change30d = ""
 			change1y = ""
 			if payload["change"].get("past day") is not None:
-				change24h = "\nPast day: *{:+,.2f} %*".format(payload["change"]["past day"])
+				change24h = "\nPast day: {:+,.2f} %".format(payload["change"]["past day"])
 			if payload["change"].get("past month") is not None:
-				change30d = "\nPast month: *{:+,.2f} %*".format(payload["change"]["past month"])
+				change30d = "\nPast month: {:+,.2f} %".format(payload["change"]["past month"])
 			if payload["change"].get("past year") is not None:
-				change1y = "\nPast year: *{:+,.2f} %*".format(payload["change"]["past year"])
+				change1y = "\nPast year: {:+,.2f} %".format(payload["change"]["past year"])
 			embed.add_field(name="Price change", value=(change24h + change30d + change1y), inline=True)
 			embed.set_footer(text=payload["sourceText"])
 
