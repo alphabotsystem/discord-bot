@@ -13,12 +13,8 @@ from helpers import constants
 from assets import static_storage
 from Processor import process_heatmap_arguments, process_task, autocomplete_timeframe, autocomplete_market, autocomplete_category, autocomplete_size, autocomplete_group
 
-from commands.base import BaseCommand, ActionsView
+from commands.base import BaseCommand, ActionsView, autocomplete_type
 
-async def autocomplete_type(ctx):
-	options = ["crypto", "stocks"]
-	currentInput = " ".join(ctx.options.get("type", "").lower().split())
-	return [e for e in options if e.startswith(currentInput)]
 
 async def autocomplete_theme(ctx):
 	options = ["light", "dark"]

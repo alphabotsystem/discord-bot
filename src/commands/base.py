@@ -14,6 +14,12 @@ from assets import static_storage
 from Processor import autocomplete_ticker, autocomplete_venues
 
 
+async def autocomplete_type(ctx):
+	options = ["crypto", "stocks"]
+	currentInput = " ".join(ctx.options.get("type", "").lower().split())
+	return [e for e in options if e.startswith(currentInput)]
+
+
 class BaseCommand(Cog):
 	commandMap = {
 		"chart": "c",

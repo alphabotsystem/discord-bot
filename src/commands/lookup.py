@@ -13,9 +13,9 @@ from pycoingecko import CoinGeckoAPI
 
 from helpers import constants
 from assets import static_storage
-from Processor import process_quote_arguments, get_listings
+from Processor import process_chart_arguments, process_quote_arguments, process_task, get_listings
 
-from commands.base import BaseCommand, Confirm
+from commands.base import BaseCommand, Confirm, autocomplete_type
 
 async def autocomplete_categories(ctx):
 	options = ["crypto gainers", "crypto losers"]
@@ -143,4 +143,63 @@ class LookupCommand(BaseCommand):
 		except Exception:
 			print(format_exc())
 			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /lookup top {category} limit: {limit}")
+			await self.unknown_error(ctx)
+
+	@lookupGroup.command(name="fgi", description="Look up the current and historic fear & greed index.")
+	async def fgi(
+		self,
+		ctx,
+		assetType: Option(str, "Fear & greed market type", name="market", autocomplete=autocomplete_type, required=False, default=""),
+	):
+		try:
+			request = await self.create_request(ctx)
+			if request is None: return
+
+			platforms = request.get_platform_order_for("c")
+			if assetType != "":
+				if assetType.lower() == "crypto":
+					assetType = "am"
+				elif assetType.lower() == "stock":
+					assetType = "cnn"
+				else:
+					embed = Embed(title="Asset type is invalid. Only stocks and crypto markets are supported.", color=constants.colors["gray"])
+					embed.set_author(name="Invalid market", icon_url=static_storage.icon_bw)
+					try: await ctx.interaction.edit_original_response(embed=embed)
+					except NotFound: pass
+					return
+
+			_, task = await process_chart_arguments([assetType], platforms, tickerId="FGI")
+
+			currentTask = task.get(task.get("currentPlatform"))
+			timeframes = task.pop("timeframes")
+			for p, t in timeframes.items(): task[p]["currentTimeframe"] = t[0]
+
+			payload, responseMessage = await process_task(task, "chart")
+
+			files, embeds = [], []
+			if responseMessage == "requires pro":
+				embed = Embed(title=f"The requested chart for `{currentTask.get('ticker').get('name')}` is only available on TradingView Premium.", description="All TradingView Premium charts are bundled with the [Advanced Charting add-on](https://www.alphabotsystem.com/pro/advanced-charting).", color=constants.colors["gray"])
+				embed.set_author(name="TradingView Premium", icon_url=static_storage.icon_bw)
+				embeds.append(embed)
+			elif payload is None:
+				errorMessage = f"Requested chart for `{currentTask.get('ticker').get('name')}` is not available." if responseMessage is None else responseMessage
+				embed = Embed(title=errorMessage, color=constants.colors["gray"])
+				embed.set_author(name="Chart not available", icon_url=static_storage.icon_bw)
+				embeds.append(embed)
+			else:
+				task["currentPlatform"] = payload.get("platform")
+				currentTask = task.get(task.get("currentPlatform"))
+				files.append(File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, request.authorId, randint(1000, 9999))))
+
+			try: await ctx.interaction.edit_original_response(embeds=embeds, files=files, view=ActionsView(user=ctx.author))
+			except NotFound: pass
+
+			await self.database.document("discord/statistics").set({request.snapshot: {"c": Increment(len(tasks))}}, merge=True)
+			await self.log_request("charts", request, tasks)
+			await self.cleanup(ctx, request, removeView=True)
+
+		except CancelledError: pass
+		except Exception:
+			print(format_exc())
+			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /lookup fgi {assetType}")
 			await self.unknown_error(ctx)

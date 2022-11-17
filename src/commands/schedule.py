@@ -17,10 +17,10 @@ from google.cloud.firestore import Increment
 from helpers import constants
 from assets import static_storage
 from Processor import process_chart_arguments, process_heatmap_arguments, process_task, autocomplete_timeframe, autocomplete_market, autocomplete_category, autocomplete_size, autocomplete_group
-from commands.heatmaps import autocomplete_type, autocomplete_theme
+from commands.heatmaps import autocomplete_theme
 from DatabaseConnector import DatabaseConnector
 
-from commands.base import BaseCommand, Confirm
+from commands.base import BaseCommand, Confirm, autocomplete_type
 
 
 cal = Calendar()
