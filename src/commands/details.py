@@ -46,9 +46,9 @@ class DetailsCommand(BaseCommand):
 			assetSupply = ""
 			assetScore = ""
 			if payload.get("marketcap") is not None:
-				assetFundamentals += "\nMarket cap: {:,.0f} {}{}".format(payload["marketcap"], "USD", "" if payload.get("rank") is None else " (ranked #{})".format(payload["rank"]))
+				assetFundamentals += "\nMarket cap: {:,.0f} {}{}".format(payload["marketcap"], ticker.get("quote"), "" if payload.get("rank") is None else " (ranked #{})".format(payload["rank"]))
 			if payload.get("volume") is not None:
-				assetFundamentals += "\nTotal volume: {:,.0f} {}".format(payload["volume"], "USD")
+				assetFundamentals += "\nTotal volume: {:,.0f} {}".format(payload["volume"], ticker.get("quote"))
 			if payload.get("industry") is not None:
 				assetFundamentals += f"\nIndustry: {payload['industry']}"
 			if payload.get("info") is not None:
@@ -76,15 +76,15 @@ class DetailsCommand(BaseCommand):
 
 			assetPriceDetails = ""
 			if payload["price"].get("current") is not None:
-				assetPriceDetails += ("\nCurrent: ${:,.%df}" % add_decimal_zeros(payload["price"]["current"])).format(payload["price"]["current"])
+				assetPriceDetails += ("\nCurrent: {:,.%df} {}" % add_decimal_zeros(payload["price"]["current"])).format(payload["price"]["current"], ticker.get("quote"))
 			if payload["price"].get("ath") is not None:
-				assetPriceDetails += ("\nAll-time high: ${:,.%df}" % add_decimal_zeros(payload["price"]["ath"])).format(payload["price"]["ath"])
+				assetPriceDetails += ("\nAll-time high: {:,.%df} {}" % add_decimal_zeros(payload["price"]["ath"])).format(payload["price"]["ath"], ticker.get("quote"))
 			if payload["price"].get("atl") is not None:
-				assetPriceDetails += ("\nAll-time low: ${:,.%df}" % add_decimal_zeros(payload["price"]["atl"])).format(payload["price"]["atl"])
+				assetPriceDetails += ("\nAll-time low: {:,.%df} {}" % add_decimal_zeros(payload["price"]["atl"])).format(payload["price"]["atl"], ticker.get("quote"))
 			if payload["price"].get("1y high") is not None:
-				assetPriceDetails += ("\n1-year high: ${:,.%df}" % add_decimal_zeros(payload["price"]["1y high"])).format(payload["price"]["1y high"])
+				assetPriceDetails += ("\n1-year high: {:,.%df} {}" % add_decimal_zeros(payload["price"]["1y high"])).format(payload["price"]["1y high"], ticker.get("quote"))
 			if payload["price"].get("1y low") is not None:
-				assetPriceDetails += ("\n1-year low: ${:,.%df}" % add_decimal_zeros(payload["price"]["1y low"])).format(payload["price"]["1y low"])
+				assetPriceDetails += ("\n1-year low: {:,.%df} {}" % add_decimal_zeros(payload["price"]["1y low"])).format(payload["price"]["1y low"], ticker.get("quote"))
 			if payload["price"].get("per") is not None:
 				assetPriceDetails += "\nPrice-to-earnings ratio: {:,.2f}".format(payload["price"]["per"])
 			if assetPriceDetails != "":
