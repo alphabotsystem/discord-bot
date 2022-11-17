@@ -366,7 +366,7 @@ class ScheduleCommand(BaseCommand):
 					while timestamp < time(): timestamp += post["period"]
 					nextPost = datetime.fromtimestamp(timestamp, tz=utc).strftime("%d/%m/%Y %H:%M")
 					command = ' '.join([e for e in post['arguments'] if e != ""])
-					embed = Embed(title=f"Post a {post['command']} every {TIME_TO_PERIOD[post['period']]} starting at {nextPost} UTC.", description=f"Request: `{}`\nChannel: <#{post['channelId']}>\nScheduled by <@{post['authorId']}>", color=constants.colors["deep purple"])
+					embed = Embed(title=f"Post a {post['command']} every {TIME_TO_PERIOD[post['period']]} starting at {nextPost} UTC.", description=f"Request: `{command}`\nChannel: <#{post['channelId']}>\nScheduled by <@{post['authorId']}>", color=constants.colors["deep purple"])
 					await ctx.followup.send(embed=embed, view=DeleteView(database=self.database, pathId=f"details/scheduledPosts/{request.guildId}/{key}", userId=request.authorId), ephemeral=True)
 
 		except CancelledError: pass
