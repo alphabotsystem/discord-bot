@@ -4,7 +4,7 @@ from aiohttp import ClientSession
 from asyncio import CancelledError, sleep
 from traceback import format_exc
 
-from discord import Embed, ButtonStyle, Interaction
+from discord import Embed, ButtonStyle, Interaction, File
 from discord.commands import SlashCommandGroup, Option
 from discord.ui import View, button, Button
 from discord.errors import NotFound
