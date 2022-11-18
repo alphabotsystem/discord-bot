@@ -3,6 +3,7 @@ from time import time
 from re import split
 from uuid import uuid4
 from orjson import dumps, OPT_SORT_KEYS
+from aiohttp import ClientSession
 from asyncio import CancelledError
 from traceback import format_exc
 
@@ -170,6 +171,14 @@ class AlertCommand(BaseCommand):
 							"placement": "above" if level > currentLevel else "below"
 						})
 
+					if currentPlatform == "CCXT":
+						thumbnailUrl = ticker.get("image")
+					else:
+						async with ClientSession() as session:
+							async with session.get(f"https://cloud.iexapis.com/stable/stock/{ticker.get('symbol')}/logo?token={environ['IEXC_KEY']}") as resp:
+								response = await resp.json()
+								thumbnailUrl = response["url"]
+
 					if len(newAlerts) == 1:
 						description = ""
 						if channel is None:
@@ -181,7 +190,7 @@ class AlertCommand(BaseCommand):
 						if description == "":
 							description = None
 						embed = Embed(title=f"Price alert set for {ticker.get('name')}{exchangeName} at {newAlerts[0]['levelText']}{pairQuoteName}.", description=description, color=constants.colors["deep purple"])
-						embed.set_author(name="Alert successfully set", icon_url=static_storage.icon)
+						embed.set_author(name="Alert successfully set", icon_url=thumbnailUrl)
 					else:
 						description = ""
 						if channel is None:
@@ -194,7 +203,7 @@ class AlertCommand(BaseCommand):
 							description = None
 						levelsText = ", ".join([e["levelText"] for e in newAlerts])
 						embed = Embed(title=f"Price alerts set for {ticker.get('name')}{exchangeName} at {levelsText}{pairQuoteName}.", description=description, color=constants.colors["deep purple"])
-						embed.set_author(name="Alerts successfully set", icon_url=static_storage.icon)
+						embed.set_author(name="Alerts successfully set", icon_url=thumbnailUrl)
 					try: await ctx.interaction.edit_original_response(embed=embed)
 					except NotFound: pass
 
