@@ -16,7 +16,7 @@ from helpers import constants
 from assets import static_storage
 from Processor import process_chart_arguments, process_quote_arguments, process_task, get_listings
 
-from commands.base import BaseCommand, Confirm, autocomplete_type
+from commands.base import BaseCommand, ActionsView, autocomplete_type
 
 async def autocomplete_categories(ctx):
 	options = ["crypto gainers", "crypto losers"]
