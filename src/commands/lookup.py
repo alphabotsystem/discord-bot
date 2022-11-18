@@ -18,6 +18,7 @@ from Processor import process_chart_arguments, process_quote_arguments, process_
 
 from commands.base import BaseCommand, ActionsView, autocomplete_type
 
+
 async def autocomplete_categories(ctx):
 	options = ["crypto gainers", "crypto losers"]
 	currentInput = " ".join(ctx.options.get("category", "").lower().split())
@@ -195,8 +196,8 @@ class LookupCommand(BaseCommand):
 			try: await ctx.interaction.edit_original_response(embeds=embeds, files=files, view=ActionsView(user=ctx.author))
 			except NotFound: pass
 
-			await self.database.document("discord/statistics").set({request.snapshot: {"c": Increment(len(tasks))}}, merge=True)
-			await self.log_request("charts", request, tasks)
+			await self.database.document("discord/statistics").set({request.snapshot: {"c": Increment(1)}}, merge=True)
+			await self.log_request("charts", request, [task])
 			await self.cleanup(ctx, request, removeView=True)
 
 		except CancelledError: pass
