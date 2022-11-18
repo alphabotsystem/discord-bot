@@ -184,7 +184,7 @@ class AlertCommand(BaseCommand):
 						if channel is None:
 							description += "No channel was specified, so the alert will be sent to your DMs. "
 						else:
-							description += f"The alert will be sent to the <#{channel.id}> you specified. "
+							description += f"The alert will be sent to the <#{channel.id}> channel. "
 						if currentPlatform == "IEXC":
 							description += "The alert might trigger with up to 15-minute delay due to data licensing requirements on different exchanges."
 						if description == "":
@@ -196,7 +196,7 @@ class AlertCommand(BaseCommand):
 						if channel is None:
 							description += "No channel was specified, so alerts will be sent to your DMs. "
 						else:
-							description += f"Alerts will be sent to the <#{channel.id}> you specified. "
+							description += f"Alerts will be sent to the <#{channel.id}> channel. "
 						if currentPlatform == "IEXC":
 							description += "Alerts might trigger with up to 15-minute delay due to data licensing requirements on different exchanges."
 						if description == "":
