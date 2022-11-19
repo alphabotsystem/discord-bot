@@ -325,7 +325,7 @@ class ScheduleCommand(BaseCommand):
 				try: await ctx.interaction.edit_original_response(view=None)
 				except NotFound: pass
 
-				embed = Embed(title="Scheduled post has been created.", description=f"The scheduled heatmap will be posted every `{period.removeprefix('1 ')}` in this channel, starting at `{start}`.", color=constants.colors["purple"])
+				embed = Embed(title="Scheduled post has been created.", description=f"The scheduled heatmap will be posted publicly every `{period.removeprefix('1 ')}` in this channel, starting at `{start}`.", color=constants.colors["purple"])
 				embed.set_author(name="Chart scheduled", icon_url=static_storage.icon)
 				await ctx.followup.send(embed=embed, ephemeral=True)
 			else:
