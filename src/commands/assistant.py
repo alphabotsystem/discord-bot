@@ -68,7 +68,7 @@ class AlphaCommand(BaseCommand):
 				if "Here are some things you can ask for:" in response:
 					return "You can learn more about Alpha at https://www.alphabotsystem.com"
 				elif any(trigger in response for trigger in constants.badPunTrigger):
-					with open("app/assets/jokes.json") as json_data:
+					with open("src/assets/jokes.json") as json_data:
 						return f"Here's a pun that might make you laugh :smile:\n{choice(load(json_data))}"
 				else:
 					for override in constants.messageOverrides:

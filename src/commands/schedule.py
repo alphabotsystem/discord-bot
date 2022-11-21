@@ -24,9 +24,12 @@ from commands.base import BaseCommand, Confirm, autocomplete_type
 
 
 cal = Calendar()
+
 PERIODS = ["5 minutes", "10 minutes", "15 minutes", "20 minutes", "30 minutes", "1 hour", "2 hours", "3 hours", "4 hours", "6 hours", "8 hours", "12 hours", "1 day"]
 PERIOD_TO_TIME = {"5 minutes": 5, "10 minutes": 10, "15 minutes": 15, "20 minutes": 20, "30 minutes": 30, "1 hour": 60, "2 hours": 120, "3 hours": 180, "4 hours": 240, "6 hours": 360, "8 hours": 480, "12 hours": 720, "1 day": 1440}
 TIME_TO_PERIOD = {value: key for key, value in PERIOD_TO_TIME.items()}
+
+EXCLUDE = ["Weekends", "Outside Market Hours"]
 
 
 def autocomplete_period(ctx):
@@ -49,6 +52,14 @@ def autocomplete_date(ctx):
 		options = [parsed.strftime("%d/%m/%Y %H:%M") + " UTC"]
 		return options
 
+def autocomplete_exclude(ctx):
+	exclude = " ".join(ctx.options.get("exclude", "").lower().split())
+	options = []
+	for option in EXCLUDE:
+		if exclude == "" or exclude in option.replace(" ", ""):
+			options.append(option)
+	return options
+
 
 class ScheduleCommand(BaseCommand):
 	scheduleGroup = SlashCommandGroup("schedule", "Schedule Alpha Bot commands to post periodically.")
@@ -60,6 +71,7 @@ class ScheduleCommand(BaseCommand):
 		arguments: Option(str, "Request arguments starting with ticker id.", name="arguments"),
 		period: Option(str, "Period of time every which the chart will be posted.", name="period", autocomplete=autocomplete_period),
 		start: Option(str, "Time at which the first chart will be posted.", name="start", autocomplete=autocomplete_date, required=False, default=datetime.now().strftime("%d/%m/%Y %H:%M") + " UTC"),
+		exclude: Option(str, "Times to exclude from posting.", name="skip", autocomplete=autocomplete_exclude, required=False, default=None),
 		message: Option(str, "Message to post with the chart.", name="message", required=False, default=None),
 		role: Option(Role, "Role to tag on trigger.", name="role", required=False, default=None)
 	):
@@ -100,6 +112,12 @@ class ScheduleCommand(BaseCommand):
 				elif period not in PERIODS:
 					embed = Embed(title="The provided period is not valid. Please pick one of the available periods.", color=constants.colors["gray"])
 					embed.set_author(name="Invalid period", icon_url=static_storage.icon_bw)
+					try: await ctx.interaction.edit_original_response(embed=embed)
+					except NotFound: pass
+					return
+				elif exclude not in EXCLUDE:
+					embed = Embed(title="The provided skip value is not valid. Please pick one of the available options.", color=constants.colors["gray"])
+					embed.set_author(name="Invalid skip value", icon_url=static_storage.icon_bw)
 					try: await ctx.interaction.edit_original_response(embed=embed)
 					except NotFound: pass
 					return
@@ -174,6 +192,7 @@ class ScheduleCommand(BaseCommand):
 					"authorId": request.authorId,
 					"channelId": request.channelId,
 					"command": "chart",
+					"exclude": exclude,
 					"message": message,
 					"period": PERIOD_TO_TIME[period],
 					"role": None if role is None else role.id,
@@ -212,6 +231,7 @@ class ScheduleCommand(BaseCommand):
 		group: Option(str, "Asset grouping method.", name="group", autocomplete=autocomplete_group, required=False, default=""),
 		theme: Option(str, "Heatmap color theme.", name="theme", autocomplete=autocomplete_theme, required=False, default=""),
 		start: Option(str, "Time at which the first heatmap will be posted.", name="start", autocomplete=autocomplete_date, required=False, default=datetime.now().strftime("%d/%m/%Y %H:%M") + " UTC"),
+		exclude: Option(str, "Times to exclude from posting.", name="skip", autocomplete=autocomplete_exclude, required=False, default=None),
 		message: Option(str, "Message to post with the heatmap.", name="message", required=False, default=None),
 		role: Option(Role, "Role to tag on trigger.", name="role", required=False, default=None)
 	):
@@ -246,6 +266,12 @@ class ScheduleCommand(BaseCommand):
 				if period not in PERIODS:
 					embed = Embed(title="The provided period is not valid. Please pick one of the available periods.", color=constants.colors["gray"])
 					embed.set_author(name="Invalid period", icon_url=static_storage.icon_bw)
+					try: await ctx.interaction.edit_original_response(embed=embed)
+					except NotFound: pass
+					return
+				elif exclude not in EXCLUDE:
+					embed = Embed(title="The provided skip value is not valid. Please pick one of the available options.", color=constants.colors["gray"])
+					embed.set_author(name="Invalid skip value", icon_url=static_storage.icon_bw)
 					try: await ctx.interaction.edit_original_response(embed=embed)
 					except NotFound: pass
 					return
@@ -315,6 +341,7 @@ class ScheduleCommand(BaseCommand):
 					"authorId": request.authorId,
 					"channelId": request.channelId,
 					"command": "heatmap",
+					"exclude": exclude,
 					"message": message,
 					"period": PERIOD_TO_TIME[period],
 					"role": None if role is None else role.id,
