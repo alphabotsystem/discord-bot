@@ -29,7 +29,7 @@ PERIODS = ["5 minutes", "10 minutes", "15 minutes", "20 minutes", "30 minutes", 
 PERIOD_TO_TIME = {"5 minutes": 5, "10 minutes": 10, "15 minutes": 15, "20 minutes": 20, "30 minutes": 30, "1 hour": 60, "2 hours": 120, "3 hours": 180, "4 hours": 240, "6 hours": 360, "8 hours": 480, "12 hours": 720, "1 day": 1440}
 TIME_TO_PERIOD = {value: key for key, value in PERIOD_TO_TIME.items()}
 
-EXCLUDE = ["Weekends", "Outside Market Hours"]
+EXCLUDE = ["Weekends", "Outside US Market Hours"]
 
 
 def autocomplete_period(ctx):
@@ -203,7 +203,7 @@ class ScheduleCommand(BaseCommand):
 				try: await ctx.interaction.edit_original_response(view=None)
 				except NotFound: pass
 
-				embed = Embed(title="Scheduled post has been created.", description=f"The scheduled chart will be posted every `{period.removeprefix('1 ')}` in this channel, starting at `{start}`.", color=constants.colors["purple"])
+				embed = Embed(title="Scheduled post has been created.", description=f"The scheduled chart will be posted publicly every `{period.removeprefix('1 ')}` in this channel, starting at `{start}`.", color=constants.colors["purple"])
 				embed.set_author(name="Chart scheduled", icon_url=static_storage.icon)
 				await ctx.followup.send(embed=embed, ephemeral=True)
 			else:
