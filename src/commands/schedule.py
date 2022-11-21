@@ -94,8 +94,8 @@ class ScheduleCommand(BaseCommand):
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 
-			elif totalPostCount >= 10:
-				embed = Embed(title="You can only create up to 10 scheduled posts per community. Remove some before creating new ones by calling </schedule list:1041362666872131675>", color=constants.colors["red"])
+			elif totalPostCount >= 25:
+				embed = Embed(title="You can only create up to 25 scheduled posts per community. Remove some before creating new ones by calling </schedule list:1041362666872131675>", color=constants.colors["red"])
 				embed.set_author(name="Maximum number of scheduled posts reached", icon_url=static_storage.icon_bw)
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
@@ -254,8 +254,8 @@ class ScheduleCommand(BaseCommand):
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 
-			elif totalPostCount >= 10:
-				embed = Embed(title="You can only create up to 10 scheduled posts per community. Remove some before creating new ones by calling </schedule list:1041362666872131675>", color=constants.colors["red"])
+			elif totalPostCount >= 25:
+				embed = Embed(title="You can only create up to 25 scheduled posts per community. Remove some before creating new ones by calling </schedule list:1041362666872131675>", color=constants.colors["red"])
 				embed.set_author(name="Maximum number of scheduled posts reached", icon_url=static_storage.icon_bw)
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
