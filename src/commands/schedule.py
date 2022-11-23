@@ -115,7 +115,7 @@ class ScheduleCommand(BaseCommand):
 					try: await ctx.interaction.edit_original_response(embed=embed)
 					except NotFound: pass
 					return
-				elif exclude not in EXCLUDE:
+				elif exclude is None or exclude not in EXCLUDE:
 					embed = Embed(title="The provided skip value is not valid. Please pick one of the available options.", color=constants.colors["gray"])
 					embed.set_author(name="Invalid skip value", icon_url=static_storage.icon_bw)
 					try: await ctx.interaction.edit_original_response(embed=embed)
@@ -269,7 +269,7 @@ class ScheduleCommand(BaseCommand):
 					try: await ctx.interaction.edit_original_response(embed=embed)
 					except NotFound: pass
 					return
-				elif exclude not in EXCLUDE:
+				elif exclude is None or exclude not in EXCLUDE:
 					embed = Embed(title="The provided skip value is not valid. Please pick one of the available options.", color=constants.colors["gray"])
 					embed.set_author(name="Invalid skip value", icon_url=static_storage.icon_bw)
 					try: await ctx.interaction.edit_original_response(embed=embed)
