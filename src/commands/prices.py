@@ -29,7 +29,7 @@ class PriceCommand(BaseCommand):
 			payload, responseMessage = await process_task(task, "quote")
 
 			if payload is None or "quotePrice" not in payload:
-				errorMessage = f"Requested price for `{currentTask.get('ticker').get('name')}` is not available." if responseMessage is None else responseMessage
+				errorMessage = f"Requested quote for `{currentTask.get('ticker').get('name')}` is not available." if responseMessage is None else responseMessage
 				embed = Embed(title=errorMessage, color=constants.colors["gray"])
 				embed.set_author(name="Data not available", icon_url=static_storage.icon_bw)
 			else:
