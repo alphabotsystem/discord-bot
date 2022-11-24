@@ -54,8 +54,7 @@ class LookupCommand(BaseCommand):
 			listings, total = await get_listings(ticker, currentPlatform)
 
 			if total != 0:
-				embed = Embed(color=constants.colors["deep purple"])
-				embed.set_author(name=f"{ticker.get('name')} listings")
+				embed = Embed(title=f"{ticker.get('name')} listings", color=constants.colors["deep purple"])
 				for quote, exchanges in listings:
 					if len(exchanges) == 0: continue
 					embed.add_field(name=f"{quote} pair found on {len(exchanges)} exchanges", value=", ".join(exchanges), inline=False)

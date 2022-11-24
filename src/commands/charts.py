@@ -23,6 +23,13 @@ ICHIBOT_TESTING = [
 	414498292655980583, 926518026457739304, # 460731020245991424
 ]
 
+REFERRALS = {
+	"binance": "https://accounts.binance.com/en-GB/register?ref=PJF2KLMW",
+	"binanceusdm": "https://accounts.binance.com/en-GB/register?ref=PJF2KLMW",
+	"binancecoinm": "https://accounts.binance.com/en-GB/register?ref=PJF2KLMW",
+	"bybit": "https://www.bybit.com/en-US/invite?ref=9OXPG3"
+}
+
 
 class ChartCommand(BaseCommand):
 	async def respond(
@@ -57,6 +64,8 @@ class ChartCommand(BaseCommand):
 		if len(files) != 0:
 			if len(tasks) == 1 and currentTask.get("ticker", {}).get("tradable") is not None and request.guildId in ICHIBOT_TESTING:
 				actions = IchibotView(self.bot.loop, currentTask, user=ctx.author)
+			elif currentTask.get("ticker", {}).get("exchange", {}).get("id") in REFERRALS:
+				actions = ReferralView(REFERRALS[currentTask["ticker"]["exchange"]["id"]], user=ctx.author)
 			else:
 				actions = ActionsView(user=ctx.author)
 
@@ -117,6 +126,11 @@ class ChartCommand(BaseCommand):
 			print(format_exc())
 			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /c {arguments} autodelete:{autodelete}")
 			await self.unknown_error(ctx)
+
+class ReferralView(ActionsView):
+	def __init__(self, url, user=None):
+		super().__init__(user=user)
+		self.add_item(Button(label="Trade", url=url, style=ButtonStyle.link))
 
 class IchibotView(ActionsView):
 	def __init__(self, eventLoop, task, user=None):
