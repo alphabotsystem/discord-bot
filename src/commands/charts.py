@@ -64,7 +64,7 @@ class ChartCommand(BaseCommand):
 		if len(files) != 0:
 			if len(tasks) == 1 and currentTask.get("ticker", {}).get("tradable") is not None and request.guildId in ICHIBOT_TESTING:
 				actions = IchibotView(self.bot.loop, currentTask, user=ctx.author)
-			elif currentTask.get("ticker", {}).get("exchange", {}).get("id") in REFERRALS:
+			elif len(tasks) == 1 and currentTask.get("ticker", {}).get("exchange", {}).get("id") in REFERRALS:
 				actions = ReferralView(REFERRALS[currentTask["ticker"]["exchange"]["id"]], user=ctx.author)
 			else:
 				actions = ActionsView(user=ctx.author)
