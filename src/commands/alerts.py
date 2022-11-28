@@ -54,7 +54,7 @@ class AlertCommand(BaseCommand):
 				responseMessage, task = await process_quote_arguments([venue], platforms, tickerId=tickerId.upper())
 
 				if responseMessage is not None:
-					embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/price-alerts).", color=constants.colors["gray"])
+					embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alpha.bot/features/price-alerts).", color=constants.colors["gray"])
 					embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
 					try: await ctx.interaction.edit_original_response(embed=embed)
 					except NotFound: pass
@@ -85,7 +85,7 @@ class AlertCommand(BaseCommand):
 						return
 				else:
 					if len(priceAlerts) >= 50:
-						embed = Embed(title="You can only create up to 50 price alerts. Remove some before creating new ones by calling </alert list:928980578739568651>", description="You can increase your limit to 1000 by signing up for a [free Alpha Account](https://www.alphabotsystem.com/sign-up", color=constants.colors["gray"])
+						embed = Embed(title="You can only create up to 50 price alerts. Remove some before creating new ones by calling </alert list:928980578739568651>", description="You can increase your limit to 1000 by signing up for a [free Alpha Account](https://www.alpha.bot/sign-up", color=constants.colors["gray"])
 						embed.set_author(name="Maximum number of price alerts reached", icon_url=static_storage.icon_bw)
 						try: await ctx.interaction.edit_original_response(embed=embed)
 						except NotFound: pass
@@ -218,8 +218,8 @@ class AlertCommand(BaseCommand):
 					await self.cleanup(ctx, request)
 
 			else:
-				embed = Embed(title=":gem: Price Alerts are available as an add-on subscription for communities or individuals for only $2.00 per month.", description="If you'd like to start your 30-day free trial, visit [our website](https://www.alphabotsystem.com/pro/price-alerts).", color=constants.colors["deep purple"])
-				# embed.set_image(url="https://www.alphabotsystem.com/files/uploads/pro-hero.jpg")
+				embed = Embed(title=":gem: Price Alerts are available as an add-on subscription for communities or individuals for only $2.00 per month.", description="If you'd like to start your 30-day free trial, visit [our website](https://www.alpha.bot/pro/price-alerts).", color=constants.colors["deep purple"])
+				# embed.set_image(url="https://www.alpha.bot/files/uploads/pro-hero.jpg")
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 

@@ -139,7 +139,7 @@ class ScheduleCommand(BaseCommand):
 				responseMessage, task = await process_chart_arguments(arguments[1:], platforms, tickerId=arguments[0].upper())
 
 				if responseMessage is not None:
-					description = "[Advanced Charting add-on](https://www.alphabotsystem.com/pro/advanced-charting) unlocks additional assets, indicators, timeframes and more." if responseMessage.endswith("add-on.") else "Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/charting)."
+					description = "[Advanced Charting add-on](https://www.alpha.bot/pro/advanced-charting) unlocks additional assets, indicators, timeframes and more." if responseMessage.endswith("add-on.") else "Detailed guide with examples is available on [our website](https://www.alpha.bot/features/charting)."
 					embed = Embed(title=responseMessage, description=description, color=constants.colors["gray"])
 					embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
 					try: await ctx.interaction.edit_original_response(embed=embed)
@@ -159,7 +159,7 @@ class ScheduleCommand(BaseCommand):
 
 				files, embeds = [], []
 				if responseMessage == "requires pro":
-					embed = Embed(title=f"The requested chart for `{currentTask.get('ticker').get('name')}` is only available on TradingView Premium.", description="All TradingView Premium charts are bundled with the [Advanced Charting add-on](https://www.alphabotsystem.com/pro/advanced-charting).", color=constants.colors["gray"])
+					embed = Embed(title=f"The requested chart for `{currentTask.get('ticker').get('name')}` is only available on TradingView Premium.", description="All TradingView Premium charts are bundled with the [Advanced Charting add-on](https://www.alpha.bot/pro/advanced-charting).", color=constants.colors["gray"])
 					embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
 					embeds.append(embed)
 				elif payload is None:
@@ -207,8 +207,8 @@ class ScheduleCommand(BaseCommand):
 				embed.set_author(name="Chart scheduled", icon_url=static_storage.icon)
 				await ctx.followup.send(embed=embed, ephemeral=True)
 			else:
-				embed = Embed(title=":gem: Scheduled Posting functionality is available as an add-on subscription for communities for only $2.00 per month.", description="If you'd like to start your 30-day free trial, visit [our website](https://www.alphabotsystem.com/pro/scheduled-posting).", color=constants.colors["deep purple"])
-				# embed.set_image(url="https://www.alphabotsystem.com/files/uploads/pro-hero.jpg")
+				embed = Embed(title=":gem: Scheduled Posting functionality is available as an add-on subscription for communities for only $2.00 per month.", description="If you'd like to start your 30-day free trial, visit [our website](https://www.alpha.bot/pro/scheduled-posting).", color=constants.colors["deep purple"])
+				# embed.set_image(url="https://www.alpha.bot/files/uploads/pro-hero.jpg")
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 
@@ -293,7 +293,7 @@ class ScheduleCommand(BaseCommand):
 				responseMessage, task = await process_heatmap_arguments(arguments, platforms)
 
 				if responseMessage is not None:
-					embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/heatmaps).", color=constants.colors["gray"])
+					embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alpha.bot/features/heatmaps).", color=constants.colors["gray"])
 					embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
 					try: await ctx.interaction.edit_original_response(embed=embed)
 					except NotFound: pass
@@ -356,8 +356,8 @@ class ScheduleCommand(BaseCommand):
 				embed.set_author(name="Heatmap scheduled", icon_url=static_storage.icon)
 				await ctx.followup.send(embed=embed, ephemeral=True)
 			else:
-				embed = Embed(title=":gem: Scheduled Posting functionality is available as an add-on subscription for communities for only $2.00 per month.", description="If you'd like to start your 30-day free trial, visit [our website](https://www.alphabotsystem.com/pro/scheduled-posting).", color=constants.colors["deep purple"])
-				# embed.set_image(url="https://www.alphabotsystem.com/files/uploads/pro-hero.jpg")
+				embed = Embed(title=":gem: Scheduled Posting functionality is available as an add-on subscription for communities for only $2.00 per month.", description="If you'd like to start your 30-day free trial, visit [our website](https://www.alpha.bot/pro/scheduled-posting).", color=constants.colors["deep purple"])
+				# embed.set_image(url="https://www.alpha.bot/files/uploads/pro-hero.jpg")
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 

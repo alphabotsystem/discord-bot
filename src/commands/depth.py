@@ -56,7 +56,7 @@ class DepthCommand(BaseCommand):
 			responseMessage, task = await process_quote_arguments([venue], platforms, tickerId=tickerId.upper())
 
 			if responseMessage is not None:
-				embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/orderbook-visualizations).", color=constants.colors["gray"])
+				embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alpha.bot/features/orderbook-visualizations).", color=constants.colors["gray"])
 				embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass

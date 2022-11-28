@@ -50,8 +50,8 @@ class FlowCommand(BaseCommand):
 			await self.cleanup(ctx, request, removeView=True)
 
 		else:
-			embed = discord.Embed(title=":gem: Options and crypto orderflow are available as a add-on subscription for communities or individuals for only $15.00 per month.", description="If you'd like to start your 30-day free trial, visit [our website](https://www.alphabotsystem.com/pro).", color=constants.colors["deep purple"])
-			# embed.set_image(url="https://www.alphabotsystem.com/files/uploads/pro-hero.jpg")
+			embed = discord.Embed(title=":gem: Options and crypto orderflow are available as a add-on subscription for communities or individuals for only $15.00 per month.", description="If you'd like to start your 30-day free trial, visit [our website](https://www.alpha.bot/pro).", color=constants.colors["deep purple"])
+			# embed.set_image(url="https://www.alpha.bot/files/uploads/pro-hero.jpg")
 			try: await ctx.interaction.edit_original_response(embed=embed)
 			except NotFound: pass
 
@@ -63,7 +63,7 @@ class FlowCommand(BaseCommand):
 			responseMessage, task = await process_chart_arguments([], ["Alpha Flow"], tickerId=tickerId)
 
 			if responseMessage is not None:
-				embed = discord.Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/pro/flow).", color=constants.colors["gray"])
+				embed = discord.Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alpha.bot/pro/flow).", color=constants.colors["gray"])
 				embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass

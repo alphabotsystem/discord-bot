@@ -42,7 +42,7 @@ class LookupCommand(BaseCommand):
 			responseMessage, task = await process_quote_arguments([], platforms, tickerId=tickerId.upper())
 
 			if responseMessage is not None:
-				embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features).", color=constants.colors["gray"])
+				embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alpha.bot/features).", color=constants.colors["gray"])
 				embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
@@ -134,7 +134,7 @@ class LookupCommand(BaseCommand):
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 			else:
-				embed = Embed(title="The specified category is invalid.", description="Detailed guide with examples is available on [our website](https://www.alphabotsystem.com/features/lookup).", color=constants.colors["deep purple"])
+				embed = Embed(title="The specified category is invalid.", description="Detailed guide with examples is available on [our website](https://www.alpha.bot/features/lookup).", color=constants.colors["deep purple"])
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 
@@ -179,7 +179,7 @@ class LookupCommand(BaseCommand):
 
 			files, embeds = [], []
 			if responseMessage == "requires pro":
-				embed = Embed(title=f"The requested chart for `{currentTask.get('ticker').get('name')}` is only available on TradingView Premium.", description="All TradingView Premium charts are bundled with the [Advanced Charting add-on](https://www.alphabotsystem.com/pro/advanced-charting).", color=constants.colors["gray"])
+				embed = Embed(title=f"The requested chart for `{currentTask.get('ticker').get('name')}` is only available on TradingView Premium.", description="All TradingView Premium charts are bundled with the [Advanced Charting add-on](https://www.alpha.bot/pro/advanced-charting).", color=constants.colors["gray"])
 				embed.set_author(name="TradingView Premium", icon_url=static_storage.icon_bw)
 				embeds.append(embed)
 			elif payload is None:

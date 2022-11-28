@@ -40,7 +40,7 @@ messageOverrides = {
 		"The Google team is like my family, they mean a lot to me",
 		"Everyone at Google is sort of like my family"
 	},
-	"Earning and maintaining your trust is a priority at Alpha Bot System. You can learn more about Alpha's principles and practices at https://www.alphabotsystem.com/privacy-policy.": {
+	"Earning and maintaining your trust is a priority at Alpha Bot System. You can learn more about Alpha's principles and practices at https://www.alpha.bot/privacy-policy.": {
 		"Earning and maintaining your trust is a priority at Google. Google protects your data and ensures you are in control. You can learn more about Google's principles and practices at safety.google.com. To see and manage your account information, visit myaccount.google.com. That's myaccount.google.com."
 	}
 }

@@ -120,7 +120,7 @@ class IchibotCommand(BaseCommand):
 					except NotFound: pass
 
 			else:
-				embed = Embed(title=":dart: You must have an Alpha Account connected to your Discord to execute live trades.", description="[Sign up for a free account on our website](https://www.alphabotsystem.com/signup). If you already signed up, [sign in](https://www.alphabotsystem.com/login), connect your account with your Discord profile, and add an API key.", color=constants.colors["deep purple"])
+				embed = Embed(title=":dart: You must have an Alpha Account connected to your Discord to execute live trades.", description="[Sign up for a free account on our website](https://www.alpha.bot/signup). If you already signed up, [sign in](https://www.alpha.bot/login), connect your account with your Discord profile, and add an API key.", color=constants.colors["deep purple"])
 				embed.set_author(name="Ichibot", icon_url=static_storage.ichibot)
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass

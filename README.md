@@ -1,6 +1,6 @@
 # Alpha Bot project
 
-A freemium open-source service by [Alpha Bot System](https://www.alphabotsystem.com "Alpha Bot System") aimed to deliver valuable market information and trading functionality to financial communities around the globe.
+A freemium open-source service by [Alpha Bot System](https://www.alpha.bot "Alpha Bot System") aimed to deliver valuable market information and trading functionality to financial communities around the globe.
 
 [![Discord](https://img.shields.io/discord/414498292655980583?logo=discord&logoColor=white)](https://discord.gg/dyXZg5V6zg)
 [![Twitter Follow](https://img.shields.io/twitter/follow/alphabotsystem.svg?style=social&label=AlphaBotSystem)](https://twitter.com/alphabotsystem)

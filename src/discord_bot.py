@@ -325,7 +325,7 @@ async def process_ichibot_command(message, commandRequest, requestSlice):
 	sentMessages = []
 	try:
 		if requestSlice == "login":
-			embed = Embed(title=":dart: API key preferences are available in your Alpha Account settings.", description="[Sign into you Alpha Account](https://www.alphabotsystem.com/login) and visit [Ichibot preferences](https://www.alphabotsystem.com/account/trading) to update your API keys.", color=constants.colors["deep purple"])
+			embed = Embed(title=":dart: API key preferences are available in your Alpha Account settings.", description="[Sign into you Alpha Account](https://www.alpha.bot/login) and visit [Ichibot preferences](https://www.alpha.bot/account/trading) to update your API keys.", color=constants.colors["deep purple"])
 			embed.set_author(name="Ichibot", icon_url=static_storage.ichibot)
 			await message.channel.send(embed=embed)
 
@@ -347,7 +347,7 @@ async def process_ichibot_command(message, commandRequest, requestSlice):
 				missingExchangeMessage = await message.channel.send(embed=embed)
 
 		else:
-			embed = Embed(title=":dart: You must have an Alpha Account connected to your Discord to execute live trades.", description="[Sign up for a free account on our website](https://www.alphabotsystem.com/signup). If you already signed up, [sign in](https://www.alphabotsystem.com/login), connect your account with your Discord profile, and add an API key.", color=constants.colors["deep purple"])
+			embed = Embed(title=":dart: You must have an Alpha Account connected to your Discord to execute live trades.", description="[Sign up for a free account on our website](https://www.alpha.bot/signup). If you already signed up, [sign in](https://www.alpha.bot/login), connect your account with your Discord profile, and add an API key.", color=constants.colors["deep purple"])
 			embed.set_author(name="Ichibot", icon_url=static_storage.ichibot)
 			await message.channel.send(embed=embed)
 
@@ -396,8 +396,8 @@ async def create_request(ctx, autodelete=-1, ephemeral=False):
 	if request.guildId != -1:
 		branding = alphaSettings["nicknames"].get(str(request.guildId), {"allowed": True, "nickname": None})
 		if branding["allowed"] == False and ctx.guild.me.nick == branding["nickname"]:
-			embed = Embed(title="This Discord community guild was flagged for re-branding Alpha Bot and is therefore violating the Terms of Service.", description="Note that you are allowed to change the nickname of the bot as long as it is neutral. If you wish to present the bot with your own branding, you have to purchase a [Bot License](https://www.alphabotsystem.com/pro/bot-license). Alpha Bot will continue to operate normally, if you remove the nickname.", color=0x000000)
-			embed.add_field(name="Terms of service", value="[Read now](https://www.alphabotsystem.com/terms-of-service)", inline=True)
+			embed = Embed(title="This Discord community guild was flagged for re-branding Alpha Bot and is therefore violating the Terms of Service.", description="Note that you are allowed to change the nickname of the bot as long as it is neutral. If you wish to present the bot with your own branding, you have to purchase a [Bot License](https://www.alpha.bot/pro/bot-license). Alpha Bot will continue to operate normally, if you remove the nickname.", color=0x000000)
+			embed.add_field(name="Terms of service", value="[Read now](https://www.alpha.bot/terms-of-service)", inline=True)
 			embed.add_field(name="Alpha Bot support Discord server", value="[Join now](https://discord.gg/GQeDE85)", inline=True)
 			try: await ctx.interaction.edit_original_response(embed=embed)
 			except NotFound: pass
@@ -409,11 +409,11 @@ async def create_request(ctx, autodelete=-1, ephemeral=False):
 				request.guildProperties = forcedFetch
 				return request
 			elif not ctx.bot and ctx.interaction.channel.permissions_for(ctx.author).administrator:
-				embed = Embed(title="Hello world!", description="Thanks for adding Alpha Bot to your Discord community, we're thrilled to have you onboard. We think you're going to love everything Alpha Bot can do. Before you start using it, you must complete a short setup process. Sign into your [Alpha Account](https://www.alphabotsystem.com/communities) and visit your [Communities Dashboard](https://www.alphabotsystem.com/communities) to begin.", color=constants.colors["pink"])
+				embed = Embed(title="Hello world!", description="Thanks for adding Alpha Bot to your Discord community, we're thrilled to have you onboard. We think you're going to love everything Alpha Bot can do. Before you start using it, you must complete a short setup process. Sign into your [Alpha Account](https://www.alpha.bot/communities) and visit your [Communities Dashboard](https://www.alpha.bot/communities) to begin.", color=constants.colors["pink"])
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 			else:
-				embed = Embed(title="Hello world!", description="This is Alpha Bot, the most popular financial bot on Discord. A short setup process hasn't been completed in this Discord community yet. Ask administrators to complete it by signing into their [Alpha Account](https://www.alphabotsystem.com/communities) and visiting their [Communities Dashboard](https://www.alphabotsystem.com/communities).", color=constants.colors["pink"])
+				embed = Embed(title="Hello world!", description="This is Alpha Bot, the most popular financial bot on Discord. A short setup process hasn't been completed in this Discord community yet. Ask administrators to complete it by signing into their [Alpha Account](https://www.alpha.bot/communities) and visiting their [Communities Dashboard](https://www.alpha.bot/communities).", color=constants.colors["pink"])
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 			return None
@@ -474,7 +474,7 @@ async def on_ready():
 		while not await accountProperties.check_status() or not await guildProperties.check_status():
 			await sleep(15)
 		botStatus[0] = True
-		await bot.change_presence(status=Status.online, activity=Activity(type=ActivityType.watching, name="alphabotsystem.com"))
+		await bot.change_presence(status=Status.online, activity=Activity(type=ActivityType.watching, name="www.alpha.bot"))
 	except:
 		print(format_exc())
 		if environ["PRODUCTION"]: logging.report_exception()
