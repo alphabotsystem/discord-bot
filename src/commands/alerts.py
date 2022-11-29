@@ -140,7 +140,7 @@ class AlertCommand(BaseCommand):
 									except NotFound: pass
 									return
 								elif alert["level"] * 0.999 < level < alert["level"] * 1.001:
-									embed = Embed(title="Price alert within 0.1% already exists.", color=constants.colors["gray"])
+									embed = Embed(title=f"Price alert at {levelText}{pairQuoteName}, which is within 0.1%, already exists.", color=constants.colors["gray"])
 									embed.set_author(name="Alert already exists", icon_url=static_storage.icon_bw)
 									try: await ctx.interaction.edit_original_response(embed=embed)
 									except NotFound: pass
