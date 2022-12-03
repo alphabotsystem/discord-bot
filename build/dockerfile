@@ -18,4 +18,4 @@ RUN rm -r ./dependencies
 COPY ./src ./
 
 # Run
-ENTRYPOINT ["python", "discord_bot.py"]
+ENTRYPOINT ["python", "-u", "discord_bot.py"]
