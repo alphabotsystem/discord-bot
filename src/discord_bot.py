@@ -1,6 +1,6 @@
 from os import environ, _exit
 environ["PRODUCTION"] = environ["PRODUCTION"] if "PRODUCTION" in environ and environ["PRODUCTION"] else ""
-botId = -1 if len(environ["HOSTNAME"].split("-")) == 1 else int(environ["HOSTNAME"].split("-")[-1])
+botId = -1 if len(environ["HOSTNAME"].split("-")) < 2 else int(environ["HOSTNAME"].split("-")[-1])
 
 from time import time
 from datetime import datetime
