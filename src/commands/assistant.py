@@ -66,7 +66,7 @@ class AlphaCommand(BaseCommand):
 
 			if response	is not None and response != "":
 				if "Here are some things you can ask for:" in response:
-					return "You can learn more about Alpha at https://www.alpha.bot"
+					return "You can learn more about Alpha Bot at https://www.alpha.bot"
 				elif any(trigger in response for trigger in constants.badPunTrigger):
 					with open("src/assets/jokes.json") as json_data:
 						return f"Here's a pun that might make you laugh :smile:\n{choice(load(json_data))}"
@@ -75,7 +75,7 @@ class AlphaCommand(BaseCommand):
 						for trigger in constants.messageOverrides[override]:
 							if trigger.lower() in response.lower():
 								return override
-					return " ".join(response.replace("Google Assistant", "Alpha").replace("Google", "Alpha").split())
+					return " ".join(response.replace("Google Assistant", "Alpha Bot").replace("Google", "Alpha Bot").split())
 			else:
 				return None
 

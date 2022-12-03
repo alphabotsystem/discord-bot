@@ -63,4 +63,6 @@ jobs:
     - name: Deploy
       run: |-
         kubectl delete deployments/${{ env.DEPLOYMENT_NAME }} --namespace=alpha-bot || :
+        kubectl delete statefulsets/licensed-bot --namespace=alpha-bot || :
         kubectl apply -f build/deployment.yaml
+        kubectl apply -f build/licenses.yaml

@@ -63,9 +63,9 @@ def autocomplete_exclude(ctx):
 
 
 class ScheduleCommand(BaseCommand):
-	scheduleGroup = SlashCommandGroup("schedule", "Schedule Alpha Bot commands to post periodically.")
+	scheduleGroup = SlashCommandGroup("schedule", "Schedule bot commands to automatically periodically post.")
 
-	@scheduleGroup.command(name="chart", description="Schedule a chart to post periodically.")
+	@scheduleGroup.command(name="chart", description="Schedule a chart to automatically periodically post.")
 	async def chart(
 		self,
 		ctx,
@@ -96,7 +96,7 @@ class ScheduleCommand(BaseCommand):
 				except NotFound: pass
 
 			elif not ctx.channel.permissions_for(ctx.guild.me).manage_webhooks:
-				embed = Embed(title="Alpha doesn't have the permission to send messages via Webhooks.", description="Grant `view channel` and `manage webhooks` permissions to Alpha in this channel to be able to schedule a post.", color=constants.colors["red"])
+				embed = Embed(title=f"{self.bot.user.name} doesn't have the permission to send messages via Webhooks.", description=f"Grant `view channel` and `manage webhooks` permissions to {self.bot.user.name} in this channel to be able to schedule a post.", color=constants.colors["red"])
 				embed.set_author(name="Missing permissions", icon_url=static_storage.error_icon)
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
@@ -177,7 +177,7 @@ class ScheduleCommand(BaseCommand):
 				else:
 					files.append(File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, request.authorId, randint(1000, 9999))))
 
-				confirmation = None if payload.get("data") is None else Confirm(user=ctx.author)
+				confirmation = None if payload is None or payload.get("data") is None else Confirm(user=ctx.author)
 				try: await ctx.interaction.edit_original_response(embeds=embeds, files=files, view=confirmation)
 				except NotFound: pass
 				await confirmation.wait()
@@ -192,7 +192,7 @@ class ScheduleCommand(BaseCommand):
 				webhooks = await ctx.channel.webhooks()
 				webhook = next((w for w in webhooks if w.user.id == self.bot.user.id), None)
 				if webhook is None:
-					webhook = await ctx.channel.create_webhook(name="Alpha")
+					webhook = await ctx.channel.create_webhook(name=self.bot.user.name)
 
 				await self.database.document(f"details/scheduledPosts/{request.guildId}/{str(uuid4())}").set({
 					"arguments": arguments,
@@ -201,6 +201,7 @@ class ScheduleCommand(BaseCommand):
 					"command": "chart",
 					"exclude": None if exclude is None else exclude.lower(),
 					"message": message,
+					"name": self.bot.user.name,
 					"period": PERIOD_TO_TIME[period],
 					"role": None if role is None else role.id,
 					"start": timestamp,
@@ -225,7 +226,7 @@ class ScheduleCommand(BaseCommand):
 			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /schedule chart {arguments} period:{period} start:{start}")
 			await self.unknown_error(ctx)
 
-	@scheduleGroup.command(name="heatmap", description="Schedule a heatmap to post periodically.")
+	@scheduleGroup.command(name="heatmap", description="Schedule a heatmap to automatically periodically post.")
 	async def heatmap(
 		self,
 		ctx,
@@ -262,7 +263,7 @@ class ScheduleCommand(BaseCommand):
 				except NotFound: pass
 
 			elif not ctx.channel.permissions_for(ctx.guild.me).manage_webhooks:
-				embed = Embed(title="Alpha doesn't have the permission to send messages via Webhooks.", description="Grant `view channel` and `manage webhooks` permissions to Alpha in this channel to be able to schedule a post.", color=constants.colors["red"])
+				embed = Embed(title=f"{self.bot.user.name} doesn't have the permission to send messages via Webhooks.", description=f"Grant `view channel` and `manage webhooks` permissions to {self.bot.user.name} in this channel to be able to schedule a post.", color=constants.colors["red"])
 				embed.set_author(name="Missing permissions", icon_url=static_storage.error_icon)
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
@@ -332,7 +333,7 @@ class ScheduleCommand(BaseCommand):
 				else:
 					files.append(File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, request.authorId, randint(1000, 9999))))
 
-				confirmation = None if payload.get("data") is None else Confirm(user=ctx.author)
+				confirmation = None if payload is None or payload.get("data") is None else Confirm(user=ctx.author)
 				try: await ctx.interaction.edit_original_response(embeds=embeds, files=files, view=confirmation)
 				except NotFound: pass
 				await confirmation.wait()
@@ -347,7 +348,7 @@ class ScheduleCommand(BaseCommand):
 				webhooks = await ctx.channel.webhooks()
 				webhook = next((w for w in webhooks if w.user.id == self.bot.user.id), None)
 				if webhook is None:
-					webhook = await ctx.channel.create_webhook(name="Alpha")
+					webhook = await ctx.channel.create_webhook(name=self.bot.user.name)
 
 				await self.database.document(f"details/scheduledPosts/{request.guildId}/{str(uuid4())}").set({
 					"arguments": arguments,
@@ -356,6 +357,7 @@ class ScheduleCommand(BaseCommand):
 					"command": "heatmap",
 					"exclude": None if exclude is None else exclude.lower(),
 					"message": message,
+					"name": self.bot.user.name,
 					"period": PERIOD_TO_TIME[period],
 					"role": None if role is None else role.id,
 					"start": timestamp,
@@ -380,7 +382,7 @@ class ScheduleCommand(BaseCommand):
 			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /schedule heatmap assetType:{assetType} color:{timeframe} market:{market} category:{category} size:{size} group:{group} theme:{theme} period:{period} start:{start}")
 			await self.unknown_error(ctx)
 
-	@scheduleGroup.command(name="price", description="Schedule a price to post periodically.")
+	@scheduleGroup.command(name="price", description="Schedule a price to automatically periodically post.")
 	async def price(
 		self,
 		ctx,
@@ -412,7 +414,7 @@ class ScheduleCommand(BaseCommand):
 				except NotFound: pass
 
 			elif not ctx.channel.permissions_for(ctx.guild.me).manage_webhooks:
-				embed = Embed(title="Alpha doesn't have the permission to send messages via Webhooks.", description="Grant `view channel` and `manage webhooks` permissions to Alpha in this channel to be able to schedule a post.", color=constants.colors["red"])
+				embed = Embed(title=f"{self.bot.user.name} doesn't have the permission to send messages via Webhooks.", description=f"Grant `view channel` and `manage webhooks` permissions to {self.bot.user.name} in this channel to be able to schedule a post.", color=constants.colors["red"])
 				embed.set_author(name="Missing permissions", icon_url=static_storage.error_icon)
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
@@ -494,7 +496,7 @@ class ScheduleCommand(BaseCommand):
 				webhooks = await ctx.channel.webhooks()
 				webhook = next((w for w in webhooks if w.user.id == self.bot.user.id), None)
 				if webhook is None:
-					webhook = await ctx.channel.create_webhook(name="Alpha")
+					webhook = await ctx.channel.create_webhook(name=self.bot.user.name)
 
 				await self.database.document(f"details/scheduledPosts/{request.guildId}/{str(uuid4())}").set({
 					"arguments": [tickerId, venue],
@@ -503,6 +505,7 @@ class ScheduleCommand(BaseCommand):
 					"command": "price",
 					"exclude": None if exclude is None else exclude.lower(),
 					"message": message,
+					"name": self.bot.user.name,
 					"period": PERIOD_TO_TIME[period],
 					"role": None if role is None else role.id,
 					"start": timestamp,

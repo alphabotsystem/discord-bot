@@ -1,19 +1,20 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
-  name: discord-bot
+  name: licensed-bot
   namespace: alpha-bot
   labels:
-    app: discord-bot
+    app: licensed-bot
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: discord-bot
+      app: licensed-bot
+  serviceName: licensed-bot
   template:
     metadata:
       labels:
-        app: discord-bot
+        app: licensed-bot
     spec:
       containers:
       - name: discord-bot
@@ -21,8 +22,8 @@ spec:
         imagePullPolicy: Always
         resources:
           requests:
-            memory: "1800Mi"
-            cpu: "170m"
+            memory: "100Mi"
+            cpu: "100m"
             ephemeral-storage: "5000Ki"
         env:
           - name: PRODUCTION
@@ -32,11 +33,11 @@ spec:
               secretKeyRef:
                 name: alpha-credentials
                 key: TOPGG_KEY
-          - name: DISCORD_PRODUCTION_TOKEN
+          - name: LMMXP4VROGBRP6ENPNTVHPKVGJQ1_TOKEN
             valueFrom:
               secretKeyRef:
                 name: alpha-credentials
-                key: DISCORD_PRODUCTION_TOKEN
+                key: LMMXP4VROGBRP6ENPNTVHPKVGJQ1_TOKEN
           - name: GOOGLE_ASSISTANT_OAUTH
             valueFrom:
               secretKeyRef:

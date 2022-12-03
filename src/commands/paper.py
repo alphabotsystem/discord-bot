@@ -340,7 +340,7 @@ class PaperCommand(BaseCommand):
 			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /paper history")
 			await self.unknown_error(ctx)
 
-	@paperGroup.command(name="leaderboard", description="Check Alpha's Paper Trader leaderboard.")
+	@paperGroup.command(name="leaderboard", description="Check the Paper Trader leaderboard.")
 	async def paper_leaderboard(
 		self,
 		ctx
@@ -530,7 +530,8 @@ class PaperCommand(BaseCommand):
 			"priceText": execPriceText,
 			"timestamp": int(time() * 1000),
 			"isLimit": execPrice != payload["candles"][-1][4],
-			"thumbnailUrl": thumbnailUrl
+			"thumbnailUrl": thumbnailUrl,
+			"destination": self.bot.user.id
 		}
 		if newOrder["isLimit"]:
 			newOrder["placement"] = "above" if newOrder["price"] > payload["candles"][-1][4] else "below"

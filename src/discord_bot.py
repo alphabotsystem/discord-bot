@@ -1,5 +1,6 @@
 from os import environ, _exit
 environ["PRODUCTION"] = environ["PRODUCTION"] if "PRODUCTION" in environ and environ["PRODUCTION"] else ""
+botId = -1 if len(environ["HOSTNAME"].split("-")) == 1 else int(environ["HOSTNAME"].split("-")[-1])
 
 from time import time
 from datetime import datetime
@@ -42,6 +43,7 @@ database = FirestoreAsyncClient()
 logging = ErrorReportingClient(service="discord")
 snapshots = FirestoreClient()
 
+PRIMARY_BOTS = [401328409499664394, 487714342301859854]
 BETA_SERVERS = [
 	414498292655980583, 849579081800482846, 779004662157934665, 707238867840925706, 493617351216857088, 642039300208459796, 704211103139233893, 710291265689878669, 614609141318680581, 719265732214390816, 788809517818445875, 834195584398524526, 771423228903030804, 778444625639374858, 813915848510537728, 816446013274718209, 807785366526230569, 817764642423177227, 618471986586189865, 663752459424104456, 697085377802010634, 719215888938827776, 726478017924169748, 748813732620009503, 814738213599445013, 856938896713580555, 793014166553755698, 838822602708353056, 837526018088239105, 700113101353123923, 732072413969383444, 784964427962777640, 828430973775511575, 838573421281411122, 625105491743473689, 469530035645317120, 814256366067253268, 848053870197473290, 802692756773273600, 782315810621882369, 597269708345180160, 821150986567548948, 737326609329291335, 746804569303941281, 825933090311503905, 804771454561681439, 827433009598038016, 830534974381752340, 824300337887576135, 747441663193907232, 832625164801802261, 530964559801090079, 831928179299844166, 812819897305399296, 460731020245991424, 829028161983348776, 299922493924311054, 608761795531767814, 336233207269687299, 805453662746968064, 379077201775296513, 785702300886499369, 690135278978859023
 ]
@@ -67,6 +69,9 @@ bot = AutoShardedBot(intents=intents, chunk_guilds_at_startup=False, max_message
 
 @bot.event
 async def on_guild_join(guild):
+	# Method should not run on licensed bots
+	if bot.user.id not in PRIMARY_BOTS: return
+
 	try:
 		if guild.id in constants.bannedGuilds:
 			await guild.leave()
@@ -82,6 +87,9 @@ async def on_guild_join(guild):
 
 @bot.event
 async def on_guild_remove(guild):
+	# Method should not run on licensed bots
+	if bot.user.id not in PRIMARY_BOTS: return
+
 	try:
 		await update_guild_count()
 	except Exception:
@@ -90,10 +98,14 @@ async def on_guild_remove(guild):
 
 @tasks.loop(hours=8.0)
 async def update_guild_count():
-	if environ["PRODUCTION"] and len(bot.guilds) > 24000:
-		t = datetime.now().astimezone(utc)
-		await database.document("discord/statistics").set({"{}-{:02d}".format(t.year, t.month): {"servers": len(bot.guilds)}}, merge=True)
-		post(f"https://top.gg/api/bots/{bot.user.id}/stats", data={"server_count": len(bot.guilds)}, headers={"Authorization": environ["TOPGG_KEY"]})
+	# Method should not run on licensed bots
+	if bot.user.id not in PRIMARY_BOTS: return
+	# Method should only run in production
+	if not environ["PRODUCTION"] or len(bot.guilds) < 25000: return
+
+	t = datetime.now().astimezone(utc)
+	await database.document("discord/statistics").set({"{}-{:02d}".format(t.year, t.month): {"servers": len(bot.guilds)}}, merge=True)
+	post(f"https://top.gg/api/bots/{bot.user.id}/stats", data={"server_count": len(bot.guilds)}, headers={"Authorization": environ["TOPGG_KEY"]})
 
 
 # -------------------------
@@ -110,7 +122,9 @@ def update_alpha_settings(settings, changes, timestamp):
 # -------------------------
 
 def process_alpha_messages(pendingMessages, changes, timestamp):
-	if len(changes) == 0 or not environ["PRODUCTION"]: return
+	# Method should only run in production
+	if not environ["PRODUCTION"]: return
+
 	try:
 		for change in changes:
 			message = change.document.to_dict()
@@ -122,6 +136,9 @@ def process_alpha_messages(pendingMessages, changes, timestamp):
 		if environ["PRODUCTION"]: logging.report_exception()
 
 async def send_alpha_messages(messageId, message):
+	# Method should only run if the message is addressed to the right bot
+	if message["destination"] != bot.user.id: return
+
 	try:
 		while not botStatus[0]:
 			await sleep(60)
@@ -206,6 +223,9 @@ async def send_alpha_messages(messageId, message):
 
 @tasks.loop(minutes=60.0)
 async def security_check():
+	# Method should not run on licensed bots
+	if bot.user.id not in PRIMARY_BOTS: return
+
 	try:
 		guildIds = [str(e.id) for e in bot.guilds]
 
@@ -243,7 +263,11 @@ async def security_check():
 
 @tasks.loop(minutes=15.0)
 async def database_sanity_check():
+	# Method should not run on licensed bots
+	if bot.user.id not in PRIMARY_BOTS: return
+	# Method should only run in production
 	if not environ["PRODUCTION"]: return
+
 	try:
 		databaseKeys = set(await guildProperties.keys())
 		if databaseKeys is None: return
@@ -286,6 +310,9 @@ async def guild_secure_fetch(guildId):
 
 @bot.event
 async def on_message(message):
+	# Method should not run on licensed bots
+	if bot.user.id not in PRIMARY_BOTS: return
+
 	try:
 		# Skip messages in servers, messages with empty content field, messages from self, or all messages when in startup mode
 		if message.guild is not None or message.clean_content == "" or message.type != MessageType.default or message.author == bot.user or not is_bot_ready(): return
@@ -393,7 +420,7 @@ async def create_request(ctx, autodelete=-1, ephemeral=False):
 		autodelete=autodelete
 	)
 
-	if request.guildId != -1:
+	if request.guildId != -1 and bot.user.id == 401328409499664394:
 		branding = alphaSettings["nicknames"].get(str(request.guildId), {"allowed": True, "nickname": None})
 		if branding["allowed"] == False and ctx.guild.me.nick == branding["nickname"]:
 			embed = Embed(title="This Discord community guild was flagged for re-branding Alpha Bot and is therefore violating the Terms of Service.", description="Note that you are allowed to change the nickname of the bot as long as it is neutral. If you wish to present the bot with your own branding, you have to purchase a [Bot License](https://www.alpha.bot/pro/bot-license). Alpha Bot will continue to operate normally, if you remove the nickname.", color=0x000000)
@@ -438,7 +465,8 @@ bot.add_cog(ConvertCommand(bot, create_request, database, logging))
 bot.add_cog(DetailsCommand(bot, create_request, database, logging))
 bot.add_cog(LookupCommand(bot, create_request, database, logging))
 bot.add_cog(PaperCommand(bot, create_request, database, logging))
-bot.add_cog(IchibotCommand(bot, create_request, database, logging))
+if botId == -1:
+	bot.add_cog(IchibotCommand(bot, create_request, database, logging))
 
 
 # -------------------------
@@ -468,13 +496,17 @@ discordMessagesLink = snapshots.collection("discord/properties/messages").on_sna
 
 @bot.event
 async def on_ready():
-	print("[Startup]: Alpha Bot is online")
+	print(f"[Startup]: {bot.user.name} Bot is online")
 
 	try:
 		while not await accountProperties.check_status() or not await guildProperties.check_status():
 			await sleep(15)
 		botStatus[0] = True
-		await bot.change_presence(status=Status.online, activity=Activity(type=ActivityType.watching, name="www.alpha.bot"))
+
+		if bot.user.id == 401328409499664394:
+			await bot.change_presence(status=Status.online, activity=Activity(type=ActivityType.watching, name="www.alpha.bot"))
+		else:
+			await bot.change_presence(status=Status.online, activity=None)
 	except:
 		print(format_exc())
 		if environ["PRODUCTION"]: logging.report_exception()
@@ -487,7 +519,7 @@ async def on_ready():
 	if not database_sanity_check.is_running():
 		database_sanity_check.start()
 
-	print("[Startup]: Alpha Bot startup complete")
+	print(f"[Startup]: {bot.user.name} Bot startup complete")
 
 def is_bot_ready():
 	return all(botStatus)
@@ -497,5 +529,12 @@ def is_bot_ready():
 # Login
 # -------------------------
 
-token = environ["DISCORD_PRODUCTION_TOKEN" if environ["PRODUCTION"] else "DISCORD_DEVELOPMENT_TOKEN"]
+token = None
+if not environ["PRODUCTION"]:
+	token = environ["DISCORD_DEVELOPMENT_TOKEN"]
+elif botId == -1:
+	token = environ["DISCORD_PRODUCTION_TOKEN"]
+elif botId == 0:
+	token = environ["LMMXP4VROGBRP6ENPNTVHPKVGJQ1_TOKEN"]
+
 bot.loop.run_until_complete(bot.start(token))

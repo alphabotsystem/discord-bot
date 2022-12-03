@@ -168,7 +168,8 @@ class AlertCommand(BaseCommand):
 							"version": 4,
 							"triggerMessage": message,
 							"triggerTag": None if role is None else role.id,
-							"placement": "above" if level > currentLevel else "below"
+							"placement": "above" if level > currentLevel else "below",
+							"destination": self.bot.user.id
 						})
 
 					if currentPlatform == "CCXT":
