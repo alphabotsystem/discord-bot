@@ -197,13 +197,13 @@ class ScheduleCommand(BaseCommand):
 				await self.database.document(f"details/scheduledPosts/{request.guildId}/{str(uuid4())}").set({
 					"arguments": arguments,
 					"authorId": str(request.authorId),
+					"botId": str(self.bot.user.id),
 					"channelId": str(request.channelId),
 					"command": "chart",
 					"exclude": None if exclude is None else exclude.lower(),
 					"message": message,
-					"name": self.bot.user.name,
 					"period": PERIOD_TO_TIME[period],
-					"role": None if role is None else role.id,
+					"role": None if role is None else str(role.id),
 					"start": timestamp,
 					"url": webhook.url
 				})
@@ -353,13 +353,13 @@ class ScheduleCommand(BaseCommand):
 				await self.database.document(f"details/scheduledPosts/{request.guildId}/{str(uuid4())}").set({
 					"arguments": arguments,
 					"authorId": str(request.authorId),
+					"botId": str(self.bot.user.id),
 					"channelId": str(request.channelId),
 					"command": "heatmap",
 					"exclude": None if exclude is None else exclude.lower(),
 					"message": message,
-					"name": self.bot.user.name,
 					"period": PERIOD_TO_TIME[period],
-					"role": None if role is None else role.id,
+					"role": None if role is None else str(role.id),
 					"start": timestamp,
 					"url": webhook.url
 				})
@@ -501,13 +501,13 @@ class ScheduleCommand(BaseCommand):
 				await self.database.document(f"details/scheduledPosts/{request.guildId}/{str(uuid4())}").set({
 					"arguments": [tickerId, venue],
 					"authorId": str(request.authorId),
+					"botId": str(self.bot.user.id),
 					"channelId": str(request.channelId),
 					"command": "price",
 					"exclude": None if exclude is None else exclude.lower(),
 					"message": message,
-					"name": self.bot.user.name,
 					"period": PERIOD_TO_TIME[period],
-					"role": None if role is None else role.id,
+					"role": None if role is None else str(role.id),
 					"start": timestamp,
 					"url": webhook.url
 				})
