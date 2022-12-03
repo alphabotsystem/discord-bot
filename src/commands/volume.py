@@ -28,7 +28,7 @@ class VolumeCommand(BaseCommand):
 		if payload is None or "quoteVolume" not in payload:
 			errorMessage = f"Requested volume for `{currentTask.get('ticker').get('name')}` is not available." if responseMessage is None else responseMessage
 			embed = Embed(title=errorMessage, color=constants.colors["gray"])
-			embed.set_author(name="Data not available", icon_url=static_storage.icon_bw)
+			embed.set_author(name="Data not available", icon_url=static_storage.error_icon)
 			try: await ctx.interaction.edit_original_response(embed=embed)
 			except NotFound: pass
 		else:
@@ -58,7 +58,7 @@ class VolumeCommand(BaseCommand):
 
 			if responseMessage is not None:
 				embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alpha.bot/features/volume).", color=constants.colors["gray"])
-				embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
+				embed.set_author(name="Invalid argument", icon_url=static_storage.error_icon)
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 				return

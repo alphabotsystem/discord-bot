@@ -130,7 +130,7 @@ async def send_alpha_messages(messageId, message):
 		embed = Embed(title=message["title"], color=message["color"])
 		if message.get("description") is not None: embed.description = message.get("description")
 		if message.get("tag") is not None: content = f"<@&{message.get('tag')}>"
-		if message.get("subtitle") is not None: embed.set_author(name=message["subtitle"], icon_url=message.get("icon", static_storage.icon))
+		if message.get("subtitle") is not None: embed.set_author(name=message["subtitle"], icon_url=message.get("icon", bot.user.avatar.url))
 		if message.get("image") is not None: embed.set_image(url=message["image"])
 		if message.get("url") is not None: embed.url = message["url"]
 
@@ -447,7 +447,7 @@ bot.add_cog(IchibotCommand(bot, create_request, database, logging))
 
 async def unknown_error(ctx, authorId):
 	embed = Embed(title="Looks like something went wrong. The issue has been reported.", color=constants.colors["gray"])
-	embed.set_author(name="Something went wrong", icon_url=static_storage.icon_bw)
+	embed.set_author(name="Something went wrong", icon_url=static_storage.error_icon)
 	try: await ctx.channel.send(embed=embed)
 	except: return
 

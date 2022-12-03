@@ -43,7 +43,7 @@ class LookupCommand(BaseCommand):
 
 			if responseMessage is not None:
 				embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alpha.bot/features).", color=constants.colors["gray"])
-				embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
+				embed.set_author(name="Invalid argument", icon_url=static_storage.error_icon)
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 				return
@@ -62,7 +62,7 @@ class LookupCommand(BaseCommand):
 				except NotFound: pass
 			else:
 				embed = Embed(title=f"`{ticker.get('name')}` is not listed on any crypto exchange.", color=constants.colors["gray"])
-				embed.set_author(name="No listings", icon_url=static_storage.icon_bw)
+				embed.set_author(name="No listings", icon_url=static_storage.error_icon)
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 
@@ -164,7 +164,7 @@ class LookupCommand(BaseCommand):
 					assetType = "cnn"
 				else:
 					embed = Embed(title="Asset type is invalid. Only stocks and crypto markets are supported.", color=constants.colors["gray"])
-					embed.set_author(name="Invalid market", icon_url=static_storage.icon_bw)
+					embed.set_author(name="Invalid market", icon_url=static_storage.error_icon)
 					try: await ctx.interaction.edit_original_response(embed=embed)
 					except NotFound: pass
 					return
@@ -180,12 +180,12 @@ class LookupCommand(BaseCommand):
 			files, embeds = [], []
 			if responseMessage == "requires pro":
 				embed = Embed(title=f"The requested chart for `{currentTask.get('ticker').get('name')}` is only available on TradingView Premium.", description="All TradingView Premium charts are bundled with the [Advanced Charting add-on](https://www.alpha.bot/pro/advanced-charting).", color=constants.colors["gray"])
-				embed.set_author(name="TradingView Premium", icon_url=static_storage.icon_bw)
+				embed.set_author(name="TradingView Premium", icon_url=static_storage.error_icon)
 				embeds.append(embed)
 			elif payload is None:
 				errorMessage = f"Requested chart for `{currentTask.get('ticker').get('name')}` is not available." if responseMessage is None else responseMessage
 				embed = Embed(title=errorMessage, color=constants.colors["gray"])
-				embed.set_author(name="Chart not available", icon_url=static_storage.icon_bw)
+				embed.set_author(name="Chart not available", icon_url=static_storage.error_icon)
 				embeds.append(embed)
 			else:
 				task["currentPlatform"] = payload.get("platform")

@@ -23,11 +23,12 @@ async def autocomplete_type(ctx):
 class BaseCommand(Cog):
 	commandMap = {
 		"chart": "c",
-		"price": "p"
+		"price": "p",
+		"schedule price": "p",
 	}
 
 	sources = {
-		"alert": ["IEXC", "CCXT"],
+		"alert set": ["IEXC", "CCXT"],
 		"c": ["TradingView", "TradingView Premium", "TradingLite", "Bookmap"],
 		"hmap": ["TradingView Stock Heatmap", "TradingView Crypto Heatmap"],
 		"flow": ["Alpha Flow"],
@@ -36,7 +37,7 @@ class BaseCommand(Cog):
 		"volume": ["IEXC", "CoinGecko", "CCXT"],
 		"depth": ["IEXC", "CCXT"],
 		"info": ["IEXC", "CoinGecko"],
-		"lookup": ["IEXC", "CCXT", "CoinGecko", "TradingView", "TradingView Premium", "TradingLite", "Bookmap"],
+		"lookup markets": ["IEXC", "CCXT", "CoinGecko", "TradingView", "TradingView Premium", "TradingLite", "Bookmap"],
 		"paper": ["IEXC", "CCXT"],
 		"ichibot": ["Ichibot"]
 	}
@@ -74,7 +75,7 @@ class BaseCommand(Cog):
 
 	async def unknown_error(self, ctx):
 		embed = Embed(title="Looks like something went wrong. The issue has been reported.", color=constants.colors["gray"])
-		embed.set_author(name="Something went wrong", icon_url=static_storage.icon_bw)
+		embed.set_author(name="Something went wrong", icon_url=static_storage.error_icon)
 		try: await ctx.interaction.edit_original_response(content=None, embed=embed, files=[])
 		except: return
 
@@ -88,8 +89,7 @@ class BaseCommand(Cog):
 		return await cls._autocomplete_ticker(ctx, "ticker")
 
 	async def _autocomplete_ticker(cls, ctx, mode):
-		_commandName = ctx.command.name if ctx.command.parent is None else ctx.command.parent.name
-		command = cls.commandMap.get(_commandName, _commandName)
+		command = cls.commandMap.get(ctx.command.qualified_name, ctx.command.qualified_name)
 		tickerId = " ".join(ctx.options.get(mode, "").lower().split()).split("|")[0]
 
 		if tickerId == "": return []
@@ -99,8 +99,7 @@ class BaseCommand(Cog):
 		return tickers
 
 	async def autocomplete_venues(cls, ctx):
-		_commandName = ctx.command.name if ctx.command.parent is None else ctx.command.parent.name
-		command = cls.commandMap.get(_commandName, _commandName)
+		command = cls.commandMap.get(ctx.command.qualified_name, ctx.command.qualified_name)
 		tickerId = ctx.options.get("ticker", "")
 		venue = " ".join(ctx.options.get("venue", "").lower().split())
 

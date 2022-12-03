@@ -37,7 +37,7 @@ class FlowCommand(BaseCommand):
 				if payload is None:
 					errorMessage = f"Requested orderflow data for `{currentTask.get('ticker').get('name')}` is not available." if responseMessage is None else responseMessage
 					embed = discord.Embed(title=errorMessage, color=constants.colors["gray"])
-					embed.set_author(name="Data not available", icon_url=static_storage.icon_bw)
+					embed.set_author(name="Data not available", icon_url=static_storage.error_icon)
 					try: await ctx.interaction.edit_original_response(embed=embed)
 					except NotFound: pass
 				else:
@@ -64,7 +64,7 @@ class FlowCommand(BaseCommand):
 
 			if responseMessage is not None:
 				embed = discord.Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alpha.bot/pro/flow).", color=constants.colors["gray"])
-				embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
+				embed.set_author(name="Invalid argument", icon_url=static_storage.error_icon)
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 				return

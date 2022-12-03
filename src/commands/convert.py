@@ -33,12 +33,12 @@ class ConvertCommand(BaseCommand):
 			if payload is None:
 				errorMessage = "Requested conversion is not available." if responseMessage is None else responseMessage
 				embed = Embed(title=errorMessage, color=constants.colors["gray"])
-				embed.set_author(name="Conversion not available", icon_url=static_storage.icon_bw)
+				embed.set_author(name="Conversion not available", icon_url=static_storage.error_icon)
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 			else:
 				embed = Embed(title=f"{payload['quotePrice']} ≈ {payload['quoteConvertedPrice']}", color=constants.colors[payload["messageColor"]])
-				embed.set_author(name="Conversion", icon_url=static_storage.icon)
+				embed.set_author(name="Conversion", icon_url=self.bot.user.avatar.url)
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 

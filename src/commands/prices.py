@@ -31,7 +31,7 @@ class PriceCommand(BaseCommand):
 			if payload is None or "quotePrice" not in payload:
 				errorMessage = f"Requested quote for `{currentTask.get('ticker').get('name')}` is not available." if responseMessage is None else responseMessage
 				embed = Embed(title=errorMessage, color=constants.colors["gray"])
-				embed.set_author(name="Data not available", icon_url=static_storage.icon_bw)
+				embed.set_author(name="Data not available", icon_url=static_storage.error_icon)
 			else:
 				currentTask = task.get(payload.get("platform"))
 				if payload.get("platform") in ["Alternative.me", "CNN Business"]:
@@ -66,7 +66,7 @@ class PriceCommand(BaseCommand):
 
 			if len(parts) > 5:
 				embed = Embed(title="Only up to 5 requests are allowed per command.", color=constants.colors["gray"])
-				embed.set_author(name="Too many requests", icon_url=static_storage.icon_bw)
+				embed.set_author(name="Too many requests", icon_url=static_storage.error_icon)
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 				return
@@ -79,7 +79,7 @@ class PriceCommand(BaseCommand):
 
 				if responseMessage is not None:
 					embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alpha.bot/features/prices).", color=constants.colors["gray"])
-					embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
+					embed.set_author(name="Invalid argument", icon_url=static_storage.error_icon)
 					try: await ctx.interaction.edit_original_response(embed=embed)
 					except NotFound: pass
 					return
@@ -110,7 +110,7 @@ class PriceCommand(BaseCommand):
 
 			if responseMessage is not None:
 				embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alpha.bot/features/prices).", color=constants.colors["gray"])
-				embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
+				embed.set_author(name="Invalid argument", icon_url=static_storage.error_icon)
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 				return

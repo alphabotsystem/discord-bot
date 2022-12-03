@@ -30,7 +30,7 @@ class DetailsCommand(BaseCommand):
 		if payload is None:
 			errorMessage = f"Requested details for `{currentTask.get('ticker').get('name')}` are not available." if responseMessage is None else responseMessage
 			embed = Embed(title=errorMessage, color=constants.colors["gray"])
-			embed.set_author(name="Data not available", icon_url=static_storage.icon_bw)
+			embed.set_author(name="Data not available", icon_url=static_storage.error_icon)
 			try: await ctx.interaction.edit_original_response(embed=embed)
 			except NotFound: pass
 		else:
@@ -123,7 +123,7 @@ class DetailsCommand(BaseCommand):
 
 			if responseMessage is not None:
 				embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alpha.bot/features/asset-details).", color=constants.colors["gray"])
-				embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
+				embed.set_author(name="Invalid argument", icon_url=static_storage.error_icon)
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 				return

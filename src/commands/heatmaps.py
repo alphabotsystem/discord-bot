@@ -40,7 +40,7 @@ class HeatmapCommand(BaseCommand):
 				if payload is None:
 					errorMessage = "Requested heatmap is not available." if responseMessage is None else responseMessage
 					embed = Embed(title=errorMessage, color=constants.colors["gray"])
-					embed.set_author(name="Heatmap not available", icon_url=static_storage.icon_bw)
+					embed.set_author(name="Heatmap not available", icon_url=static_storage.error_icon)
 					embeds.append(embed)
 				else:
 					files.append(File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, request.authorId, randint(1000, 9999))))
@@ -78,7 +78,7 @@ class HeatmapCommand(BaseCommand):
 
 			if responseMessage is not None:
 				embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alpha.bot/features/heatmaps).", color=constants.colors["gray"])
-				embed.set_author(name="Invalid argument", icon_url=static_storage.icon_bw)
+				embed.set_author(name="Invalid argument", icon_url=static_storage.error_icon)
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 				return
