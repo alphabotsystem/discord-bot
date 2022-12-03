@@ -83,7 +83,13 @@ class ScheduleCommand(BaseCommand):
 			posts = await self.database.collection(f"details/scheduledPosts/{request.guildId}").get()
 			totalPostCount = len(posts)
 
-			if not ctx.channel.permissions_for(ctx.author).manage_messages:
+			if request.guildId == -1:
+				embed = Embed(title="You cannot schedule a post in DMs.", color=constants.colors["gray"])
+				embed.set_author(name="Permission denied", icon_url=static_storage.error_icon)
+				try: await ctx.interaction.edit_original_response(embed=embed)
+				except NotFound: pass
+
+			elif not ctx.channel.permissions_for(ctx.author).manage_messages:
 				embed = Embed(title="You do not have the sufficient permission to create a scheduled post.", description="To be able to create a scheduled post, you must have the `manage messages` permission.", color=constants.colors["red"])
 				embed.set_author(name="Permission denied", icon_url=static_storage.error_icon)
 				try: await ctx.interaction.edit_original_response(embed=embed)
@@ -243,7 +249,13 @@ class ScheduleCommand(BaseCommand):
 			posts = await self.database.collection(f"details/scheduledPosts/{request.guildId}").get()
 			totalPostCount = len(posts)
 
-			if not ctx.channel.permissions_for(ctx.author).manage_messages:
+			if request.guildId == -1:
+				embed = Embed(title="You cannot schedule a post in DMs.", color=constants.colors["gray"])
+				embed.set_author(name="Permission denied", icon_url=static_storage.error_icon)
+				try: await ctx.interaction.edit_original_response(embed=embed)
+				except NotFound: pass
+
+			elif not ctx.channel.permissions_for(ctx.author).manage_messages:
 				embed = Embed(title="You do not have the sufficient permission to create a scheduled post.", description="To be able to create a scheduled post, you must have the `manage messages` permission.", color=constants.colors["red"])
 				embed.set_author(name="Permission denied", icon_url=static_storage.error_icon)
 				try: await ctx.interaction.edit_original_response(embed=embed)
@@ -387,7 +399,13 @@ class ScheduleCommand(BaseCommand):
 			posts = await self.database.collection(f"details/scheduledPosts/{request.guildId}").get()
 			totalPostCount = len(posts)
 
-			if not ctx.channel.permissions_for(ctx.author).manage_messages:
+			if request.guildId == -1:
+				embed = Embed(title="You cannot schedule a post in DMs.", color=constants.colors["gray"])
+				embed.set_author(name="Permission denied", icon_url=static_storage.error_icon)
+				try: await ctx.interaction.edit_original_response(embed=embed)
+				except NotFound: pass
+
+			elif not ctx.channel.permissions_for(ctx.author).manage_messages:
 				embed = Embed(title="You do not have the sufficient permission to create a scheduled post.", description="To be able to create a scheduled post, you must have the `manage messages` permission.", color=constants.colors["red"])
 				embed.set_author(name="Permission denied", icon_url=static_storage.error_icon)
 				try: await ctx.interaction.edit_original_response(embed=embed)
