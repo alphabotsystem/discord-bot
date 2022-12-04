@@ -105,7 +105,7 @@ async def on_guild_remove(guild):
 async def update_guild_count():
 	# Method should not run on licensed bots
 	if bot.user.id not in PRIMARY_BOTS: return
-	# Method should only run in production
+	# Method should only run in production and after the guild cache is populated
 	if not environ["PRODUCTION"] or len(bot.guilds) < 25000: return
 
 	t = datetime.now().astimezone(utc)
@@ -230,6 +230,8 @@ async def send_alpha_messages(messageId, message):
 async def security_check():
 	# Method should not run on licensed bots
 	if bot.user.id not in PRIMARY_BOTS: return
+	# Method should only run after the guild cache is populated
+	if len(bot.guilds) < 25000: return
 
 	try:
 		guildIds = [str(e.id) for e in bot.guilds]
@@ -270,8 +272,8 @@ async def security_check():
 async def database_sanity_check():
 	# Method should not run on licensed bots
 	if bot.user.id not in PRIMARY_BOTS: return
-	# Method should only run in production
-	if not environ["PRODUCTION"]: return
+	# Method should only run in production and after the guild cache is populated
+	if not environ["PRODUCTION"] or len(bot.guilds) < 25000: return
 
 	try:
 		databaseKeys = set(await guildProperties.keys())
