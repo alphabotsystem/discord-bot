@@ -279,12 +279,12 @@ async def database_sanity_check():
 		databaseKeys = set(await guildProperties.keys())
 		if databaseKeys is None: return
 
-		guilds = set([g.id for g in bot.guilds])
+		guilds = set([str(g.id) for g in bot.guilds])
 		difference = guilds.symmetric_difference(databaseKeys)
 
 		tasks = []
 		for guildId in difference:
-			if guildId not in guilds and guildId not in LICENSED_BOTS:
+			if guildId not in guilds and int(guildId) not in LICENSED_BOTS:
 				tasks.append(create_task(database.document(f"discord/properties/guilds/{guildId}").set({"stale": {"count": Increment(1), "timestamp": time()}}, merge=True)))
 
 		for guildId in difference:
