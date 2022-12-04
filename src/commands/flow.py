@@ -15,7 +15,6 @@ from assets import static_storage
 from Processor import process_chart_arguments, process_task
 
 from commands.base import BaseCommand, ActionsView
-from commands.ichibot import Ichibot
 
 
 class FlowCommand(BaseCommand):
