@@ -19,18 +19,6 @@ from commands.base import BaseCommand, ActionsView
 from commands.ichibot import Ichibot
 
 
-ICHIBOT_TESTING = [
-	414498292655980583, 926518026457739304, # 460731020245991424
-]
-
-REFERRALS = {
-	"binance": "https://accounts.binance.com/en-GB/register?ref=PJF2KLMW",
-	"binanceusdm": "https://accounts.binance.com/en-GB/register?ref=PJF2KLMW",
-	"binancecoinm": "https://accounts.binance.com/en-GB/register?ref=PJF2KLMW",
-	"bybit": "https://www.bybit.com/en-US/invite?ref=9OXPG3"
-}
-
-
 class ChartCommand(BaseCommand):
 	async def respond(
 		self,
@@ -62,10 +50,10 @@ class ChartCommand(BaseCommand):
 
 		actions = None
 		if len(files) != 0:
-			if len(tasks) == 1 and currentTask.get("ticker", {}).get("tradable") is not None and request.guildId in ICHIBOT_TESTING:
+			if len(tasks) == 1 and currentTask.get("ticker", {}).get("tradable") is not None and request.guildId in constants.LICENSED_BOTS and request.guildId in constants.ICHIBOT_TESTING:
 				actions = IchibotView(self.bot.loop, currentTask, user=ctx.author)
-			elif len(tasks) == 1 and currentTask.get("ticker", {}).get("exchange", {}).get("id") in REFERRALS:
-				actions = ReferralView(REFERRALS[currentTask["ticker"]["exchange"]["id"]], user=ctx.author)
+			elif len(tasks) == 1 and currentTask.get("ticker", {}).get("exchange", {}).get("id") in constants.REFERRALS:
+				actions = ReferralView(constants.REFERRALS[currentTask["ticker"]["exchange"]["id"]], user=ctx.author)
 			else:
 				actions = ActionsView(user=ctx.author)
 

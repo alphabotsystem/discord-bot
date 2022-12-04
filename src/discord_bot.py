@@ -43,16 +43,6 @@ database = FirestoreAsyncClient()
 logging = ErrorReportingClient(service="discord")
 snapshots = FirestoreClient()
 
-PRIMARY_BOTS = [
-	401328409499664394, 487714342301859854
-]
-LICENSED_BOTS = {
-	1018659248021979227: [1048166215689977886]
-}
-BETA_SERVERS = [
-	414498292655980583, 849579081800482846, 779004662157934665, 707238867840925706, 493617351216857088, 642039300208459796, 704211103139233893, 710291265689878669, 614609141318680581, 719265732214390816, 788809517818445875, 834195584398524526, 771423228903030804, 778444625639374858, 813915848510537728, 816446013274718209, 807785366526230569, 817764642423177227, 618471986586189865, 663752459424104456, 697085377802010634, 719215888938827776, 726478017924169748, 748813732620009503, 814738213599445013, 856938896713580555, 793014166553755698, 838822602708353056, 837526018088239105, 700113101353123923, 732072413969383444, 784964427962777640, 828430973775511575, 838573421281411122, 625105491743473689, 469530035645317120, 814256366067253268, 848053870197473290, 802692756773273600, 782315810621882369, 597269708345180160, 821150986567548948, 737326609329291335, 746804569303941281, 825933090311503905, 804771454561681439, 827433009598038016, 830534974381752340, 824300337887576135, 747441663193907232, 832625164801802261, 530964559801090079, 831928179299844166, 812819897305399296, 460731020245991424, 829028161983348776, 299922493924311054, 608761795531767814, 336233207269687299, 805453662746968064, 379077201775296513, 785702300886499369, 690135278978859023
-]
-
 
 # -------------------------
 # Initialization
@@ -75,7 +65,7 @@ bot = AutoShardedBot(intents=intents, chunk_guilds_at_startup=False, max_message
 @bot.event
 async def on_guild_join(guild):
 	# Method should not run on licensed bots
-	if bot.user.id not in PRIMARY_BOTS: return
+	if bot.user.id not in constants.PRIMARY_BOTS: return
 
 	try:
 		if guild.id in constants.bannedGuilds:
@@ -93,7 +83,7 @@ async def on_guild_join(guild):
 @bot.event
 async def on_guild_remove(guild):
 	# Method should not run on licensed bots
-	if bot.user.id not in PRIMARY_BOTS: return
+	if bot.user.id not in constants.PRIMARY_BOTS: return
 
 	try:
 		await update_guild_count()
@@ -104,7 +94,7 @@ async def on_guild_remove(guild):
 @tasks.loop(hours=8.0)
 async def update_guild_count():
 	# Method should not run on licensed bots
-	if bot.user.id not in PRIMARY_BOTS: return
+	if bot.user.id not in constants.PRIMARY_BOTS: return
 	# Method should only run in production and after the guild cache is populated
 	if not environ["PRODUCTION"] or len(bot.guilds) < 25000: return
 
@@ -229,7 +219,7 @@ async def send_alpha_messages(messageId, message):
 @tasks.loop(minutes=60.0)
 async def security_check():
 	# Method should not run on licensed bots
-	if bot.user.id not in PRIMARY_BOTS: return
+	if bot.user.id not in constants.PRIMARY_BOTS: return
 	# Method should only run after the guild cache is populated
 	if len(bot.guilds) < 25000: return
 
@@ -271,7 +261,7 @@ async def security_check():
 @tasks.loop(minutes=15.0)
 async def database_sanity_check():
 	# Method should not run on licensed bots
-	if bot.user.id not in PRIMARY_BOTS: return
+	if bot.user.id not in constants.PRIMARY_BOTS: return
 	# Method should only run in production and after the guild cache is populated
 	if not environ["PRODUCTION"] or len(bot.guilds) < 25000: return
 
@@ -284,7 +274,7 @@ async def database_sanity_check():
 
 		tasks = []
 		for guildId in difference:
-			if guildId not in guilds and int(guildId) not in LICENSED_BOTS:
+			if guildId not in guilds and int(guildId) not in constants.LICENSED_BOTS:
 				tasks.append(create_task(database.document(f"discord/properties/guilds/{guildId}").set({"stale": {"count": Increment(1), "timestamp": time()}}, merge=True)))
 
 		for guildId in difference:
@@ -317,7 +307,7 @@ async def guild_secure_fetch(guildId):
 @bot.event
 async def on_message(message):
 	# Method should not run on licensed bots
-	if bot.user.id not in PRIMARY_BOTS: return
+	if bot.user.id not in constants.PRIMARY_BOTS: return
 
 	try:
 		# Skip messages in servers, messages with empty content field, messages from self, or all messages when in startup mode
@@ -405,7 +395,7 @@ async def create_request(ctx, autodelete=-1, ephemeral=False):
 	if authorId in constants.blockedUsers or guildId in constants.blockedGuilds: return
 
 	# Check if the bot has the permission to operate in this guild
-	if bot.user.id not in PRIMARY_BOTS and bot.user.id not in LICENSED_BOTS.get(guildId, []): return
+	if bot.user.id not in constants.PRIMARY_BOTS and bot.user.id not in constants.LICENSED_BOTS.get(guildId, []): return
 
 	[accountId, user, guild] = await gather(
 		accountProperties.match(authorId),
