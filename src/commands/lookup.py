@@ -160,7 +160,7 @@ class LookupCommand(BaseCommand):
 			if assetType != "":
 				if assetType.lower() == "crypto":
 					assetType = "am"
-				elif assetType.lower() == "stock":
+				elif assetType.lower() == "stocks":
 					assetType = "cnn"
 				else:
 					embed = Embed(title="Asset type is invalid. Only stocks and crypto markets are supported.", color=constants.colors["gray"])
