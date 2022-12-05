@@ -553,7 +553,7 @@ class ScheduleCommand(BaseCommand):
 
 				for key, post in posts:
 					timestamp = post["start"]
-					while timestamp < time(): timestamp += post["period"]
+					while timestamp < time(): timestamp += post["period"] * 60
 					nextPost = datetime.fromtimestamp(timestamp, tz=utc).strftime("%d/%m/%Y %H:%M")
 					command = "`" + ' '.join([e for e in post['arguments'] if e != ""]) + "`"
 					if len(command) == 2: command = "No arguments"
