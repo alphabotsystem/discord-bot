@@ -29,7 +29,7 @@ class AlphaCommand(BaseCommand):
 		assistantCredentials.refresh(http_request)
 		self.grpc_channel = secure_authorized_channel(assistantCredentials, http_request, "embeddedassistant.googleapis.com")
 
-	@slash_command(name="alpha", description="Look up definitions, wikipedia articles, and get answers to many other questions.")
+	@slash_command(name="ask", description="Look up definitions, wikipedia articles, and get answers to many other questions.")
 	async def assistant(
 		self,
 		ctx,
