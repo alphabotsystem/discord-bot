@@ -32,7 +32,7 @@ class ChartCommand(BaseCommand):
 			timeframes = task.pop("timeframes")
 			for i in range(task.get("requestCount")):
 				for p, t in timeframes.items(): task[p]["currentTimeframe"] = t[i]
-				payload, responseMessage = await process_task(task, "chart")
+				payload, responseMessage = await process_task(task, "chart", origin=request.origin)
 
 				if responseMessage == "requires pro":
 					embed = Embed(title=f"The requested chart for `{currentTask.get('ticker').get('name')}` is only available on TradingView Premium.", description="All TradingView Premium charts are bundled with the [Advanced Charting add-on](https://www.alpha.bot/pro/advanced-charting).", color=constants.colors["gray"])

@@ -416,7 +416,8 @@ async def create_request(ctx, autodelete=-1, ephemeral=False):
 		guildId=guildId,
 		accountProperties=user,
 		guildProperties=guild,
-		autodelete=autodelete
+		autodelete=autodelete,
+		origin="default" if bot.user.id in constants.PRIMARY_BOTS else bot.user.id
 	)
 
 	if request.guildId != -1 and bot.user.id == 401328409499664394:
