@@ -53,10 +53,5 @@ spec:
               secretKeyRef:
                 name: alpha-credentials
                 key: IEXC_KEY
-          - name: INFLUXDB_TOKEN
-            valueFrom:
-              secretKeyRef:
-                name: alpha-credentials
-                key: INFLUXDB_TOKEN
         ports:
           - containerPort: 6910

@@ -1,17 +1,21 @@
 from os import environ
+from time import time
 from asyncio import sleep
 from re import sub
+from orjson import dumps
 from traceback import format_exc
 
 from discord import Embed, ButtonStyle, Interaction, PartialEmoji
 from discord.ext.commands import Cog
 from discord.ui import View, button, Button
-from influxdb_client import Point
-from influxdb_client.client.influxdb_client_async import InfluxDBClientAsync
+from google.cloud import pubsub_v1
 
 from helpers import constants
 from assets import static_storage
 from Processor import autocomplete_ticker, autocomplete_venues
+
+publisher = pubsub_v1.PublisherClient()
+TOPIC_NAME = "projects/nlc-bot-36685/topics/discord-requests"
 
 
 async def autocomplete_type(ctx):
@@ -49,20 +53,21 @@ class BaseCommand(Cog):
 		self.logging = logging
 
 	async def log_request(self, command, request, tasks):
-		async with InfluxDBClientAsync(url="http://influxdb.default", port=6902, token=environ["INFLUXDB_TOKEN"], org="Alpha Bot System") as client:
-			writeApi = client.write_api()
-
-			points = []
-			if command in ["charts", "heatmaps", "prices", "volume", "details", "depth"]:
-				for task in tasks:
-					currentTask = task.get(task.get("currentPlatform"))
-					base = currentTask.get("ticker").get("base")
-					if base is None: base = currentTask.get("ticker").get("id")
-					point = Point("discord").tag("command", command).tag("user", request.authorId).tag("guild", request.guildId).tag("channel", request.channelId).tag("base", base).tag("platform", task.get("currentPlatform")).field("count", task.get("requestCount", 1))
-					points.append(point)
-
-			try: await writeApi.write(bucket="requests", record=points)
-			except: print(format_exc())
+		if command in ["charts", "heatmaps", "prices", "volume", "details", "depth"]:
+			for task in tasks:
+				currentTask = task.get(task.get("currentPlatform"))
+				base = currentTask.get("ticker").get("base")
+				if base is None: base = currentTask.get("ticker").get("id")
+				publisher.publish(TOPIC_NAME, dumps({
+					"timestamp": int(time()),
+					"command": command,
+					"user": str(request.authorId),
+					"guild": str(request.guildId),
+					"channel": str(request.channelId),
+					"base": base,
+					"platform": task.get("currentPlatform"),
+					"count": task.get("requestCount", 1)
+				}))
 
 	async def cleanup(self, ctx, request, removeView=False):
 		if request.autodelete is not None:
