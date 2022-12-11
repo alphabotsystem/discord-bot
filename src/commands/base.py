@@ -42,7 +42,8 @@ class BaseCommand(Cog):
 		"depth": ["IEXC", "CCXT"],
 		"info": ["IEXC", "CoinGecko"],
 		"lookup markets": ["IEXC", "CCXT", "CoinGecko", "TradingView", "TradingView Premium", "TradingLite", "Bookmap"],
-		"paper": ["IEXC", "CCXT"],
+		"paper buy": ["IEXC", "CCXT"],
+		"paper sell": ["IEXC", "CCXT"],
 		"ichibot": ["Ichibot"]
 	}
 
