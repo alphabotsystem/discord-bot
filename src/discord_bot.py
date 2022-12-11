@@ -2,7 +2,7 @@ from os import environ, _exit
 environ["PRODUCTION"] = environ["PRODUCTION"] if "PRODUCTION" in environ and environ["PRODUCTION"] else ""
 botId = -1 if len(environ["HOSTNAME"].split("-")) != 3 else int(environ["HOSTNAME"].split("-")[-1])
 
-from time import time
+from time import time, sleep as ssleep
 from datetime import datetime
 from pytz import utc
 from requests import post
@@ -121,6 +121,9 @@ def update_alpha_settings(settings, changes, timestamp):
 # -------------------------
 
 def process_alpha_messages(pendingMessages, changes, timestamp):
+	while not botStatus[0]:
+		ssleep(60)
+
 	# Method should only run in production
 	if not environ["PRODUCTION"]: return
 
@@ -135,13 +138,13 @@ def process_alpha_messages(pendingMessages, changes, timestamp):
 		if environ["PRODUCTION"]: logging.report_exception()
 
 async def send_alpha_messages(messageId, message):
+	while not botStatus[0]:
+		await sleep(60)
+
 	# Method should only run if the message is addressed to the right bot
 	if message["destination"] != bot.user.id: return
 
 	try:
-		while not botStatus[0]:
-			await sleep(60)
-
 		content = None
 		embed = Embed(title=message["title"], color=message["color"])
 		if message.get("description") is not None: embed.description = message.get("description")
@@ -399,7 +402,7 @@ async def create_request(ctx, autodelete=-1, ephemeral=False):
 	if authorId in constants.blockedUsers or guildId in constants.blockedGuilds: return
 
 	# Check if the bot has the permission to operate in this guild
-	if bot.user.id not in constants.PRIMARY_BOTS and constants.LICENSED_BOTS.get(guildId) == bot.user.id: return
+	if bot.user.id not in constants.PRIMARY_BOTS and constants.LICENSED_BOTS.get(guildId) != bot.user.id: return
 
 	[accountId, user, guild] = await gather(
 		accountProperties.match(authorId),
