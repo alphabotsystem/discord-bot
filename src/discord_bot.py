@@ -65,7 +65,9 @@ bot = AutoShardedBot(intents=intents, chunk_guilds_at_startup=False, max_message
 @bot.event
 async def on_guild_join(guild):
 	# Method should not run on licensed bots
-	if bot.user.id not in constants.PRIMARY_BOTS: return
+	if bot.user.id not in constants.PRIMARY_BOTS:
+		print(f"{bot.user.name} Bot ({bot.user.id}) joined {guild.name} ({guild.id})")
+		return
 
 	try:
 		if guild.id in constants.bannedGuilds:
@@ -83,7 +85,9 @@ async def on_guild_join(guild):
 @bot.event
 async def on_guild_remove(guild):
 	# Method should not run on licensed bots
-	if bot.user.id not in constants.PRIMARY_BOTS: return
+	if bot.user.id not in constants.PRIMARY_BOTS:
+		print(f"{bot.user.name} Bot ({bot.user.id}) left {guild.name} ({guild.id})")
+		return
 
 	try:
 		await update_guild_count()
@@ -395,7 +399,7 @@ async def create_request(ctx, autodelete=-1, ephemeral=False):
 	if authorId in constants.blockedUsers or guildId in constants.blockedGuilds: return
 
 	# Check if the bot has the permission to operate in this guild
-	if bot.user.id not in constants.PRIMARY_BOTS and bot.user.id not in constants.LICENSED_BOTS.get(guildId, []): return
+	if bot.user.id not in constants.PRIMARY_BOTS and constants.LICENSED_BOTS.get(guildId) == bot.user.id: return
 
 	[accountId, user, guild] = await gather(
 		accountProperties.match(authorId),
