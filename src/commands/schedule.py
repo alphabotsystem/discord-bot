@@ -215,7 +215,7 @@ class ScheduleCommand(BaseCommand):
 				embed.set_author(name="Chart scheduled", icon_url=self.bot.user.avatar.url)
 				await ctx.followup.send(embed=embed, ephemeral=True)
 			else:
-				embed = Embed(title=":gem: Scheduled Posting functionality is available as an add-on subscription for communities for only $2.00 per month.", description="If you'd like to start your 30-day free trial, visit [our website](https://www.alpha.bot/pro/scheduled-posting).", color=constants.colors["deep purple"])
+				embed = Embed(title=":gem: Scheduled Posting functionality is available as an add-on subscription for communities for only $5.00 per month.", description="If you'd like to start your 30-day free trial, visit [our website](https://www.alpha.bot/pro/scheduled-posting).", color=constants.colors["deep purple"])
 				# embed.set_image(url="https://www.alpha.bot/files/uploads/pro-hero.jpg")
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
@@ -371,7 +371,7 @@ class ScheduleCommand(BaseCommand):
 				embed.set_author(name="Heatmap scheduled", icon_url=self.bot.user.avatar.url)
 				await ctx.followup.send(embed=embed, ephemeral=True)
 			else:
-				embed = Embed(title=":gem: Scheduled Posting functionality is available as an add-on subscription for communities for only $2.00 per month.", description="If you'd like to start your 30-day free trial, visit [our website](https://www.alpha.bot/pro/scheduled-posting).", color=constants.colors["deep purple"])
+				embed = Embed(title=":gem: Scheduled Posting functionality is available as an add-on subscription for communities for only $5.00 per month.", description="If you'd like to start your 30-day free trial, visit [our website](https://www.alpha.bot/pro/scheduled-posting).", color=constants.colors["deep purple"])
 				# embed.set_image(url="https://www.alpha.bot/files/uploads/pro-hero.jpg")
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
@@ -519,7 +519,7 @@ class ScheduleCommand(BaseCommand):
 				embed.set_author(name="Chart scheduled", icon_url=self.bot.user.avatar.url)
 				await ctx.followup.send(embed=embed, ephemeral=True)
 			else:
-				embed = Embed(title=":gem: Scheduled Posting functionality is available as an add-on subscription for communities for only $2.00 per month.", description="If you'd like to start your 30-day free trial, visit [our website](https://www.alpha.bot/pro/scheduled-posting).", color=constants.colors["deep purple"])
+				embed = Embed(title=":gem: Scheduled Posting functionality is available as an add-on subscription for communities for only $5.00 per month.", description="If you'd like to start your 30-day free trial, visit [our website](https://www.alpha.bot/pro/scheduled-posting).", color=constants.colors["deep purple"])
 				# embed.set_image(url="https://www.alpha.bot/files/uploads/pro-hero.jpg")
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
