@@ -71,7 +71,7 @@ class ScheduleCommand(BaseCommand):
 		ctx,
 		arguments: Option(str, "Request arguments starting with ticker id.", name="arguments"),
 		period: Option(str, "Period of time every which the chart will be posted.", name="period", autocomplete=autocomplete_period),
-		start: Option(str, "Time at which the first chart will be posted.", name="start", autocomplete=autocomplete_date, required=False, default=datetime.now().strftime("%d/%m/%Y %H:%M") + " UTC"),
+		start: Option(str, "Time at which the first chart will be posted.", name="start", autocomplete=autocomplete_date, required=False, default=None),
 		exclude: Option(str, "Times to exclude from posting.", name="skip", autocomplete=autocomplete_exclude, required=False, default=None),
 		message: Option(str, "Message to post with the chart.", name="message", required=False, default=None),
 		role: Option(Role, "Role to tag on trigger.", name="role", required=False, default=None)
@@ -129,6 +129,8 @@ class ScheduleCommand(BaseCommand):
 					except NotFound: pass
 					return
 
+				if start is None:
+					start = datetime.now().strftime("%d/%m/%Y %H:%M") + " UTC"
 				try:
 					timestamp = datetime.strptime(start, "%d/%m/%Y %H:%M UTC").timestamp()
 				except:
@@ -238,7 +240,7 @@ class ScheduleCommand(BaseCommand):
 		size: Option(str, "Method used to determine heatmap's block sizes.", name="size", autocomplete=autocomplete_size, required=False, default=""),
 		group: Option(str, "Asset grouping method.", name="group", autocomplete=autocomplete_group, required=False, default=""),
 		theme: Option(str, "Heatmap color theme.", name="theme", autocomplete=autocomplete_theme, required=False, default=""),
-		start: Option(str, "Time at which the first heatmap will be posted.", name="start", autocomplete=autocomplete_date, required=False, default=datetime.now().strftime("%d/%m/%Y %H:%M") + " UTC"),
+		start: Option(str, "Time at which the first heatmap will be posted.", name="start", autocomplete=autocomplete_date, required=False, default=None),
 		exclude: Option(str, "Times to exclude from posting.", name="skip", autocomplete=autocomplete_exclude, required=False, default=None),
 		message: Option(str, "Message to post with the heatmap.", name="message", required=False, default=None),
 		role: Option(Role, "Role to tag on trigger.", name="role", required=False, default=None)
@@ -290,6 +292,8 @@ class ScheduleCommand(BaseCommand):
 					except NotFound: pass
 					return
 
+				if start is None:
+					start = datetime.now().strftime("%d/%m/%Y %H:%M") + " UTC"
 				try:
 					timestamp = datetime.strptime(start, "%d/%m/%Y %H:%M UTC").timestamp()
 				except:
@@ -389,7 +393,7 @@ class ScheduleCommand(BaseCommand):
 		tickerId: Option(str, "Ticker id of an asset.", name="ticker", autocomplete=BaseCommand.autocomplete_ticker),
 		period: Option(str, "Period of time every which the chart will be posted.", name="period", autocomplete=autocomplete_period),
 		venue: Option(str, "Venue to pull the price from.", name="venue", autocomplete=BaseCommand.autocomplete_venues, required=False, default=""),
-		start: Option(str, "Time at which the first chart will be posted.", name="start", autocomplete=autocomplete_date, required=False, default=datetime.now().strftime("%d/%m/%Y %H:%M") + " UTC"),
+		start: Option(str, "Time at which the first chart will be posted.", name="start", autocomplete=autocomplete_date, required=False, default=None),
 		exclude: Option(str, "Times to exclude from posting.", name="skip", autocomplete=autocomplete_exclude, required=False, default=None),
 		message: Option(str, "Message to post with the chart.", name="message", required=False, default=None),
 		role: Option(Role, "Role to tag on trigger.", name="role", required=False, default=None)
@@ -441,6 +445,8 @@ class ScheduleCommand(BaseCommand):
 					except NotFound: pass
 					return
 
+				if start is None:
+					start = datetime.now().strftime("%d/%m/%Y %H:%M") + " UTC"
 				try:
 					timestamp = datetime.strptime(start, "%d/%m/%Y %H:%M UTC").timestamp()
 				except:
