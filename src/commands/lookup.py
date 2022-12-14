@@ -175,7 +175,7 @@ class LookupCommand(BaseCommand):
 			timeframes = task.pop("timeframes")
 			for p, t in timeframes.items(): task[p]["currentTimeframe"] = t[0]
 
-			payload, responseMessage = await process_task(task, "chart")
+			payload, responseMessage = await process_task(task, "chart", origin=request.origin)
 
 			files, embeds = [], []
 			if responseMessage == "requires pro":

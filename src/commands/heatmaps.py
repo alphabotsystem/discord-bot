@@ -35,7 +35,7 @@ class HeatmapCommand(BaseCommand):
 			timeframes = task.pop("timeframes")
 			for i in range(task.get("requestCount")):
 				for p, t in timeframes.items(): task[p]["currentTimeframe"] = t[i]
-				payload, responseMessage = await process_task(task, "heatmap")
+				payload, responseMessage = await process_task(task, "heatmap", origin=request.origin)
 
 				if payload is None:
 					errorMessage = "Requested heatmap is not available." if responseMessage is None else responseMessage

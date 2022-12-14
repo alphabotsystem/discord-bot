@@ -164,7 +164,7 @@ class ScheduleCommand(BaseCommand):
 				currentTask = task.get(task.get("currentPlatform"))
 				timeframes = task.pop("timeframes")
 				for p, t in timeframes.items(): task[p]["currentTimeframe"] = t[0]
-				payload, responseMessage = await process_task(task, "chart")
+				payload, responseMessage = await process_task(task, "chart", origin=request.origin)
 
 				files, embeds = [], []
 				if responseMessage == "requires pro":
@@ -326,7 +326,7 @@ class ScheduleCommand(BaseCommand):
 				currentTask = task.get(task.get("currentPlatform"))
 				timeframes = task.pop("timeframes")
 				for p, t in timeframes.items(): task[p]["currentTimeframe"] = t[0]
-				payload, responseMessage = await process_task(task, "heatmap")
+				payload, responseMessage = await process_task(task, "heatmap", origin=request.origin)
 
 				files, embeds = [], []
 				if payload is None:
