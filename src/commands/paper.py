@@ -531,7 +531,7 @@ class PaperCommand(BaseCommand):
 			"timestamp": int(time() * 1000),
 			"isLimit": execPrice != payload["candles"][-1][4],
 			"thumbnailUrl": thumbnailUrl,
-			"destination": self.bot.user.id
+			"destination": str(self.bot.user.id)
 		}
 		if newOrder["isLimit"]:
 			newOrder["placement"] = "above" if newOrder["price"] > payload["candles"][-1][4] else "below"
