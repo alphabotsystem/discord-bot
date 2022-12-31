@@ -15,7 +15,8 @@ from assets import static_storage
 from Processor import autocomplete_ticker, autocomplete_venues
 
 publisher = pubsub_v1.PublisherClient()
-TOPIC_NAME = "projects/nlc-bot-36685/topics/discord-requests"
+REQUESTS_TOPIC_NAME = "projects/nlc-bot-36685/topics/discord-requests"
+TELEMETRY_TOPIC_NAME = "projects/nlc-bot-36685/topics/discord-telemetry"
 
 
 async def autocomplete_type(ctx):
@@ -53,20 +54,32 @@ class BaseCommand(Cog):
 		self.database = database
 		self.logging = logging
 
-	async def log_request(self, command, request, tasks):
+	async def log_request(self, command, request, tasks, telemetry=None):
+		timestamp = int(time())
 		if command in ["charts", "heatmaps", "prices", "volume", "details", "depth"]:
 			for task in tasks:
 				currentTask = task.get(task.get("currentPlatform"))
 				base = currentTask.get("ticker").get("base")
 				if base is None: base = currentTask.get("ticker").get("id")
-				publisher.publish(TOPIC_NAME, dumps({
-					"timestamp": int(time()),
+				publisher.publish(REQUESTS_TOPIC_NAME, dumps({
+					"timestamp": timestamp,
 					"command": command,
 					"user": str(request.authorId),
 					"guild": str(request.guildId),
 					"channel": str(request.channelId),
 					"base": base,
 					"platform": task.get("currentPlatform"),
+					"count": task.get("requestCount", 1)
+				}))
+			if telemetry is not None:
+				publisher.publish(TELEMETRY_TOPIC_NAME, dumps({
+					"timestamp": timestamp,
+					"command": command,
+					"database": telemetry["database"],
+					"prelight": telemetry["prelight"],
+					"parser": telemetry["parser"],
+					"request": telemetry["request"],
+					"response": telemetry["response"],
 					"count": task.get("requestCount", 1)
 				}))
 

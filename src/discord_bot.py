@@ -394,6 +394,7 @@ async def process_ichibot_command(message, commandRequest, requestSlice):
 # -------------------------
 
 async def create_request(ctx, autodelete=-1, ephemeral=False):
+	start = time()
 	authorId = ctx.author.id
 	guildId = ctx.guild.id if ctx.guild is not None else -1
 	channelId = ctx.channel.id if ctx.channel is not None else -1
@@ -412,9 +413,7 @@ async def create_request(ctx, autodelete=-1, ephemeral=False):
 
 	if ctx.command.qualified_name == "alpha":
 		ephemeral = not guild.get("settings", {}).get("assistant", {}).get("enabled", True)
-
-	try: await ctx.defer(ephemeral=ephemeral)
-	except: return
+	databaseCheckpoint = time()
 
 	request = CommandRequest(
 		accountId=accountId,
@@ -426,6 +425,7 @@ async def create_request(ctx, autodelete=-1, ephemeral=False):
 		autodelete=autodelete,
 		origin="default" if bot.user.id in constants.PRIMARY_BOTS else bot.user.id
 	)
+	request.set_delay("database", databaseCheckpoint - start)
 
 	if request.guildId != -1 and bot.user.id == 401328409499664394:
 		branding = alphaSettings["nicknames"].get(str(request.guildId), {"allowed": True, "nickname": None})
@@ -451,6 +451,9 @@ async def create_request(ctx, autodelete=-1, ephemeral=False):
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 			return None
+
+	try: await ctx.defer(ephemeral=ephemeral)
+	except: return
 
 	return request
 

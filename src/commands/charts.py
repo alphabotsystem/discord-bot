@@ -26,6 +26,7 @@ class ChartCommand(BaseCommand):
 		request,
 		tasks
 	):
+		start = time()
 		files, embeds = [], []
 		for task in tasks:
 			currentTask = task.get(task.get("currentPlatform"))
@@ -57,11 +58,15 @@ class ChartCommand(BaseCommand):
 			else:
 				actions = ActionsView(user=ctx.author)
 
+		requestCheckpoint = time()
+		request.set_delay("request", (requestCheckpoint - start) / len(tasks))
 		try: await ctx.interaction.edit_original_response(embeds=embeds, files=files, view=actions)
 		except NotFound: pass
+		request.set_delay("response", time() - requestCheckpoint)
+		
 
 		await self.database.document("discord/statistics").set({request.snapshot: {"c": Increment(len(tasks))}}, merge=True)
-		await self.log_request("charts", request, tasks)
+		await self.log_request("charts", request, tasks, telemetry=request.telemetry)
 		await self.cleanup(ctx, request, removeView=True)
 
 	@slash_command(name="c", description="Pull charts from TradingView, TradingLite and more. Command for power users.")
@@ -86,6 +91,9 @@ class ChartCommand(BaseCommand):
 				except NotFound: pass
 				return
 
+			prelightCheckpoint = time()
+			request.set_delay("prelight", prelightCheckpoint - request.start)
+
 			for part in parts:
 				partArguments = part.lower().split()
 				if len(partArguments) == 0: continue
@@ -107,6 +115,7 @@ class ChartCommand(BaseCommand):
 
 				tasks.append(task)
 
+			request.set_delay("parser", (time() - prelightCheckpoint) / len(tasks))
 			await self.respond(ctx, request, tasks)
 
 		except CancelledError: pass
