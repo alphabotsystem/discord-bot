@@ -1,8 +1,8 @@
 from os import environ
 from time import time
 from uuid import uuid4
-from aiohttp import ClientSession, wait
-from asyncio import CancelledError
+from aiohttp import ClientSession
+from asyncio import CancelledError, wait
 from traceback import format_exc
 
 from discord import Embed, ButtonStyle, Interaction
