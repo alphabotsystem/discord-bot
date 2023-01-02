@@ -63,9 +63,9 @@ def autocomplete_exclude(ctx):
 
 
 class ScheduleCommand(BaseCommand):
-	scheduleGroup = SlashCommandGroup("schedule", "Schedule bot commands to automatically periodically post.")
+	scheduleGroup = SlashCommandGroup("schedule", "Schedule bot commands to get automatically posted periodically.")
 
-	@scheduleGroup.command(name="chart", description="Schedule a chart to automatically periodically post.")
+	@scheduleGroup.command(name="chart", description="Schedule a chart to get automatically posted periodically.")
 	async def chart(
 		self,
 		ctx,
@@ -231,7 +231,7 @@ class ScheduleCommand(BaseCommand):
 			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /schedule chart {arguments} period:{period} start:{start}")
 			await self.unknown_error(ctx)
 
-	@scheduleGroup.command(name="heatmap", description="Schedule a heatmap to automatically periodically post.")
+	@scheduleGroup.command(name="heatmap", description="Schedule a heatmap to get automatically posted periodically.")
 	async def heatmap(
 		self,
 		ctx,
@@ -392,7 +392,7 @@ class ScheduleCommand(BaseCommand):
 			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /schedule heatmap assetType:{assetType} color:{timeframe} market:{market} category:{category} size:{size} group:{group} theme:{theme} period:{period} start:{start}")
 			await self.unknown_error(ctx)
 
-	@scheduleGroup.command(name="price", description="Schedule a price to automatically periodically post.")
+	@scheduleGroup.command(name="price", description="Schedule a price to get automatically posted periodically.")
 	async def price(
 		self,
 		ctx,
@@ -545,7 +545,7 @@ class ScheduleCommand(BaseCommand):
 			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /schedule chart {arguments} period:{period} start:{start}")
 			await self.unknown_error(ctx)
 
-	@scheduleGroup.command(name="volume", description="Schedule 24-hour volume to automatically periodically post.")
+	@scheduleGroup.command(name="volume", description="Schedule 24-hour volume to get automatically posted periodically.")
 	async def price(
 		self,
 		ctx,
