@@ -114,7 +114,7 @@ class PaperCommand(BaseCommand):
 					except NotFound: pass
 					return
 
-				responseMessage, task = await gather(
+				[(responseMessage, task), _] = await gather(
 					process_quote_arguments([], platforms, tickerId=tickerId.upper()),
 					ctx.defer()
 				)
