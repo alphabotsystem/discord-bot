@@ -30,6 +30,7 @@ class BaseCommand(Cog):
 		"chart": "c",
 		"price": "p",
 		"schedule price": "p",
+		"schedule volume": "volume",
 	}
 
 	sources = {
@@ -55,6 +56,7 @@ class BaseCommand(Cog):
 		self.logging = logging
 
 	async def log_request(self, command, request, tasks, telemetry=None):
+		if not environ["PRODUCTION"]: return
 		timestamp = int(time())
 		if command in ["charts", "heatmaps", "prices", "volume", "details", "depth"]:
 			for task in tasks:
