@@ -1,7 +1,7 @@
 from os import environ
 from time import time
 from uuid import uuid4
-from aiohttp import ClientSession
+from aiohttp import ClientSession, wait
 from asyncio import CancelledError
 from traceback import format_exc
 
@@ -110,11 +110,15 @@ class PaperCommand(BaseCommand):
 			if request.is_registered():
 				if level is not None:
 					embed = Embed(title="Limit orders are temporarily unavailable.", color=constants.colors["gray"])
-					try: await ctx.interaction.edit_original_response(embed=embed)
+					try: await ctx.respond(embed=embed)
 					except NotFound: pass
 					return
 
-				responseMessage, task = await process_quote_arguments([], platforms, tickerId=tickerId.upper())
+				responseMessage, task = await gather(
+					process_quote_arguments([], platforms, tickerId=tickerId.upper()),
+					ctx.defer()
+				)
+
 				if responseMessage is not None:
 					embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alpha.bot/features/paper-trading).", color=constants.colors["gray"])
 					embed.set_author(name="Invalid argument", icon_url=static_storage.error_icon)
@@ -138,7 +142,7 @@ class PaperCommand(BaseCommand):
 			else:
 				embed = Embed(title=":joystick: You must have an Alpha Account connected to your Discord to use Paper Trader.", description="[Sign up for a free account on our website](https://www.alpha.bot/signup). If you already signed up, [sign in](https://www.alpha.bot/login), and connect your account with your Discord profile.", color=constants.colors["deep purple"])
 				embed.set_author(name="Paper Trader", icon_url=self.bot.user.avatar.url)
-				try: await ctx.interaction.edit_original_response(embed=embed)
+				try: await ctx.respond(embed=embed)
 				except NotFound: pass
 
 		except CancelledError: pass
@@ -175,6 +179,8 @@ class PaperCommand(BaseCommand):
 		try:
 			request = await self.create_request(ctx)
 			if request is None: return
+
+			await ctx.defer()
 
 			if request.is_registered():
 				paperOrders = await self.database.collection(f"details/openPaperOrders/{request.accountId}").get()
@@ -261,12 +267,12 @@ class PaperCommand(BaseCommand):
 				if totalOrderCount == 0:
 					embed = Embed(title="No open paper orders.", color=constants.colors["deep purple"])
 					embed.set_author(name="Paper Trader", icon_url=self.bot.user.avatar.url)
-					try: await ctx.interaction.edit_original_response(embed=embed)
+					try: await ctx.respond(embed=embed)
 					except NotFound: pass
 
 				else:
 					embed = Embed(title=f"You've set {totalOrderCount} paper order{'' if totalOrderCount == 1 else 's'}.", color=constants.colors["light blue"])
-					try: await ctx.interaction.edit_original_response(embed=embed)
+					try: await ctx.respond(embed=embed)
 					except NotFound: pass
 
 					for i, element in enumerate(paperOrders):
@@ -284,7 +290,7 @@ class PaperCommand(BaseCommand):
 			else:
 				embed = Embed(title=":joystick: You must have an Alpha Account connected to your Discord to use Paper Trader.", description="[Sign up for a free account on our website](https://www.alpha.bot/signup). If you already signed up, [sign in](https://www.alpha.bot/login), and connect your account with your Discord profile.", color=constants.colors["deep purple"])
 				embed.set_author(name="Paper Trader", icon_url=self.bot.user.avatar.url)
-				try: await ctx.interaction.edit_original_response(embed=embed)
+				try: await ctx.respond(embed=embed)
 				except NotFound: pass
 
 		except CancelledError: pass
@@ -307,7 +313,7 @@ class PaperCommand(BaseCommand):
 				if len(paperHistory) == 0:
 					embed = Embed(title="No paper trading history.", color=constants.colors["deep purple"])
 					embed.set_author(name="Paper Trader", icon_url=self.bot.user.avatar.url)
-					try: await ctx.interaction.edit_original_response(embed=embed)
+					try: await ctx.respond(embed=embed)
 					except NotFound: pass
 				else:
 					embed = Embed(title="Paper trading history:", color=constants.colors["deep purple"])
@@ -325,13 +331,13 @@ class PaperCommand(BaseCommand):
 						elif order["orderType"].startswith("stop"): side = "Stop sold"
 						embed.add_field(name=f"{side} {order['amountText']} {ticker.get('base')} at {order['priceText']} {ticker.get('quote')}", value=f"{timestamp_to_date(order['timestamp'] / 1000)}", inline=False)
 
-					try: await ctx.interaction.edit_original_response(embed=embed)
+					try: await ctx.respond(embed=embed)
 					except NotFound: pass
 			
 			else:
 				embed = Embed(title=":joystick: You must have an Alpha Account connected to your Discord to use Paper Trader.", description="[Sign up for a free account on our website](https://www.alpha.bot/signup). If you already signed up, [sign in](https://www.alpha.bot/login), and connect your account with your Discord profile.", color=constants.colors["deep purple"])
 				embed.set_author(name="Paper Trader", icon_url=self.bot.user.avatar.url)
-				try: await ctx.interaction.edit_original_response(embed=embed)
+				try: await ctx.respond(embed=embed)
 				except NotFound: pass
 
 		except CancelledError: pass
@@ -385,7 +391,7 @@ class PaperCommand(BaseCommand):
 			for index, (balance, lastReset, authorId) in enumerate(topBalances[:10]):
 				embed.add_field(name=f"#{index + 1}: <@!{authorId}> with {balance} USD", value=f"Since {timestamp_to_date(lastReset)}", inline=False)
 
-			try: await ctx.interaction.edit_original_response(embed=embed)
+			try: await ctx.respond(embed=embed)
 			except NotFound: pass
 
 		except CancelledError: pass
@@ -406,32 +412,32 @@ class PaperCommand(BaseCommand):
 			if not request.is_registered():
 				embed = Embed(title=":joystick: You must have an Alpha Account connected to your Discord to use Paper Trader.", description="[Sign up for a free account on our website](https://www.alpha.bot/signup). If you already signed up, [sign in](https://www.alpha.bot/login), and connect your account with your Discord profile.", color=constants.colors["deep purple"])
 				embed.set_author(name="Paper Trader", icon_url=self.bot.user.avatar.url)
-				try: await ctx.interaction.edit_original_response(embed=embed)
+				try: await ctx.respond(embed=embed)
 				except NotFound: pass
 
 			elif request.accountProperties["paperTrader"]["globalLastReset"] == 0 and request.accountProperties["paperTrader"]["globalResetCount"] == 0:
 				embed = Embed(title="You have to start trading before you can reset your paper balance.", color=constants.colors["gray"])
 				embed.set_author(name="Paper Trader", icon_url=static_storage.error_icon)
-				try: await ctx.interaction.edit_original_response(embed=embed)
+				try: await ctx.respond(embed=embed)
 				except NotFound: pass
 
 			elif request.accountProperties["paperTrader"]["globalLastReset"] + 604800 < time():
 				confirmation = Confirm(user=ctx.author)
 				embed = Embed(title="Do you really want to reset your paper balance? This cannot be undone.", description="Paper balance can only be reset once every seven days. Your last public reset date will be publicly visible.", color=constants.colors["pink"])
 				embed.set_author(name="Paper Trader", icon_url=self.bot.user.avatar.url)
-				try: await ctx.interaction.edit_original_response(embed=embed, view=confirmation)
+				try: await ctx.respond(embed=embed, view=confirmation)
 				except NotFound: pass
 				await confirmation.wait()
 
 				if confirmation.value is None or not confirmation.value:
 					embed = Embed(title="Paper balance reset canceled.", description="~~Do you really want to reset your paper balance? This cannot be undone.~~", color=constants.colors["gray"])
 					embed.set_author(name="Paper Trader", icon_url=static_storage.error_icon)
-					try: await ctx.interaction.edit_original_response(embed=embed, view=None)
+					try: await ctx.respond(embed=embed, view=None)
 					except NotFound: pass
 
 				else:
 					embed = Embed(description="Deleting your paper trading history ...", color=constants.colors["deep purple"])
-					try: await ctx.interaction.edit_original_response(embed=embed, view=None)
+					try: await ctx.respond(embed=embed, view=None)
 					except NotFound: pass
 
 					async def delete_collection(collectionRef, batchSize):
@@ -445,8 +451,10 @@ class PaperCommand(BaseCommand):
 						if deleted >= batchSize:
 							return await delete_collection(collectionRef, batchSize)
 
-					await delete_collection(self.database.collection(f"details/openPaperOrders/{request.accountId}"), 300)
-					await delete_collection(self.database.collection(f"details/paperOrderHistory/{request.accountId}"), 300)
+					await wait([
+						delete_collection(self.database.collection(f"details/openPaperOrders/{request.accountId}"), 300),
+						delete_collection(self.database.collection(f"details/paperOrderHistory/{request.accountId}"), 300)
+					])
 
 					paper = {
 						"globalResetCount": request.accountProperties["paperTrader"]["globalResetCount"] + 1,
@@ -457,13 +465,13 @@ class PaperCommand(BaseCommand):
 
 					embed = Embed(title="Paper balance has been reset successfully.", color=constants.colors["deep purple"])
 					embed.set_author(name="Paper Trader", icon_url=self.bot.user.avatar.url)
-					try: await ctx.interaction.edit_original_response(embed=embed)
+					try: await ctx.respond(embed=embed)
 					except NotFound: pass
 
 			else:
 				embed = Embed(title="Paper balance can only be reset once every seven days.", color=constants.colors["gray"])
 				embed.set_author(name="Paper Trader", icon_url=static_storage.error_icon)
-				try: await ctx.interaction.edit_original_response(embed=embed)
+				try: await ctx.respond(embed=embed)
 				except NotFound: pass
 
 		except CancelledError: pass

@@ -1,5 +1,5 @@
 from os import environ
-from asyncio import CancelledError
+from asyncio import gather, CancelledError
 from traceback import format_exc
 
 from discord import Embed
@@ -28,7 +28,10 @@ class ConvertCommand(BaseCommand):
 			if request is None: return
 
 			platforms = request.get_platform_order_for("convert")
-			payload, responseMessage = await process_conversion(request, fromTicker.upper(), toTicker.upper(), amount, platforms)
+			[(payload, responseMessage), _] = await gather(
+				process_conversion(request, fromTicker.upper(), toTicker.upper(), amount, platforms),
+				ctx.defer()
+			)
 
 			if payload is None:
 				errorMessage = "Requested conversion is not available." if responseMessage is None else responseMessage

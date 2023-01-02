@@ -1,8 +1,7 @@
 from os import environ
 from time import time
 from random import randint
-from aiohttp import ClientSession
-from asyncio import CancelledError, sleep
+from asyncio import gather, CancelledError, sleep
 from traceback import format_exc
 
 from discord import Embed, ButtonStyle, Interaction, File
@@ -39,12 +38,13 @@ class LookupCommand(BaseCommand):
 			if request is None: return
 
 			platforms = request.get_platform_order_for("lookup")
+
 			responseMessage, task = await process_quote_arguments([], platforms, tickerId=tickerId.upper())
 
 			if responseMessage is not None:
 				embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alpha.bot/features).", color=constants.colors["gray"])
 				embed.set_author(name="Invalid argument", icon_url=static_storage.error_icon)
-				try: await ctx.interaction.edit_original_response(embed=embed)
+				try: await ctx.respond(embed=embed)
 				except NotFound: pass
 				return
 
@@ -58,12 +58,12 @@ class LookupCommand(BaseCommand):
 				for quote, exchanges in listings:
 					if len(exchanges) == 0: continue
 					embed.add_field(name=f"{quote} pair found on {len(exchanges)} exchanges", value=", ".join(exchanges), inline=False)
-				try: await ctx.interaction.edit_original_response(embed=embed)
+				try: await ctx.respond(embed=embed)
 				except NotFound: pass
 			else:
 				embed = Embed(title=f"`{ticker.get('name')}` is not listed on any crypto exchange.", color=constants.colors["gray"])
 				embed.set_author(name="No listings", icon_url=static_storage.error_icon)
-				try: await ctx.interaction.edit_original_response(embed=embed)
+				try: await ctx.respond(embed=embed)
 				except NotFound: pass
 
 			await self.database.document("discord/statistics").set({request.snapshot: {"mk": Increment(1)}}, merge=True)
@@ -84,6 +84,8 @@ class LookupCommand(BaseCommand):
 		try:
 			request = await self.create_request(ctx)
 			if request is None: return
+
+			await ctx.defer()
 
 			category = " ".join(category.lower().split())
 			if category == "crypto gainers":
@@ -169,7 +171,10 @@ class LookupCommand(BaseCommand):
 					except NotFound: pass
 					return
 
-			_, task = await process_chart_arguments([assetType], platforms, tickerId="FGI")
+			[(_, task), _] = await gather(
+				process_chart_arguments([assetType], platforms, tickerId="FGI"),
+				ctx.defer()
+			)
 
 			currentTask = task.get(task.get("currentPlatform"))
 			timeframes = task.pop("timeframes")

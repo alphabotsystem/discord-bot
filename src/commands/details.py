@@ -31,7 +31,7 @@ class DetailsCommand(BaseCommand):
 			errorMessage = f"Requested details for `{currentTask.get('ticker').get('name')}` are not available." if responseMessage is None else responseMessage
 			embed = Embed(title=errorMessage, color=constants.colors["gray"])
 			embed.set_author(name="Data not available", icon_url=static_storage.error_icon)
-			try: await ctx.interaction.edit_original_response(embed=embed)
+			try: await ctx.respond(embed=embed)
 			except NotFound: pass
 		else:
 			currentTask = task.get(payload.get("platform"))
@@ -102,7 +102,7 @@ class DetailsCommand(BaseCommand):
 			embed.add_field(name="Price change", value=(change24h + change30d + change1y), inline=True)
 			embed.set_footer(text=payload["sourceText"])
 
-			try: await ctx.interaction.edit_original_response(embed=embed)
+			try: await ctx.respond(embed=embed)
 			except NotFound: pass
 
 		await self.database.document("discord/statistics").set({request.snapshot: {"info": Increment(1)}}, merge=True)
@@ -124,7 +124,7 @@ class DetailsCommand(BaseCommand):
 			if responseMessage is not None:
 				embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alpha.bot/features/asset-details).", color=constants.colors["gray"])
 				embed.set_author(name="Invalid argument", icon_url=static_storage.error_icon)
-				try: await ctx.interaction.edit_original_response(embed=embed)
+				try: await ctx.respond(embed=embed)
 				except NotFound: pass
 				return
 

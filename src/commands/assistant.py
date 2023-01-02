@@ -42,11 +42,13 @@ class AlphaCommand(BaseCommand):
 			if len(question) > 500: return
 			response = await self.bot.loop.run_in_executor(None, self.process_reply, question, request.guildProperties.get("settings", {}).get("assistant", {}).get("enabled", True))
 
+			ephemeral = not request.guildProperties.get("settings", {}).get("assistant", {}).get("enabled", True)
+
 			if response is not None:
-				try: await ctx.interaction.edit_original_response(content=response)
+				try: await ctx.respond(content=response, ephemeral=ephemeral)
 				except NotFound: pass
 			else:
-				try: await ctx.interaction.edit_original_response(content="Sorry, I can't help you with that.")
+				try: await ctx.respond(content="Sorry, I can't help you with that.", ephemeral=ephemeral)
 				except NotFound: pass
 
 			await self.database.document("discord/statistics").set({request.snapshot: {"alpha": Increment(1)}}, merge=True)

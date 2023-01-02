@@ -1,6 +1,6 @@
 from os import environ
-from time import perf_counter
-from asyncio import CancelledError
+from time import time
+from asyncio import gather, CancelledError
 from traceback import format_exc
 
 from discord import Embed
@@ -23,6 +23,7 @@ class PriceCommand(BaseCommand):
 		request,
 		tasks
 	):
+		start = time()
 		embeds = []
 		for task in tasks:
 			currentTask = task.get(task.get("currentPlatform"))
@@ -44,11 +45,15 @@ class PriceCommand(BaseCommand):
 					embed.set_footer(text=payload["sourceText"])
 
 			embeds.append(embed)
-		
+
+		requestCheckpoint = time()
+		request.set_delay("request", requestCheckpoint - start)
 		try: await ctx.interaction.edit_original_response(embeds=embeds)
 		except NotFound: pass
+		request.set_delay("response", time() - requestCheckpoint)
+
 		await self.database.document("discord/statistics").set({request.snapshot: {"p": Increment(len(tasks))}}, merge=True)
-		await self.log_request("prices", request, tasks)
+		await self.log_request("prices", request, tasks, telemetry=request.telemetry)
 
 	@slash_command(name="p", description="Fetch stock and crypto prices, forex rates, and other instrument data. Command for power users.")
 	async def p(
@@ -62,7 +67,6 @@ class PriceCommand(BaseCommand):
 
 			platforms = request.get_platform_order_for("p")
 			parts = arguments.split(",")
-			tasks = []
 
 			if len(parts) > 5:
 				embed = Embed(title="Only up to 5 requests are allowed per command.", color=constants.colors["gray"])
@@ -71,21 +75,30 @@ class PriceCommand(BaseCommand):
 				except NotFound: pass
 				return
 
+			prelightCheckpoint = time()
+			request.set_delay("prelight", prelightCheckpoint - request.start)
+
+			tasks = []
 			for part in parts:
 				partArguments = part.lower().split()
 				if len(partArguments) == 0: continue
+				tasks.append(process_quote_arguments(partArguments[1:], platforms, tickerId=partArguments[0].upper()))
+			[results, _] = await gather(
+				gather(*tasks),
+				ctx.defer()
+			)
 
-				responseMessage, task = await process_quote_arguments(partArguments[1:], platforms, tickerId=partArguments[0].upper())
-
+			tasks = []
+			for (responseMessage, task) in results:
 				if responseMessage is not None:
 					embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alpha.bot/features/prices).", color=constants.colors["gray"])
 					embed.set_author(name="Invalid argument", icon_url=static_storage.error_icon)
 					try: await ctx.interaction.edit_original_response(embed=embed)
 					except NotFound: pass
 					return
-				
 				tasks.append(task)
 
+			request.set_delay("parser", time() - prelightCheckpoint)
 			await self.respond(ctx, request, tasks)
 
 		except CancelledError: pass
@@ -105,8 +118,14 @@ class PriceCommand(BaseCommand):
 			request = await self.create_request(ctx)
 			if request is None: return
 
+			prelightCheckpoint = time()
+			request.set_delay("prelight", prelightCheckpoint - request.start)
+
 			platforms = request.get_platform_order_for("p")
-			responseMessage, task = await process_quote_arguments([venue], platforms, tickerId=tickerId.upper())
+			[(responseMessage, task), _] = await gather(
+				process_quote_arguments([venue], platforms, tickerId=tickerId.upper()),
+				ctx.defer()
+			)
 
 			if responseMessage is not None:
 				embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alpha.bot/features/prices).", color=constants.colors["gray"])
@@ -114,6 +133,8 @@ class PriceCommand(BaseCommand):
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 				return
+
+			request.set_delay("parser", time() - prelightCheckpoint)
 
 			await self.respond(ctx, request, [task])
 

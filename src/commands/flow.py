@@ -1,7 +1,7 @@
 from os import environ
 from time import time
 from random import randint
-from asyncio import CancelledError
+from asyncio import gather, CancelledError
 from traceback import format_exc
 
 from discord import Embed, File, ButtonStyle, SelectOption, Interaction, PartialEmoji
@@ -59,7 +59,10 @@ class FlowCommand(BaseCommand):
 			request = await self.create_request(ctx, autodelete=autodelete)
 			if request is None: return
 
-			responseMessage, task = await process_chart_arguments([], ["Alpha Flow"], tickerId=tickerId)
+			[(responseMessage, task), _] = await gather(
+				process_chart_arguments([], ["Alpha Flow"], tickerId=tickerId),
+				ctx.defer()
+			)
 
 			if responseMessage is not None:
 				embed = discord.Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alpha.bot/pro/flow).", color=constants.colors["gray"])

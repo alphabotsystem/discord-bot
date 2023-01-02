@@ -1,7 +1,7 @@
 from os import environ
 from time import time
 from random import randint
-from asyncio import CancelledError
+from asyncio import gather, CancelledError
 from traceback import format_exc
 
 from discord import Embed, File
@@ -74,7 +74,11 @@ class HeatmapCommand(BaseCommand):
 
 			platforms = request.get_platform_order_for("hmap", assetType=assetType)
 			arguments = [assetType, timeframe, market, category, size, group, theme]
-			responseMessage, task = await process_heatmap_arguments(arguments, platforms)
+
+			[(responseMessage, task), _] = await gather(
+				process_heatmap_arguments(arguments, platforms),
+				ctx.defer()
+			)
 
 			if responseMessage is not None:
 				embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alpha.bot/features/heatmaps).", color=constants.colors["gray"])

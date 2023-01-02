@@ -1,7 +1,7 @@
 from os import environ
 from time import time
 from random import randint
-from asyncio import CancelledError, sleep
+from asyncio import gather, CancelledError, sleep
 from traceback import format_exc
 
 from discord import Embed, File, ButtonStyle, SelectOption, Interaction, PartialEmoji
@@ -59,17 +59,16 @@ class ChartCommand(BaseCommand):
 				actions = ActionsView(user=ctx.author)
 
 		requestCheckpoint = time()
-		request.set_delay("request", (requestCheckpoint - start) / len(tasks))
+		request.set_delay("request", (requestCheckpoint - start) / (len(files) + len(embeds)))
 		try: await ctx.interaction.edit_original_response(embeds=embeds, files=files, view=actions)
 		except NotFound: pass
 		request.set_delay("response", time() - requestCheckpoint)
-		
 
 		await self.database.document("discord/statistics").set({request.snapshot: {"c": Increment(len(tasks))}}, merge=True)
 		await self.log_request("charts", request, tasks, telemetry=request.telemetry)
 		await self.cleanup(ctx, request, removeView=True)
 
-	@slash_command(name="c", description="Pull charts from TradingView, TradingLite and more. Command for power users.")
+	@slash_command(name="c", description="Pull charts from TradingView, TradingLite and more.")
 	async def c(
 		self,
 		ctx,
@@ -82,24 +81,29 @@ class ChartCommand(BaseCommand):
 
 			platforms = request.get_platform_order_for("c")
 			parts = arguments.split(",")
-			tasks = []
 
 			if len(parts) > 5:
 				embed = Embed(title="Only up to five requests are allowed per command.", color=constants.colors["gray"])
 				embed.set_author(name="Too many requests", icon_url=static_storage.error_icon)
-				try: await ctx.interaction.edit_original_response(embed=embed)
+				try: await ctx.respond(embed=embed)
 				except NotFound: pass
 				return
 
 			prelightCheckpoint = time()
 			request.set_delay("prelight", prelightCheckpoint - request.start)
 
+			tasks = []
 			for part in parts:
 				partArguments = part.lower().split()
 				if len(partArguments) == 0: continue
+				tasks.append(process_chart_arguments(partArguments[1:], platforms, tickerId=partArguments[0].upper(), defaults=request.guildProperties["charting"]))
+			[results, _] = await gather(
+				gather(*tasks),
+				ctx.defer()
+			)
 
-				responseMessage, task = await process_chart_arguments(partArguments[1:], platforms, tickerId=partArguments[0].upper(), defaults=request.guildProperties["charting"])
-
+			tasks = []
+			for (responseMessage, task) in results:
 				if responseMessage is not None:
 					description = "[Advanced Charting add-on](https://www.alpha.bot/pro/advanced-charting) unlocks additional assets, indicators, timeframes and more." if responseMessage.endswith("add-on.") else "Detailed guide with examples is available on [our website](https://www.alpha.bot/features/charting)."
 					embed = Embed(title=responseMessage, description=description, color=constants.colors["gray"])
@@ -112,10 +116,9 @@ class ChartCommand(BaseCommand):
 					try: await ctx.interaction.edit_original_response(embed=embed)
 					except NotFound: pass
 					return
-
 				tasks.append(task)
 
-			request.set_delay("parser", (time() - prelightCheckpoint) / len(tasks))
+			request.set_delay("parser", time() - prelightCheckpoint)
 			await self.respond(ctx, request, tasks)
 
 		except CancelledError: pass

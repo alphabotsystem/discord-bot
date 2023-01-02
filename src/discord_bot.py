@@ -393,7 +393,7 @@ async def process_ichibot_command(message, commandRequest, requestSlice):
 # Slash command request
 # -------------------------
 
-async def create_request(ctx, autodelete=-1, ephemeral=False):
+async def create_request(ctx, autodelete=-1):
 	start = time()
 	authorId = ctx.author.id
 	guildId = ctx.guild.id if ctx.guild is not None else -1
@@ -410,9 +410,6 @@ async def create_request(ctx, autodelete=-1, ephemeral=False):
 		accountProperties.get(str(authorId), {}),
 		guildProperties.get(guildId, {})
 	)
-
-	if ctx.command.qualified_name == "alpha":
-		ephemeral = not guild.get("settings", {}).get("assistant", {}).get("enabled", True)
 	databaseCheckpoint = time()
 
 	request = CommandRequest(
@@ -433,7 +430,7 @@ async def create_request(ctx, autodelete=-1, ephemeral=False):
 			embed = Embed(title="This Discord community guild was flagged for re-branding Alpha Bot and is therefore violating the Terms of Service.", description="Note that you are allowed to change the nickname of the bot as long as it is neutral. If you wish to present the bot with your own branding, you have to purchase a [Bot License](https://www.alpha.bot/pro/bot-license). Alpha Bot will continue to operate normally, if you remove the nickname.", color=0x000000)
 			embed.add_field(name="Terms of service", value="[Read now](https://www.alpha.bot/terms-of-service)", inline=True)
 			embed.add_field(name="Alpha Bot support Discord server", value="[Join now](https://discord.gg/GQeDE85)", inline=True)
-			try: await ctx.interaction.edit_original_response(embed=embed)
+			try: await ctx.respond(embed=embed)
 			except NotFound: pass
 			return None
 		elif not request.guildProperties["settings"]["setup"]["completed"]:
@@ -444,16 +441,13 @@ async def create_request(ctx, autodelete=-1, ephemeral=False):
 				return request
 			elif not ctx.bot and ctx.interaction.channel.permissions_for(ctx.author).administrator:
 				embed = Embed(title="Hello world!", description="Thanks for adding Alpha Bot to your Discord community, we're thrilled to have you onboard. We think you're going to love everything Alpha Bot can do. Before you start using it, you must complete a short setup process. Sign into your [Alpha Account](https://www.alpha.bot/communities) and visit your [Communities Dashboard](https://www.alpha.bot/communities) to begin.", color=constants.colors["pink"])
-				try: await ctx.interaction.edit_original_response(embed=embed)
+				try: await ctx.respond(embed=embed)
 				except NotFound: pass
 			else:
 				embed = Embed(title="Hello world!", description="This is Alpha Bot, the most popular financial bot on Discord. A short setup process hasn't been completed in this Discord community yet. Ask administrators to complete it by signing into their [Alpha Account](https://www.alpha.bot/communities) and visiting their [Communities Dashboard](https://www.alpha.bot/communities).", color=constants.colors["pink"])
-				try: await ctx.interaction.edit_original_response(embed=embed)
+				try: await ctx.respond(embed=embed)
 				except NotFound: pass
 			return None
-
-	try: await ctx.defer(ephemeral=ephemeral)
-	except: return
 
 	return request
 

@@ -77,8 +77,11 @@ class ScheduleCommand(BaseCommand):
 		role: Option(Role, "Role to tag on trigger.", name="role", required=False, default=None)
 	):
 		try:
-			request = await self.create_request(ctx, ephemeral=True)
+			request = await self.create_request(ctx)
 			if request is None: return
+
+			try: await ctx.defer(ephemeral=True)
+			except: return
 
 			posts = await self.database.collection(f"details/scheduledPosts/{request.guildId}").get()
 			totalPostCount = len(posts)
@@ -246,8 +249,11 @@ class ScheduleCommand(BaseCommand):
 		role: Option(Role, "Role to tag on trigger.", name="role", required=False, default=None)
 	):
 		try:
-			request = await self.create_request(ctx, ephemeral=True)
+			request = await self.create_request(ctx)
 			if request is None: return
+
+			try: await ctx.defer(ephemeral=True)
+			except: return
 
 			posts = await self.database.collection(f"details/scheduledPosts/{request.guildId}").get()
 			totalPostCount = len(posts)
@@ -399,8 +405,11 @@ class ScheduleCommand(BaseCommand):
 		role: Option(Role, "Role to tag on trigger.", name="role", required=False, default=None)
 	):
 		try:
-			request = await self.create_request(ctx, ephemeral=True)
+			request = await self.create_request(ctx)
 			if request is None: return
+
+			try: await ctx.defer(ephemeral=True)
+			except: return
 
 			posts = await self.database.collection(f"details/scheduledPosts/{request.guildId}").get()
 			totalPostCount = len(posts)
@@ -539,7 +548,7 @@ class ScheduleCommand(BaseCommand):
 	@scheduleGroup.command(name="list", description="List all scheduled posts.")
 	async def schedule_list(self, ctx):
 		try:
-			request = await self.create_request(ctx, ephemeral=True)
+			request = await self.create_request(ctx)
 			if request is None: return
 
 			response = await self.database.collection(f"details/scheduledPosts/{request.guildId}").get()
@@ -549,12 +558,12 @@ class ScheduleCommand(BaseCommand):
 			if totalPostCount == 0:
 				embed = Embed(title="You haven't set any scheduled posts yet.", color=constants.colors["gray"])
 				embed.set_author(name="Scheduled Posts", icon_url=static_storage.error_icon)
-				try: await ctx.interaction.edit_original_response(embed=embed)
+				try: await ctx.respond(embed=embed)
 				except NotFound: pass
 
 			else:
 				embed = Embed(title=f"You've created {totalPostCount} scheduled post{'' if totalPostCount == 1 else 's'} in this community.", color=constants.colors["light blue"])
-				try: await ctx.interaction.edit_original_response(embed=embed)
+				try: await ctx.respond(embed=embed)
 				except NotFound: pass
 
 				for key, post in posts:

@@ -1,7 +1,7 @@
 from os import environ
 from time import time
 from random import randint
-from asyncio import CancelledError
+from asyncio import gather, CancelledError
 from traceback import format_exc
 
 from discord import Embed, File
@@ -53,7 +53,10 @@ class DepthCommand(BaseCommand):
 			if request is None: return
 
 			platforms = request.get_platform_order_for("d")
-			responseMessage, task = await process_quote_arguments([venue], platforms, tickerId=tickerId.upper())
+			[(responseMessage, task), _] = await gather(
+				process_quote_arguments([venue], platforms, tickerId=tickerId.upper()),
+				ctx.defer()
+			)
 
 			if responseMessage is not None:
 				embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alpha.bot/features/orderbook-visualizations).", color=constants.colors["gray"])
