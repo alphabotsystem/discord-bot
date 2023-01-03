@@ -45,7 +45,7 @@ class AlertCommand(BaseCommand):
 				except:
 					embed = Embed(title="Invalid price level requested.", description="Make sure the requested level is a valid number. If you're requesting multiple levels, make sure they are all valid and separated with a comma.", color=constants.colors["gray"])
 					embed.set_author(name="Invalid argument", icon_url=static_storage.error_icon)
-					try: await ctx.interaction.respond(embed=embed)
+					try: await ctx.respond(embed=embed)
 					except NotFound: pass
 					return
 
@@ -56,13 +56,13 @@ class AlertCommand(BaseCommand):
 				if responseMessage is not None:
 					embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alpha.bot/features/price-alerts).", color=constants.colors["gray"])
 					embed.set_author(name="Invalid argument", icon_url=static_storage.error_icon)
-					try: await ctx.interaction.respond(embed=embed)
+					try: await ctx.respond(embed=embed)
 					except NotFound: pass
 					return
 				elif len(levels) > 10:
 					embed = Embed(title="You can only set up to 10 alerts at a time.", color=constants.colors["gray"])
 					embed.set_author(name="Invalid argument", icon_url=static_storage.error_icon)
-					try: await ctx.interaction.respond(embed=embed)
+					try: await ctx.respond(embed=embed)
 					except NotFound: pass
 					return
 
@@ -222,7 +222,7 @@ class AlertCommand(BaseCommand):
 			else:
 				embed = Embed(title=":gem: Price Alerts are available as an add-on subscription for communities or individuals for only $2.00 per month.", description="If you'd like to start your 30-day free trial, visit [our website](https://www.alpha.bot/pro/price-alerts).", color=constants.colors["deep purple"])
 				# embed.set_image(url="https://www.alpha.bot/files/uploads/pro-hero.jpg")
-				try: await ctx.interaction.respond(embed=embed)
+				try: await ctx.respond(embed=embed)
 				except NotFound: pass
 
 		except CancelledError: pass
