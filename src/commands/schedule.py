@@ -83,8 +83,7 @@ class ScheduleCommand(BaseCommand):
 			try: await ctx.defer(ephemeral=True)
 			except: return
 
-			posts = await self.database.collection(f"details/scheduledPosts/{request.guildId}").get()
-			totalPostCount = len(posts)
+			totalPostCount = await self.database.collection(f"details/scheduledPosts/{request.guildId}").count().get()
 
 			if request.guildId == -1:
 				embed = Embed(title="You cannot schedule a post in DMs.", color=constants.colors["gray"])
@@ -104,7 +103,7 @@ class ScheduleCommand(BaseCommand):
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 
-			elif totalPostCount >= 25:
+			elif totalPostCount[0][0].value >= 25:
 				embed = Embed(title="You can only create up to 25 scheduled posts per community. Remove some before creating new ones by calling </schedule list:1041362666872131675>", color=constants.colors["red"])
 				embed.set_author(name="Maximum number of scheduled posts reached", icon_url=static_storage.error_icon)
 				try: await ctx.interaction.edit_original_response(embed=embed)
@@ -197,7 +196,8 @@ class ScheduleCommand(BaseCommand):
 				webhooks = await ctx.channel.webhooks()
 				webhook = next((w for w in webhooks if w.user.id == self.bot.user.id), None)
 				if webhook is None:
-					webhook = await ctx.channel.create_webhook(name=self.bot.user.name)
+					avatar = await self.bot.user.avatar.read()
+					webhook = await ctx.channel.create_webhook(name=self.bot.user.name, avatar=avatar)
 
 				await self.database.document(f"details/scheduledPosts/{request.guildId}/{str(uuid4())}").set({
 					"arguments": arguments,
@@ -255,8 +255,7 @@ class ScheduleCommand(BaseCommand):
 			try: await ctx.defer(ephemeral=True)
 			except: return
 
-			posts = await self.database.collection(f"details/scheduledPosts/{request.guildId}").get()
-			totalPostCount = len(posts)
+			totalPostCount = await self.database.collection(f"details/scheduledPosts/{request.guildId}").count().get()
 
 			if request.guildId == -1:
 				embed = Embed(title="You cannot schedule a post in DMs.", color=constants.colors["gray"])
@@ -276,7 +275,7 @@ class ScheduleCommand(BaseCommand):
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 
-			elif totalPostCount >= 25:
+			elif totalPostCount[0][0].value >= 25:
 				embed = Embed(title="You can only create up to 25 scheduled posts per community. Remove some before creating new ones by calling </schedule list:1041362666872131675>", color=constants.colors["red"])
 				embed.set_author(name="Maximum number of scheduled posts reached", icon_url=static_storage.error_icon)
 				try: await ctx.interaction.edit_original_response(embed=embed)
@@ -358,7 +357,8 @@ class ScheduleCommand(BaseCommand):
 				webhooks = await ctx.channel.webhooks()
 				webhook = next((w for w in webhooks if w.user.id == self.bot.user.id), None)
 				if webhook is None:
-					webhook = await ctx.channel.create_webhook(name=self.bot.user.name)
+					avatar = await self.bot.user.avatar.read()
+					webhook = await ctx.channel.create_webhook(name=self.bot.user.name, avatar=avatar)
 
 				await self.database.document(f"details/scheduledPosts/{request.guildId}/{str(uuid4())}").set({
 					"arguments": arguments,
@@ -411,8 +411,7 @@ class ScheduleCommand(BaseCommand):
 			try: await ctx.defer(ephemeral=True)
 			except: return
 
-			posts = await self.database.collection(f"details/scheduledPosts/{request.guildId}").get()
-			totalPostCount = len(posts)
+			totalPostCount = await self.database.collection(f"details/scheduledPosts/{request.guildId}").count().get()
 
 			if request.guildId == -1:
 				embed = Embed(title="You cannot schedule a post in DMs.", color=constants.colors["gray"])
@@ -432,7 +431,7 @@ class ScheduleCommand(BaseCommand):
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 
-			elif totalPostCount >= 25:
+			elif totalPostCount[0][0].value >= 25:
 				embed = Embed(title="You can only create up to 25 scheduled posts per community. Remove some before creating new ones by calling </schedule list:1041362666872131675>", color=constants.colors["red"])
 				embed.set_author(name="Maximum number of scheduled posts reached", icon_url=static_storage.error_icon)
 				try: await ctx.interaction.edit_original_response(embed=embed)
@@ -511,7 +510,8 @@ class ScheduleCommand(BaseCommand):
 				webhooks = await ctx.channel.webhooks()
 				webhook = next((w for w in webhooks if w.user.id == self.bot.user.id), None)
 				if webhook is None:
-					webhook = await ctx.channel.create_webhook(name=self.bot.user.name)
+					avatar = await self.bot.user.avatar.read()
+					webhook = await ctx.channel.create_webhook(name=self.bot.user.name, avatar=avatar)
 
 				await self.database.document(f"details/scheduledPosts/{request.guildId}/{str(uuid4())}").set({
 					"arguments": [tickerId, venue],
@@ -564,8 +564,7 @@ class ScheduleCommand(BaseCommand):
 			try: await ctx.defer(ephemeral=True)
 			except: return
 
-			posts = await self.database.collection(f"details/scheduledPosts/{request.guildId}").get()
-			totalPostCount = len(posts)
+			totalPostCount = await self.database.collection(f"details/scheduledPosts/{request.guildId}").count().get()
 
 			if request.guildId == -1:
 				embed = Embed(title="You cannot schedule a post in DMs.", color=constants.colors["gray"])
@@ -585,7 +584,7 @@ class ScheduleCommand(BaseCommand):
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 
-			elif totalPostCount >= 25:
+			elif totalPostCount[0][0].value >= 25:
 				embed = Embed(title="You can only create up to 25 scheduled posts per community. Remove some before creating new ones by calling </schedule list:1041362666872131675>", color=constants.colors["red"])
 				embed.set_author(name="Maximum number of scheduled posts reached", icon_url=static_storage.error_icon)
 				try: await ctx.interaction.edit_original_response(embed=embed)
@@ -659,7 +658,8 @@ class ScheduleCommand(BaseCommand):
 				webhooks = await ctx.channel.webhooks()
 				webhook = next((w for w in webhooks if w.user.id == self.bot.user.id), None)
 				if webhook is None:
-					webhook = await ctx.channel.create_webhook(name=self.bot.user.name)
+					avatar = await self.bot.user.avatar.read()
+					webhook = await ctx.channel.create_webhook(name=self.bot.user.name, avatar=avatar)
 
 				await self.database.document(f"details/scheduledPosts/{request.guildId}/{str(uuid4())}").set({
 					"arguments": [tickerId, venue],
