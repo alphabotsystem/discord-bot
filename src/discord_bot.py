@@ -142,7 +142,7 @@ async def send_alpha_messages(messageId, message):
 		await sleep(60)
 
 	# Method should only run if the message is addressed to the right bot
-	if message["destination"] != str(bot.user.id): return
+	if message["botId"] != str(bot.user.id): return
 
 	try:
 		content = None
