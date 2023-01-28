@@ -40,7 +40,7 @@ class ConvertCommand(BaseCommand):
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 			else:
-				embed = Embed(title=f"{payload['quotePrice']} ≈ {payload['quoteConvertedPrice']}", color=constants.colors[payload["messageColor"]])
+				embed = Embed(title=f"{payload['quotePrice']} ≈ {payload['quoteConvertedPrice']}", description=f"{payload['quoteVolume']} {payload['quoteConvertedVolume']}", color=constants.colors[payload["messageColor"]])
 				embed.set_author(name="Conversion", icon_url=self.bot.user.avatar.url)
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass

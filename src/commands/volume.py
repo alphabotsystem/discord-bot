@@ -38,7 +38,7 @@ class VolumeCommand(BaseCommand):
 			embed.set_footer(text=payload["sourceText"])
 			try: await ctx.interaction.edit_original_response(embed=embed)
 			except NotFound: pass
-		
+
 		await self.database.document("discord/statistics").set({request.snapshot: {"v": Increment(1)}}, merge=True)
 		await self.log_request("volume", request, [task])
 
@@ -54,7 +54,6 @@ class VolumeCommand(BaseCommand):
 			if request is None: return
 
 			platforms = request.get_platform_order_for("v")
-
 			[(responseMessage, task), _] = await gather(
 				process_quote_arguments([venue], platforms, tickerId=tickerId.upper()),
 				ctx.defer()

@@ -44,7 +44,7 @@ class HeatmapCommand(BaseCommand):
 					embeds.append(embed)
 				else:
 					files.append(File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, request.authorId, randint(1000, 9999))))
-		
+
 		actions = None
 		if len(files) != 0:
 			actions = ActionsView(user=ctx.author)
@@ -74,7 +74,6 @@ class HeatmapCommand(BaseCommand):
 
 			platforms = request.get_platform_order_for("hmap", assetType=assetType)
 			arguments = [assetType, timeframe, market, category, size, group, theme]
-
 			[(responseMessage, task), _] = await gather(
 				process_heatmap_arguments(arguments, platforms),
 				ctx.defer()

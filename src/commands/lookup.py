@@ -38,7 +38,6 @@ class LookupCommand(BaseCommand):
 			if request is None: return
 
 			platforms = request.get_platform_order_for("lookup")
-
 			responseMessage, task = await process_quote_arguments([], platforms, tickerId=tickerId.upper())
 
 			if responseMessage is not None:
@@ -105,7 +104,7 @@ class LookupCommand(BaseCommand):
 					if e.get("price_change_percentage_24h_in_currency", None) is not None:
 						response.append({"symbol": e["symbol"].upper(), "change": e["price_change_percentage_24h_in_currency"]})
 				response = sorted(response, key=lambda k: k["change"], reverse=True)[:10]
-				
+
 				embed = Embed(title="Top gainers", color=constants.colors["deep purple"])
 				for token in response:
 					embed.add_field(name=token["symbol"], value="Gained {:,.2f} %".format(token["change"]), inline=True)
@@ -158,7 +157,6 @@ class LookupCommand(BaseCommand):
 			request = await self.create_request(ctx)
 			if request is None: return
 
-			platforms = request.get_platform_order_for("c")
 			if assetType != "":
 				if assetType.lower() == "crypto":
 					assetType = "am"
@@ -171,6 +169,7 @@ class LookupCommand(BaseCommand):
 					except NotFound: pass
 					return
 
+			platforms = request.get_platform_order_for("c")
 			[(_, task), _] = await gather(
 				process_chart_arguments([assetType], platforms, tickerId="FGI"),
 				ctx.defer()

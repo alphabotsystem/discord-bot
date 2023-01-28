@@ -50,7 +50,6 @@ class AlertCommand(BaseCommand):
 					return
 
 				platforms = request.get_platform_order_for("alert")
-
 				responseMessage, task = await process_quote_arguments([venue], platforms, tickerId=tickerId.upper())
 
 				if responseMessage is not None:
@@ -159,8 +158,8 @@ class AlertCommand(BaseCommand):
 
 						newAlerts.append({
 							"timestamp": time(),
-							"channel": None if channel is None else channel.id,
-							"backupChannel": ctx.channel.id,
+							"channel": None if channel is None else str(channel.id),
+							"backupChannel": str(ctx.channel.id),
 							"service": "Discord",
 							"request": currentTask,
 							"currentPlatform": currentPlatform,
@@ -168,7 +167,7 @@ class AlertCommand(BaseCommand):
 							"levelText": levelText,
 							"version": 4,
 							"triggerMessage": message,
-							"triggerTag": None if role is None else role.id,
+							"triggerTag": None if role is None else str(role.id),
 							"placement": "above" if level > currentLevel else "below",
 							"botId": str(self.bot.user.id)
 						})
