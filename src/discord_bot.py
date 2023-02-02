@@ -23,7 +23,7 @@ from helpers import constants
 from DatabaseConnector import DatabaseConnector
 from CommandRequest import CommandRequest
 
-from commands.assistant import AlphaCommand
+from commands.assistant import AskCommand
 from commands.alerts import AlertCommand
 from commands.charts import ChartCommand
 from commands.flow import FlowCommand
@@ -111,16 +111,16 @@ async def update_guild_count():
 # Database management
 # -------------------------
 
-def update_alpha_settings(settings, changes, timestamp):
-	global alphaSettings
-	alphaSettings = settings[0].to_dict()
+def update_settings(s, changes, timestamp):
+	global settings
+	settings = s[0].to_dict()
 	botStatus[1] = True
 
 # -------------------------
 # Message processing
 # -------------------------
 
-def process_alpha_messages(pendingMessages, changes, timestamp):
+def process_messages(pendingMessages, changes, timestamp):
 	while not botStatus[0]:
 		ssleep(60)
 
@@ -131,13 +131,13 @@ def process_alpha_messages(pendingMessages, changes, timestamp):
 		for change in changes:
 			message = change.document.to_dict()
 			if change.type.name in ["ADDED", "MODIFIED"]:
-				bot.loop.create_task(send_alpha_messages(change.document.id, message))
+				bot.loop.create_task(send_messages(change.document.id, message))
 
 	except Exception:
 		print(format_exc())
 		if environ["PRODUCTION"]: logging.report_exception()
 
-async def send_alpha_messages(messageId, message):
+async def send_messages(messageId, message):
 	while not botStatus[0]:
 		await sleep(60)
 
@@ -233,32 +233,32 @@ async def security_check():
 	try:
 		guildIds = [str(e.id) for e in bot.guilds]
 
-		for guildId in list(alphaSettings["nicknames"].keys()):
+		for guildId in list(settings["nicknames"].keys()):
 			if guildId not in guildIds:
-				alphaSettings["nicknames"].pop(guildId)
+				settings["nicknames"].pop(guildId)
 
 		for guild in bot.guilds:
 			if guild.id in constants.bannedGuilds:
 				await guild.leave()
 			if guild.member_count < 10:
-				if guildId in alphaSettings["nicknames"]:
-					alphaSettings["nicknames"].pop(guildId)
+				if guildId in settings["nicknames"]:
+					settings["nicknames"].pop(guildId)
 				continue
 
 			guildId = str(guild.id)
 			if guild.me is not None:
-				if guildId in alphaSettings["nicknames"]:
+				if guildId in settings["nicknames"]:
 					if guild.me.nick is None:
-						alphaSettings["nicknames"].pop(guildId)
-					elif alphaSettings["nicknames"][guildId]["nickname"] != guild.me.nick or alphaSettings["nicknames"][guildId]["server name"] != guild.name:
-						alphaSettings["nicknames"][guildId] = {"nickname": guild.me.nick, "server name": guild.name, "allowed": None}
+						settings["nicknames"].pop(guildId)
+					elif settings["nicknames"][guildId]["nickname"] != guild.me.nick or settings["nicknames"][guildId]["server name"] != guild.name:
+						settings["nicknames"][guildId] = {"nickname": guild.me.nick, "server name": guild.name, "allowed": None}
 				elif guild.me.nick is not None:
-					alphaSettings["nicknames"][guildId] = {"nickname": guild.me.nick, "server name": guild.name, "allowed": None}
-			elif guildId in alphaSettings["nicknames"]:
-				alphaSettings["nicknames"].pop(guildId)
+					settings["nicknames"][guildId] = {"nickname": guild.me.nick, "server name": guild.name, "allowed": None}
+			elif guildId in settings["nicknames"]:
+				settings["nicknames"].pop(guildId)
 
 		if environ["PRODUCTION"]:
-			await database.document("discord/settings").set(alphaSettings)
+			await database.document("discord/settings").set(settings)
 
 	except CancelledError: pass
 	except Exception:
@@ -355,7 +355,7 @@ async def process_ichibot_command(message, commandRequest, requestSlice):
 	sentMessages = []
 	try:
 		if requestSlice == "login":
-			embed = Embed(title=":dart: API key preferences are available in your Alpha Account settings.", description="[Sign into you Alpha Account](https://www.alpha.bot/login) and visit [Ichibot preferences](https://www.alpha.bot/account/trading) to update your API keys.", color=constants.colors["deep purple"])
+			embed = Embed(title=":dart: API key preferences are available in your Alpha.bot account settings.", description="[Sign into you Alpha.bot account](https://www.alpha.bot/login) and visit [Ichibot preferences](https://www.alpha.bot/account/trading) to update your API keys.", color=constants.colors["deep purple"])
 			embed.set_author(name="Ichibot", icon_url=static_storage.ichibot)
 			await message.channel.send(embed=embed)
 
@@ -377,7 +377,7 @@ async def process_ichibot_command(message, commandRequest, requestSlice):
 				missingExchangeMessage = await message.channel.send(embed=embed)
 
 		else:
-			embed = Embed(title=":dart: You must have an Alpha Account connected to your Discord to execute live trades.", description="[Sign up for a free account on our website](https://www.alpha.bot/signup). If you already signed up, [sign in](https://www.alpha.bot/login), connect your account with your Discord profile, and add an API key.", color=constants.colors["deep purple"])
+			embed = Embed(title=":dart: You must have an Alpha.bot account connected to your Discord to execute live trades.", description="[Sign up for a free account on our website](https://www.alpha.bot/signup). If you already signed up, [sign in](https://www.alpha.bot/login), connect your account with your Discord profile, and add an API key.", color=constants.colors["deep purple"])
 			embed.set_author(name="Ichibot", icon_url=static_storage.ichibot)
 			await message.channel.send(embed=embed)
 
@@ -425,11 +425,11 @@ async def create_request(ctx, autodelete=-1):
 	request.set_delay("database", databaseCheckpoint - start)
 
 	if request.guildId != -1 and bot.user.id == 401328409499664394:
-		branding = alphaSettings["nicknames"].get(str(request.guildId), {"allowed": True, "nickname": None})
+		branding = settings["nicknames"].get(str(request.guildId), {"allowed": True, "nickname": None})
 		if branding["allowed"] == False and ctx.guild.me.nick == branding["nickname"]:
-			embed = Embed(title="This Discord community guild was flagged for re-branding Alpha Bot and is therefore violating the Terms of Service.", description="Note that you are allowed to change the nickname of the bot as long as it is neutral. If you wish to present the bot with your own branding, you have to purchase a [Bot License](https://www.alpha.bot/pro/bot-license). Alpha Bot will continue to operate normally, if you remove the nickname.", color=0x000000)
+			embed = Embed(title="This Discord community guild was flagged for re-branding Alpha.bot and is therefore violating the Terms of Service.", description="Note that you are allowed to change the nickname of the bot as long as it is neutral. If you wish to present the bot with your own branding, you have to purchase a [Bot License](https://www.alpha.bot/pro/bot-license). Alpha.bot will continue to operate normally, if you remove the nickname.", color=0x000000)
 			embed.add_field(name="Terms of service", value="[Read now](https://www.alpha.bot/terms-of-service)", inline=True)
-			embed.add_field(name="Alpha Bot support Discord server", value="[Join now](https://discord.gg/GQeDE85)", inline=True)
+			embed.add_field(name="Alpha.bot support Discord server", value="[Join now](https://discord.gg/GQeDE85)", inline=True)
 			try: await ctx.respond(embed=embed)
 			except NotFound: pass
 			return None
@@ -440,11 +440,11 @@ async def create_request(ctx, autodelete=-1):
 				request.guildProperties = forcedFetch
 				return request
 			elif not ctx.bot and ctx.interaction.channel.permissions_for(ctx.author).administrator:
-				embed = Embed(title="Hello world!", description="Thanks for adding Alpha Bot to your Discord community, we're thrilled to have you onboard. We think you're going to love everything Alpha Bot can do. Before you start using it, you must complete a short setup process. Sign into your [Alpha Account](https://www.alpha.bot/communities) and visit your [Communities Dashboard](https://www.alpha.bot/communities) to begin.", color=constants.colors["pink"])
+				embed = Embed(title="Hello world!", description="Thanks for adding Alpha.bot to your Discord community, we're thrilled to have you onboard. We think you're going to love everything Alpha.bot can do. Before you start using it, you must complete a short setup process. Sign into your [Alpha.bot account](https://www.alpha.bot/communities) and visit your [Communities Dashboard](https://www.alpha.bot/communities) to begin.", color=constants.colors["pink"])
 				try: await ctx.respond(embed=embed)
 				except NotFound: pass
 			else:
-				embed = Embed(title="Hello world!", description="This is Alpha Bot, the most popular financial bot on Discord. A short setup process hasn't been completed in this Discord community yet. Ask administrators to complete it by signing into their [Alpha Account](https://www.alpha.bot/communities) and visiting their [Communities Dashboard](https://www.alpha.bot/communities).", color=constants.colors["pink"])
+				embed = Embed(title="Hello world!", description="This is Alpha.bot, the most popular financial bot on Discord. A short setup process hasn't been completed in this Discord community yet. Ask administrators to complete it by signing into their [Alpha.bot account](https://www.alpha.bot/communities) and visiting their [Communities Dashboard](https://www.alpha.bot/communities).", color=constants.colors["pink"])
 				try: await ctx.respond(embed=embed)
 				except NotFound: pass
 			return None
@@ -456,7 +456,7 @@ async def create_request(ctx, autodelete=-1):
 # Slash commands
 # -------------------------
 
-bot.add_cog(AlphaCommand(bot, create_request, database, logging))
+bot.add_cog(AskCommand(bot, create_request, database, logging))
 bot.add_cog(AlertCommand(bot, create_request, database, logging))
 bot.add_cog(ChartCommand(bot, create_request, database, logging))
 # bot.add_cog(FlowCommand(bot, create_request, database, logging))
@@ -490,13 +490,13 @@ async def unknown_error(ctx, authorId):
 
 botStatus = [False, False]
 
-alphaSettings = {}
+settings = {}
 accountProperties = DatabaseConnector(mode="account")
 guildProperties = DatabaseConnector(mode="guild")
 Ichibot.logging = logging
 
-discordSettingsLink = snapshots.document("discord/settings").on_snapshot(update_alpha_settings)
-discordMessagesLink = snapshots.collection("discord/properties/messages").on_snapshot(process_alpha_messages)
+discordSettingsLink = snapshots.document("discord/settings").on_snapshot(update_settings)
+discordMessagesLink = snapshots.collection("discord/properties/messages").on_snapshot(process_messages)
 
 @bot.event
 async def on_ready():

@@ -20,7 +20,7 @@ from assets import static_storage
 from commands.base import BaseCommand
 
 
-class AlphaCommand(BaseCommand):
+class AskCommand(BaseCommand):
 	def __init__(self, bot, create_request, database, logging):
 		super().__init__(bot, create_request, database, logging)
 
@@ -56,7 +56,7 @@ class AlphaCommand(BaseCommand):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /alpha {question}")
+			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /ask {question}")
 			await self.unknown_error(ctx)
 
 	def process_reply(self, question, hasPermissions):
@@ -68,7 +68,7 @@ class AlphaCommand(BaseCommand):
 
 			if response	is not None and response != "":
 				if "Here are some things you can ask for:" in response:
-					return "You can learn more about Alpha Bot at https://www.alpha.bot"
+					return "You can learn more about Alpha.bot's features at https://www.alpha.bot/features"
 				elif any(trigger in response for trigger in constants.badPunTrigger):
 					with open("src/assets/jokes.json") as json_data:
 						return f"Here's a pun that might make you laugh :smile:\n{choice(load(json_data))}"
@@ -77,7 +77,7 @@ class AlphaCommand(BaseCommand):
 						for trigger in constants.messageOverrides[override]:
 							if trigger.lower() in response.lower():
 								return override
-					return " ".join(response.replace("Google Assistant", "Alpha Bot").replace("Google", "Alpha Bot").split())
+					return " ".join(response.replace("Google Assistant", "Alpha.bot").replace("Google", "Alpha.bot").split())
 			else:
 				return None
 

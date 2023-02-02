@@ -164,3 +164,8 @@ class ActionsView(View):
 			await interaction.response.send_message(embed=embed)
 		try: await interaction.message.delete()
 		except: return
+
+class AuthView(View):
+	def __init__(self):
+		super().__init__()
+		self.add_item(Button(label="Authorize", url="https://discord.com/oauth2/authorize?client_id=401328409499664394&redirect_uri=https%3A%2F%2Fwww.alpha.bot%2Faccount%2Faction&response_type=code&scope=identify%20email%20guilds%20guilds.join%20role_connections.write", style=ButtonStyle.link))

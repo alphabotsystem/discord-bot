@@ -85,7 +85,7 @@ class AlertCommand(BaseCommand):
 						return
 				else:
 					if len(priceAlerts) >= 50:
-						embed = Embed(title="You can only create up to 50 price alerts. Remove some before creating new ones by calling </alert list:928980578739568651>", description="You can increase your limit to 1000 by signing up for a [free Alpha Account](https://www.alpha.bot/sign-up", color=constants.colors["gray"])
+						embed = Embed(title="You can only create up to 50 price alerts. Remove some before creating new ones by calling </alert list:928980578739568651>", description="You can increase your limit to 500 by signing up for a [free Alpha.bot account](https://www.alpha.bot/sign-up", color=constants.colors["gray"])
 						embed.set_author(name="Maximum number of price alerts reached", icon_url=static_storage.error_icon)
 						try: await ctx.interaction.edit_original_response(embed=embed)
 						except NotFound: pass
