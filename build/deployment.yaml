@@ -22,7 +22,7 @@ spec:
         resources:
           requests:
             memory: "1800Mi"
-            cpu: "170m"
+            cpu: "100m"
             ephemeral-storage: "5000Ki"
         env:
           - name: PRODUCTION
