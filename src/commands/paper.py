@@ -2,7 +2,7 @@ from os import environ
 from time import time
 from uuid import uuid4
 from aiohttp import ClientSession
-from asyncio import gather, CancelledError, wait
+from asyncio import gather, CancelledError, wait, create_task
 from traceback import format_exc
 
 from discord import Embed, ButtonStyle, Interaction
@@ -454,12 +454,12 @@ class PaperCommand(BaseCommand):
 
 					if request.is_registered():
 						await wait([
-							delete_collection(self.database.collection(f"details/openPaperOrders/{request.accountId}"), 300),
-							delete_collection(self.database.collection(f"details/paperOrderHistory/{request.accountId}"), 300),
+							create_task(delete_collection(self.database.collection(f"details/openPaperOrders/{request.accountId}"), 300)),
+							create_task(delete_collection(self.database.collection(f"details/paperOrderHistory/{request.accountId}"), 300)),
 						])
 
 					await wait([
-						delete_collection(self.database.collection(f"details/paperOrderHistory/{request.authorId}"), 300)
+						create_task(delete_collection(self.database.collection(f"details/paperOrderHistory/{request.authorId}"), 300))
 					])
 
 					if request.is_registered():
