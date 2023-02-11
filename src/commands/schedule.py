@@ -44,13 +44,13 @@ def autocomplete_period(ctx):
 def autocomplete_date(ctx):
 	date = " ".join(ctx.options.get("start", "").lower().split())
 	if date == "":
-		options = [datetime.now().strftime("%d/%m/%Y %H:%M") + " UTC"]
+		options = [datetime.now().strftime("%b %d %Y %H:%M") + " UTC"]
 		return options
 	else:
 		timeStructs, _ = cal.parse(date)
 		parsed = datetime(*timeStructs[:5])
 		if parsed < datetime.now(): parsed += timedelta(days=1)
-		options = [parsed.strftime("%d/%m/%Y %H:%M") + " UTC"]
+		options = [parsed.strftime("%b %d %Y %H:%M") + " UTC"]
 		return options
 
 def autocomplete_exclude(ctx):
@@ -132,9 +132,9 @@ class ScheduleCommand(BaseCommand):
 					return
 
 				if start is None:
-					start = datetime.now().strftime("%d/%m/%Y %H:%M") + " UTC"
+					start = datetime.now().strftime("%b %d %Y %H:%M") + " UTC"
 				try:
-					timestamp = datetime.strptime(start, "%d/%m/%Y %H:%M UTC").timestamp()
+					timestamp = datetime.strptime(start, "%b %d %Y %H:%M UTC").timestamp()
 				except:
 					embed = Embed(title="The provided start date is not valid. Please provide a valid date and time.", color=constants.colors["gray"])
 					embed.set_author(name="Invalid start time", icon_url=static_storage.error_icon)
@@ -298,9 +298,9 @@ class ScheduleCommand(BaseCommand):
 					return
 
 				if start is None:
-					start = datetime.now().strftime("%d/%m/%Y %H:%M") + " UTC"
+					start = datetime.now().strftime("%b %d %Y %H:%M") + " UTC"
 				try:
-					timestamp = datetime.strptime(start, "%d/%m/%Y %H:%M UTC").timestamp()
+					timestamp = datetime.strptime(start, "%b %d %Y %H:%M UTC").timestamp()
 				except:
 					embed = Embed(title="The provided start date is not valid. Please provide a valid date and time.", color=constants.colors["gray"])
 					embed.set_author(name="Invalid start time", icon_url=static_storage.error_icon)
@@ -454,9 +454,9 @@ class ScheduleCommand(BaseCommand):
 					return
 
 				if start is None:
-					start = datetime.now().strftime("%d/%m/%Y %H:%M") + " UTC"
+					start = datetime.now().strftime("%b %d %Y %H:%M") + " UTC"
 				try:
-					timestamp = datetime.strptime(start, "%d/%m/%Y %H:%M UTC").timestamp()
+					timestamp = datetime.strptime(start, "%b %d %Y %H:%M UTC").timestamp()
 				except:
 					embed = Embed(title="The provided start date is not valid. Please provide a valid date and time.", color=constants.colors["gray"])
 					embed.set_author(name="Invalid start time", icon_url=static_storage.error_icon)
@@ -607,9 +607,9 @@ class ScheduleCommand(BaseCommand):
 					return
 
 				if start is None:
-					start = datetime.now().strftime("%d/%m/%Y %H:%M") + " UTC"
+					start = datetime.now().strftime("%b %d %Y %H:%M") + " UTC"
 				try:
-					timestamp = datetime.strptime(start, "%d/%m/%Y %H:%M UTC").timestamp()
+					timestamp = datetime.strptime(start, "%b %d %Y %H:%M UTC").timestamp()
 				except:
 					embed = Embed(title="The provided start date is not valid. Please provide a valid date and time.", color=constants.colors["gray"])
 					embed.set_author(name="Invalid start time", icon_url=static_storage.error_icon)
@@ -717,7 +717,7 @@ class ScheduleCommand(BaseCommand):
 				for key, post in posts:
 					timestamp = post["start"]
 					while timestamp < time(): timestamp += post["period"] * 60
-					nextPost = datetime.fromtimestamp(timestamp, tz=utc).strftime("%d/%m/%Y %H:%M")
+					nextPost = datetime.fromtimestamp(timestamp, tz=utc).strftime("%b %d %Y %H:%M")
 					command = "`" + ' '.join([e for e in post['arguments'] if e != ""]) + "`"
 					if len(command) == 2: command = "No arguments"
 					if post['command'] == "volume":
