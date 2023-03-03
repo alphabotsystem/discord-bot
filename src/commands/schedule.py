@@ -733,6 +733,176 @@ class ScheduleCommand(BaseCommand):
 			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /schedule list")
 			await self.unknown_error(ctx)
 
+	@scheduleGroup.command(name="fgi", description="Schedule fear & greed index chart to get automatically posted periodically.")
+	async def chart(
+		self,
+		ctx,
+		period: Option(str, "Period of time every which the chart will be posted.", name="period", autocomplete=autocomplete_period),
+		assetType: Option(str, "Fear & greed market type", name="market", autocomplete=autocomplete_type, required=False, default=""),
+		start: Option(str, "Time at which the first chart will be posted.", name="start", autocomplete=autocomplete_date, required=False, default=None),
+		exclude: Option(str, "Times to exclude from posting.", name="skip", autocomplete=autocomplete_exclude, required=False, default=None),
+		message: Option(str, "Message to post with the chart.", name="message", required=False, default=None),
+		role: Option(Role, "Role to tag on trigger.", name="role", required=False, default=None)
+	):
+		try:
+			request = await self.create_request(ctx)
+			if request is None: return
+
+			try: await ctx.defer(ephemeral=True)
+			except: return
+
+			totalPostCount = await self.database.collection(f"details/scheduledPosts/{request.guildId}").count().get()
+
+			if request.guildId == -1:
+				embed = Embed(title="You cannot schedule a post in DMs.", color=constants.colors["gray"])
+				embed.set_author(name="Permission denied", icon_url=static_storage.error_icon)
+				try: await ctx.interaction.edit_original_response(embed=embed)
+				except NotFound: pass
+
+			elif not ctx.channel.permissions_for(ctx.author).manage_messages:
+				embed = Embed(title="You do not have the sufficient permission to create a scheduled post.", description="To be able to create a scheduled post, you must have the `manage messages` permission.", color=constants.colors["red"])
+				embed.set_author(name="Permission denied", icon_url=static_storage.error_icon)
+				try: await ctx.interaction.edit_original_response(embed=embed)
+				except NotFound: pass
+
+			elif not ctx.channel.permissions_for(ctx.guild.me).manage_webhooks:
+				embed = Embed(title=f"{self.bot.user.name} doesn't have the permission to send messages via Webhooks.", description=f"Grant `view channel` and `manage webhooks` permissions to {self.bot.user.name} in this channel to be able to schedule a post.", color=constants.colors["red"])
+				embed.set_author(name="Missing permissions", icon_url=static_storage.error_icon)
+				try: await ctx.interaction.edit_original_response(embed=embed)
+				except NotFound: pass
+
+			elif totalPostCount[0][0].value >= 100:
+				embed = Embed(title="You can only create up to 100 scheduled posts per community. Remove some before creating new ones by calling </schedule list:1041362666872131675>", color=constants.colors["red"])
+				embed.set_author(name="Maximum number of scheduled posts reached", icon_url=static_storage.error_icon)
+				try: await ctx.interaction.edit_original_response(embed=embed)
+				except NotFound: pass
+
+			elif request.scheduled_posting_available():
+				period = period.lower()
+
+				if assetType != "":
+					if assetType.lower() == "crypto":
+						assetType = "am"
+					elif assetType.lower() == "stocks":
+						assetType = "cnn"
+					else:
+						embed = Embed(title="Asset type is invalid. Only stocks and crypto markets are supported.", color=constants.colors["gray"])
+						embed.set_author(name="Invalid market", icon_url=static_storage.error_icon)
+						try: await ctx.interaction.edit_original_response(embed=embed)
+						except NotFound: pass
+						return
+				elif period not in PERIODS:
+					embed = Embed(title="The provided period is not valid. Please pick one of the available periods.", color=constants.colors["gray"])
+					embed.set_author(name="Invalid period", icon_url=static_storage.error_icon)
+					try: await ctx.interaction.edit_original_response(embed=embed)
+					except NotFound: pass
+					return
+				elif exclude is not None and exclude not in EXCLUDE:
+					embed = Embed(title="The provided skip value is not valid. Please pick one of the available options.", color=constants.colors["gray"])
+					embed.set_author(name="Invalid skip value", icon_url=static_storage.error_icon)
+					try: await ctx.interaction.edit_original_response(embed=embed)
+					except NotFound: pass
+					return
+
+				if start is None:
+					start = datetime.now().strftime("%b %d %Y %H:%M") + " UTC"
+				try:
+					timestamp = datetime.strptime(start, "%b %d %Y %H:%M UTC").timestamp()
+				except:
+					embed = Embed(title="The provided start date is not valid. Please provide a valid date and time.", color=constants.colors["gray"])
+					embed.set_author(name="Invalid start time", icon_url=static_storage.error_icon)
+					try: await ctx.interaction.edit_original_response(embed=embed)
+					except NotFound: pass
+					return
+
+				while timestamp < time():
+					timestamp += PERIOD_TO_TIME[period] * 60
+
+				platforms = request.get_platform_order_for("c")
+				responseMessage, task = await process_chart_arguments([assetType], platforms, tickerId="FGI")
+
+				if responseMessage is not None:
+					description = "[Advanced Charting add-on](https://www.alpha.bot/pro/advanced-charting) unlocks additional assets, indicators, timeframes and more." if responseMessage.endswith("add-on.") else "Detailed guide with examples is available on [our website](https://www.alpha.bot/features/charting)."
+					embed = Embed(title=responseMessage, description=description, color=constants.colors["gray"])
+					embed.set_author(name="Invalid argument", icon_url=static_storage.error_icon)
+					try: await ctx.interaction.edit_original_response(embed=embed)
+					except NotFound: pass
+					return
+				elif task.get("requestCount") > 1:
+					embed = Embed(title="Only one timeframe is allowed per request when scheduling a post.", color=constants.colors["gray"])
+					embed.set_author(name="Too many requests", icon_url=static_storage.error_icon)
+					try: await ctx.interaction.edit_original_response(embed=embed)
+					except NotFound: pass
+					return
+
+				currentTask = task.get(task.get("currentPlatform"))
+				timeframes = task.pop("timeframes")
+				for p, t in timeframes.items(): task[p]["currentTimeframe"] = t[0]
+				payload, responseMessage = await process_task(task, "chart", origin=request.origin)
+
+				files, embeds = [], []
+				if responseMessage == "requires pro":
+					embed = Embed(title=f"The requested chart for `{currentTask.get('ticker').get('name')}` is only available on TradingView Premium.", description="All TradingView Premium charts are bundled with the [Advanced Charting add-on](https://www.alpha.bot/pro/advanced-charting).", color=constants.colors["gray"])
+					embed.set_author(name="Invalid argument", icon_url=static_storage.error_icon)
+					embeds.append(embed)
+				elif payload is None:
+					errorMessage = f"Requested chart for `{currentTask.get('ticker').get('name')}` is not available." if responseMessage is None else responseMessage
+					embed = Embed(title=errorMessage, color=constants.colors["gray"])
+					embed.set_author(name="Chart not available", icon_url=static_storage.error_icon)
+					embeds.append(embed)
+				else:
+					files.append(File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, request.authorId, randint(1000, 9999))))
+
+				confirmation = None if payload is None or payload.get("data") is None else Confirm(user=ctx.author)
+				try: await ctx.interaction.edit_original_response(embeds=embeds, files=files, view=confirmation)
+				except NotFound: pass
+				await confirmation.wait()
+
+				if confirmation is None:
+					return
+				if confirmation.value is None or not confirmation.value:
+					try: await ctx.interaction.delete_original_response()
+					except NotFound: pass
+					return
+
+				webhooks = await ctx.channel.webhooks()
+				webhook = next((w for w in webhooks if w.user.id == self.bot.user.id), None)
+				if webhook is None:
+					avatar = await self.bot.user.avatar.read()
+					webhook = await ctx.channel.create_webhook(name=self.bot.user.name, avatar=avatar)
+
+				await self.database.document(f"details/scheduledPosts/{request.guildId}/{str(uuid4())}").set({
+					"arguments": [assetType],
+					"authorId": str(request.authorId),
+					"botId": str(self.bot.user.id),
+					"channelId": str(request.channelId),
+					"command": "chart",
+					"exclude": None if exclude is None else exclude.lower(),
+					"message": message,
+					"period": PERIOD_TO_TIME[period],
+					"role": None if role is None else str(role.id),
+					"start": timestamp,
+					"url": webhook.url
+				})
+
+				try: await ctx.interaction.edit_original_response(view=None)
+				except NotFound: pass
+
+				embed = Embed(title="Scheduled post has been created.", description=f"The scheduled chart will be posted publicly every {period.removeprefix('1 ')} in this channel, starting {start}.", color=constants.colors["purple"])
+				embed.set_author(name="Chart scheduled", icon_url=self.bot.user.avatar.url)
+				await ctx.followup.send(embed=embed, ephemeral=True)
+			else:
+				embed = Embed(title=":gem: Scheduled Posting functionality is available as an add-on subscription for communities for only $5.00 per month.", description="If you'd like to start your 30-day free trial, visit [our website](https://www.alpha.bot/pro/scheduled-posting).", color=constants.colors["deep purple"])
+				# embed.set_image(url="https://www.alpha.bot/files/uploads/pro-hero.jpg")
+				try: await ctx.interaction.edit_original_response(embed=embed)
+				except NotFound: pass
+
+		except CancelledError: pass
+		except Exception:
+			print(format_exc())
+			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /schedule chart {arguments} period:{period} start:{start}")
+			await self.unknown_error(ctx)
+
 
 class DeleteView(View):
 	def __init__(self, database, pathId, userId=None):
