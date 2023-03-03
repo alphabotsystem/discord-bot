@@ -52,9 +52,9 @@ class ChartCommand(BaseCommand):
 		actions = None
 		if len(files) != 0:
 			if request.guildId not in constants.LICENSED_BOTS and len(tasks) == 1 and currentTask.get("ticker", {}).get("tradable") is not None and request.guildId in constants.ICHIBOT_TESTING:
-				actions = IchibotView(self.bot.loop, currentTask, user=ctx.author)
+				actions = IchibotView(self.bot.loop, currentTask, user=ctx.author, command=ctx.command.mention)
 			elif request.guildId not in constants.LICENSED_BOTS and len(tasks) == 1 and currentTask.get("ticker", {}).get("exchange", {}).get("id") in constants.REFERRALS:
-				actions = ReferralView(constants.REFERRALS[currentTask["ticker"]["exchange"]["id"]], user=ctx.author)
+				actions = ReferralView(constants.REFERRALS[currentTask["ticker"]["exchange"]["id"]], user=ctx.author, command=ctx.command.mention)
 			else:
 				actions = ActionsView(user=ctx.author, command=ctx.command.mention)
 
@@ -128,12 +128,12 @@ class ChartCommand(BaseCommand):
 			await self.unknown_error(ctx)
 
 class ReferralView(ActionsView):
-	def __init__(self, url, user=None):
-		super().__init__(user=user)
+	def __init__(self, url, user=None, command=None):
+		super().__init__(user=user, command=command)
 		self.add_item(Button(label="Trade", url=url, style=ButtonStyle.link))
 
 class IchibotView(ActionsView):
-	def __init__(self, eventLoop, task, user=None):
+	def __init__(self, eventLoop, task, user=None, command=None):
 		super().__init__(user=user)
 		self.eventLoop = eventLoop
 		self.task = task
