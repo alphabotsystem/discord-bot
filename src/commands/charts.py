@@ -56,7 +56,7 @@ class ChartCommand(BaseCommand):
 			elif request.guildId not in constants.LICENSED_BOTS and len(tasks) == 1 and currentTask.get("ticker", {}).get("exchange", {}).get("id") in constants.REFERRALS:
 				actions = ReferralView(constants.REFERRALS[currentTask["ticker"]["exchange"]["id"]], user=ctx.author)
 			else:
-				actions = ActionsView(user=ctx.author)
+				actions = ActionsView(user=ctx.author, command=ctx.command.mention)
 
 		requestCheckpoint = time()
 		request.set_delay("request", (requestCheckpoint - start) / (len(files) + len(embeds)))

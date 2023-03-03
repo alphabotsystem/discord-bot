@@ -41,7 +41,7 @@ class FlowCommand(BaseCommand):
 					except NotFound: pass
 				else:
 					currentTask = task.get(payload.get("platform"))
-					actions = ActionsView(user=ctx.author)
+					actions = ActionsView(user=ctx.author, command=ctx.command.mention)
 					try: await ctx.interaction.edit_original_response(file=discord.File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, request.authorId, randint(1000, 9999))), view=actions)
 					except NotFound: pass
 

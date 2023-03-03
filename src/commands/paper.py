@@ -77,7 +77,7 @@ class PaperCommand(BaseCommand):
 						except NotFound: pass
 						return
 				else:
-					embed = Embed(title=":joystick: Placing a limit order requires authorization.", description="In order to place limit orders via Alpha.bot's paper trader, you have to create a free account on [our website](https://www.alpha.bot/signup) or via the link below.", color=constants.colors["deep purple"])
+					embed = Embed(title=":joystick: Placing a limit order requires authorization.", description="In order to place limit orders via Alpha.bot's paper trader, you have to create a free account on [our website](https://www.alpha.bot/signup) or via the button below.", color=constants.colors["deep purple"])
 					embed.set_author(name="Paper Trader", icon_url=self.bot.user.avatar.url)
 					try: await ctx.respond(embed=embed, view=AuthView())
 					except NotFound: pass

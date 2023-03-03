@@ -196,7 +196,8 @@ class LookupCommand(BaseCommand):
 				currentTask = task.get(task.get("currentPlatform"))
 				files.append(File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, request.authorId, randint(1000, 9999))))
 
-			try: await ctx.interaction.edit_original_response(embeds=embeds, files=files, view=ActionsView(user=ctx.author))
+			actions = ActionsView(user=ctx.author, command=ctx.command.mention)
+			try: await ctx.interaction.edit_original_response(embeds=embeds, files=files, view=actions)
 			except NotFound: pass
 
 			await self.database.document("discord/statistics").set({request.snapshot: {"c": Increment(1)}}, merge=True)

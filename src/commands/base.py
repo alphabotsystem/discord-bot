@@ -87,9 +87,10 @@ class BaseCommand(Cog):
 
 	async def cleanup(self, ctx, request, removeView=False):
 		if request.autodelete is not None:
-			try: await ctx.interaction.delete_original_response(delay=request.autodelete * 60)
+			await sleep(request.autodelete * 60)
+			try: await ctx.interaction.edit_original_response(embeds=[], attachments=[], view=None, content=f"The response has been removed. You can make a new request using {ctx.command.mention}")
 			except: pass
-		if removeView:
+		elif removeView:
 			await sleep(600)
 			try: await ctx.interaction.edit_original_response(view=None)
 			except: pass
@@ -152,9 +153,10 @@ class Confirm(View):
 
 
 class ActionsView(View):
-	def __init__(self, user=None):
+	def __init__(self, user=None, command=None):
 		super().__init__(timeout=None)
 		self.user = user
+		self.command = command
 
 	@button(emoji=PartialEmoji.from_str("<:remove_response:929342678976565298>"), style=ButtonStyle.gray)
 	async def delete(self, button: Button, interaction: Interaction):
@@ -162,7 +164,12 @@ class ActionsView(View):
 			if not interaction.permissions.manage_messages: return
 			embed = Embed(title="Chart has been removed by a moderator.", description=f"{interaction.user.mention} has removed the chart requested by {self.user.mention}.", color=constants.colors["pink"])
 			await interaction.response.send_message(embed=embed)
-		try: await interaction.message.delete()
+
+		try:
+			if self.command is None:
+				await interaction.message.edit(embeds=[], attachments=[], view=None, content="Nothing to see here! The response has been removed.")
+			else:
+				await interaction.message.edit(embeds=[], attachments=[], view=None, content=f"The response has been removed. You can make a new request using {self.command}")
 		except: return
 
 class AuthView(View):

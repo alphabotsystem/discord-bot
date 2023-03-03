@@ -47,7 +47,7 @@ class HeatmapCommand(BaseCommand):
 
 		actions = None
 		if len(files) != 0:
-			actions = ActionsView(user=ctx.author)
+			actions = ActionsView(user=ctx.author, command=ctx.command.mention)
 
 		try: await ctx.interaction.edit_original_response(embeds=embeds, files=files, view=actions)
 		except NotFound: pass
