@@ -528,7 +528,6 @@ class PaperCommand(BaseCommand):
 			responseMessage = f"Your {ticker.get('quote') if orderType.endswith('buy') else ticker.get('base')} balance is empty."
 			return outputTitle, responseMessage, paper, None
 
-		print(execPrice, payload["candles"][-1][4])
 		newOrder = {
 			"orderType": orderType,
 			"amount": execAmount,

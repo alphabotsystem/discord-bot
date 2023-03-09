@@ -73,7 +73,7 @@ class LookupCommand(BaseCommand):
 			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /lookup markets {tickerId}")
 			await self.unknown_error(ctx)
 
-	@lookupGroup.command(name="top", description="Look up top gainers and losers in the market.")
+	@lookupGroup.command(name="top-performers", description="Look up top gainers and losers in the market.")
 	async def top(
 		self,
 		ctx,
