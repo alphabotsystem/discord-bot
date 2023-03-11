@@ -15,13 +15,7 @@ from helpers import constants
 from assets import static_storage
 from Processor import process_chart_arguments, process_quote_arguments, process_task, get_listings
 
-from commands.base import BaseCommand, ActionsView, autocomplete_type
-
-
-async def autocomplete_categories(ctx):
-	options = ["crypto gainers", "crypto losers"]
-	currentInput = " ".join(ctx.options.get("category", "").lower().split())
-	return [e for e in options if e.startswith(currentInput)]
+from commands.base import BaseCommand, ActionsView, autocomplete_type, autocomplete_performers_categories
 
 
 class LookupCommand(BaseCommand):
@@ -77,7 +71,7 @@ class LookupCommand(BaseCommand):
 	async def top(
 		self,
 		ctx,
-		category: Option(str, "Ranking type.", name="category", autocomplete=autocomplete_categories),
+		category: Option(str, "Ranking type.", name="category", autocomplete=autocomplete_performers_categories),
 		limit: Option(int, "Asset count limit. Defaults to top 250 by market cap, maximum is 1000.", name="limit", required=False, default=250)
 	):
 		try:
@@ -134,6 +128,7 @@ class LookupCommand(BaseCommand):
 					embed.add_field(name=token["symbol"], value="Lost {:,.2f} %".format(token["change"]), inline=True)
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
+
 			else:
 				embed = Embed(title="The specified category is invalid.", description="Detailed guide with examples is available on [our website](https://www.alpha.bot/features/lookup).", color=constants.colors["deep purple"])
 				try: await ctx.interaction.edit_original_response(embed=embed)

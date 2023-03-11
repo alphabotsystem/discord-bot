@@ -24,6 +24,11 @@ async def autocomplete_type(ctx):
 	currentInput = " ".join(ctx.options.get("type", "").lower().split())
 	return [e for e in options if e.startswith(currentInput)]
 
+async def autocomplete_performers_categories(ctx):
+	options = ["crypto gainers", "crypto losers"]
+	currentInput = " ".join(ctx.options.get("category", "").lower().split())
+	return [e for e in options if e.startswith(currentInput)]
+
 
 class BaseCommand(Cog):
 	commandMap = {
