@@ -158,9 +158,9 @@ class AlertCommand(BaseCommand):
 
 						newAlerts.append({
 							"timestamp": time(),
-							"guild": None if channel is None else request.guildId,
+							"guild": None if channel is None else str(request.guildId),
 							"channel": None if channel is None else str(channel.id),
-							"backupChannel": request.channelId,
+							"backupChannel": str(request.channelId),
 							"service": "Discord",
 							"request": currentTask,
 							"currentPlatform": currentPlatform,
