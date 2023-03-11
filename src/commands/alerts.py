@@ -158,14 +158,15 @@ class AlertCommand(BaseCommand):
 
 						newAlerts.append({
 							"timestamp": time(),
+							"guild": request.guildId,
 							"channel": None if channel is None else str(channel.id),
-							"backupChannel": str(ctx.channel.id),
+							"backupChannel": request.channelId,
 							"service": "Discord",
 							"request": currentTask,
 							"currentPlatform": currentPlatform,
 							"level": level,
 							"levelText": levelText,
-							"version": 4,
+							"version": 5,
 							"triggerMessage": message,
 							"triggerTag": None if role is None else str(role.id),
 							"placement": "above" if level > currentLevel else "below",
