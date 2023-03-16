@@ -1009,7 +1009,7 @@ class ScheduleCommand(BaseCommand):
 					webhook = await ctx.channel.create_webhook(name=self.bot.user.name, avatar=avatar)
 
 				await self.database.document(f"details/scheduledPosts/{request.guildId}/{str(uuid4())}").set({
-					"arguments": [assetType],
+					"arguments": ["fgi", assetType],
 					"authorId": str(request.authorId),
 					"botId": str(self.bot.user.id),
 					"channelId": str(request.channelId),
