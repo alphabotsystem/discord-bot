@@ -156,6 +156,15 @@ class AlertCommand(BaseCommand):
 							except NotFound: pass
 							return
 
+						if currentPlatform == "CCXT":
+							thumbnailUrl = ticker.get("image")
+						else:
+							async with ClientSession() as session:
+								async with session.get(f"https://cloud.iexapis.com/stable/stock/{ticker.get('symbol')}/logo?token={environ['IEXC_KEY']}") as resp:
+									response = await resp.json()
+									thumbnailUrl = response["url"]
+									currentTask["ticker"]["image"] = thumbnailUrl
+
 						newAlerts.append({
 							"timestamp": time(),
 							"guild": None if channel is None else str(request.guildId),
@@ -172,14 +181,6 @@ class AlertCommand(BaseCommand):
 							"placement": "above" if level > currentLevel else "below",
 							"botId": str(self.bot.user.id)
 						})
-
-					if currentPlatform == "CCXT":
-						thumbnailUrl = ticker.get("image")
-					else:
-						async with ClientSession() as session:
-							async with session.get(f"https://cloud.iexapis.com/stable/stock/{ticker.get('symbol')}/logo?token={environ['IEXC_KEY']}") as resp:
-								response = await resp.json()
-								thumbnailUrl = response["url"]
 
 					if len(newAlerts) == 1:
 						description = ""
