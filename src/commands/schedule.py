@@ -22,7 +22,7 @@ from Processor import process_chart_arguments, process_heatmap_arguments, proces
 from commands.heatmaps import autocomplete_theme
 from DatabaseConnector import DatabaseConnector
 
-from commands.base import BaseCommand, Confirm, autocomplete_type, autocomplete_performers_categories
+from commands.base import BaseCommand, RedirectView, Confirm, autocomplete_type, autocomplete_performers_categories
 
 
 cal = Calendar()
@@ -1055,7 +1055,7 @@ class ScheduleCommand(BaseCommand):
 				except NotFound: pass
 
 			else:
-				embed = Embed(title=f"You've created {totalPostCount[0][0].value} scheduled post{'' if totalPostCount[0][0].value == 1 else 's'} in this community.", color=constants.colors["light blue"])
+				embed = Embed(title=f"You've created {totalPostCount[0][0].value} scheduled post{'' if totalPostCount[0][0].value == 1 else 's'} in this community. You can manage them on the community dashboard.", color=constants.colors["light blue"])
 				try: await ctx.respond(embed=embed, view=RedirectView(f"https://www.alpha.bot/communities/{request.guildId}?tab=2"), ephemeral=True)
 				except NotFound: pass
 
@@ -1079,9 +1079,3 @@ class DeleteView(View):
 		await self.database.document(self.pathId).delete()
 		embed = Embed(title="Scheduled post deleted", color=constants.colors["gray"])
 		await interaction.response.edit_message(embed=embed, view=None)
-
-
-class RedirectView(View):
-	def __init__(self, url):
-		super().__init__()
-		self.add_item(Button(label="Open dashboard", url=url, style=ButtonStyle.link))

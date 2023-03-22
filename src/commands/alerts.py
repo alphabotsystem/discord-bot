@@ -18,7 +18,7 @@ from helpers import constants
 from assets import static_storage
 from Processor import process_quote_arguments, process_task
 
-from commands.base import BaseCommand
+from commands.base import BaseCommand, RedirectView, AuthView
 
 
 class AlertCommand(BaseCommand):
@@ -65,32 +65,31 @@ class AlertCommand(BaseCommand):
 					except NotFound: pass
 					return
 
+				count1, count2 = 0, 0
+				if request.is_registered():
+					count1 = await self.database.collection(f"details/marketAlerts/{request.accountId}").count().get()
+				count2 = await self.database.collection(f"details/marketAlerts/{request.authorId}").count().get()
+				totalAlertCount = count1[0][0].value + count2[0][0].value
+
+				if request.is_registered():
+					if totalAlertCount + len(levels) > 250:
+						embed = Embed(title="You can only create up to 250 price alerts. Remove some before creating new ones by calling </alert list:928980578739568651>", color=constants.colors["gray"])
+						embed.set_author(name="Maximum number of price alerts reached", icon_url=static_storage.error_icon)
+						try: await ctx.respond(embed=embed, view=RedirectView(f"https://www.alpha.bot/account/alerts"), ephemeral=True)
+						except NotFound: pass
+						return
+				else:
+					if totalAlertCount + len(levels) > 10:
+						embed = Embed(title="Create more than 10 price alerts by authorizing Alpha.bot, or remove some before creating new ones by calling </alert list:928980578739568651>", description="You can increase your limit to 250 by signing up for a free account on [our website](https://www.alpha.bot/sign-up) or via the button below.", color=constants.colors["gray"])
+						embed.set_author(name="Maximum number of price alerts reached", icon_url=static_storage.error_icon)
+						try: await ctx.respond(embed=embed, view=AuthView(redirect="account/alerts"), ephemeral=True)
+						except NotFound: pass
+						return
+
 				await ctx.defer()
 
 				currentPlatform = task.get("currentPlatform")
 				currentTask = task.get(currentPlatform)
-
-				response1, response2 = [], []
-				if request.is_registered():
-					response1 = await self.database.collection(f"details/marketAlerts/{request.accountId}").get()
-				response2 = await self.database.collection(f"details/marketAlerts/{request.authorId}").get()
-				priceAlerts = [e.to_dict() for e in response1] + [e.to_dict() for e in response2]
-
-				if request.is_registered():
-					if len(priceAlerts) >= 500:
-						embed = Embed(title="You can only create up to 500 price alerts. Remove some before creating new ones by calling </alert list:928980578739568651>", color=constants.colors["gray"])
-						embed.set_author(name="Maximum number of price alerts reached", icon_url=static_storage.error_icon)
-						try: await ctx.interaction.edit_original_response(embed=embed)
-						except NotFound: pass
-						return
-				else:
-					if len(priceAlerts) >= 50:
-						embed = Embed(title="You can only create up to 50 price alerts. Remove some before creating new ones by calling </alert list:928980578739568651>", description="You can increase your limit to 500 by signing up for a [free Alpha.bot account](https://www.alpha.bot/sign-up", color=constants.colors["gray"])
-						embed.set_author(name="Maximum number of price alerts reached", icon_url=static_storage.error_icon)
-						try: await ctx.interaction.edit_original_response(embed=embed)
-						except NotFound: pass
-						return
-
 				payload, responseMessage = await process_task(task, "candle")
 
 				if payload is None or len(payload.get("candles", [])) == 0:
@@ -125,6 +124,12 @@ class AlertCommand(BaseCommand):
 					exchangeName = f" ({exchange.get('name')})" if exchange else ""
 					pairQuoteName = " " + ticker.get("quote") if ticker.get("quote") else ""
 
+					response1, response2 = [], []
+					if request.is_registered():
+						response1 = await self.database.collection(f"details/marketAlerts/{request.accountId}").get()
+					response2 = await self.database.collection(f"details/marketAlerts/{request.authorId}").get()
+					priceAlerts = [e.to_dict() for e in response1] + [e.to_dict() for e in response2]
+
 					newAlerts = []
 					for level in levels:
 						levelText = "{:,.10f}".format(level).rstrip('0').rstrip('.')
@@ -149,7 +154,7 @@ class AlertCommand(BaseCommand):
 						currentLevel = payload["candles"][-1][4]
 						currentLevelText = "{:,.10f}".format(currentLevel).rstrip('0').rstrip('.')
 						if currentLevel * 0.2 > level or currentLevel * 5 < level:
-							embed = Embed(title=f"Your desired alert trigger level at {levelText} {ticker.get('quote')} is too far from the current price of {currentLevelText} {ticker.get('quote')}.", color=constants.colors["gray"])
+							embed = Embed(title=f"Price alert for {ticker.get('name')}{exchangeName} with trigger level at {levelText} {ticker.get('quote')} is too far from the current price of {currentLevelText} {ticker.get('quote')}.", color=constants.colors["gray"])
 							embed.set_author(name="Price Alerts", icon_url=static_storage.error_icon)
 							embed.set_footer(text=payload.get("sourceText"))
 							try: await ctx.interaction.edit_original_response(embed=embed)
@@ -185,28 +190,28 @@ class AlertCommand(BaseCommand):
 					if len(newAlerts) == 1:
 						description = ""
 						if channel is None:
-							description += "No channel was specified, so the alert will be sent to your DMs. "
+							description += "No channel was specified, so the price alert will be sent to your DMs. "
 						else:
-							description += f"The alert will be sent to the <#{channel.id}> channel. "
+							description += f"The price alert will be sent to the <#{channel.id}> channel. "
 						if currentPlatform == "IEXC":
-							description += "The alert might trigger with up to 15-minute delay due to data licensing requirements on different exchanges."
+							description += "The price alert might trigger with up to 15-minute delay due to data licensing requirements on different exchanges."
 						if description == "":
 							description = None
 						embed = Embed(title=f"Price alert set for {ticker.get('name')}{exchangeName} at {newAlerts[0]['levelText']}{pairQuoteName}.", description=description, color=constants.colors["deep purple"])
-						embed.set_author(name="Alert successfully set", icon_url=thumbnailUrl)
+						embed.set_author(name="Price alert successfully set", icon_url=thumbnailUrl)
 					else:
 						description = ""
 						if channel is None:
-							description += "No channel was specified, so alerts will be sent to your DMs. "
+							description += "No channel was specified, so price alerts will be sent to your DMs. "
 						else:
-							description += f"Alerts will be sent to the <#{channel.id}> channel. "
+							description += f"Price alerts will be sent to the <#{channel.id}> channel. "
 						if currentPlatform == "IEXC":
 							description += "Alerts might trigger with up to 15-minute delay due to data licensing requirements on different exchanges."
 						if description == "":
 							description = None
 						levelsText = ", ".join([e["levelText"] for e in newAlerts])
 						embed = Embed(title=f"Price alerts set for {ticker.get('name')}{exchangeName} at {levelsText}{pairQuoteName}.", description=description, color=constants.colors["deep purple"])
-						embed.set_author(name="Alerts successfully set", icon_url=thumbnailUrl)
+						embed.set_author(name="Price alerts successfully set", icon_url=thumbnailUrl)
 					try: await ctx.interaction.edit_original_response(embed=embed)
 					except NotFound: pass
 
@@ -241,21 +246,31 @@ class AlertCommand(BaseCommand):
 			request = await self.create_request(ctx)
 			if request is None: return
 
-			response1, response2 = [], []
+			count1, count2 = 0, 0
 			if request.is_registered():
-				response1 = await self.database.collection(f"details/marketAlerts/{request.accountId}").get()
-			response2 = await self.database.collection(f"details/marketAlerts/{request.authorId}").get()
-			priceAlerts = [(e.id, e.to_dict(), request.accountId) for e in response1] + [(e.id, e.to_dict(), request.authorId) for e in response2]
-			totalAlertCount = len(priceAlerts)
+				count1 = await self.database.collection(f"details/marketAlerts/{request.accountId}").count().get()
+			count2 = await self.database.collection(f"details/marketAlerts/{request.authorId}").count().get()
+			totalAlertCount = count1[0][0].value + count2[0][0].value
 
 			if totalAlertCount == 0:
-				embed = Embed(title="You haven't set any alerts yet.", color=constants.colors["gray"])
+				embed = Embed(title="You haven't set any price alerts yet.", color=constants.colors["gray"])
 				embed.set_author(name="Price Alerts", icon_url=static_storage.error_icon)
 				try: await ctx.respond(embed=embed)
 				except NotFound: pass
 
+			elif request.is_registered():
+				embed = Embed(title=f"You've created {totalAlertCount} price alert{'' if totalAlertCount == 1 else 's'}. You can manage them on your account dashboard.", color=constants.colors["light blue"])
+				try: await ctx.respond(embed=embed, view=RedirectView(f"https://www.alpha.bot/account/alerts"), ephemeral=True)
+				except NotFound: pass
+
 			else:
-				embed = Embed(title=f"You've scheduled {totalAlertCount} price alert{'' if totalAlertCount == 1 else 's'}.", color=constants.colors["light blue"])
+				response1, response2 = [], []
+				if request.is_registered():
+					response1 = await self.database.collection(f"details/marketAlerts/{request.accountId}").get()
+				response2 = await self.database.collection(f"details/marketAlerts/{request.authorId}").get()
+				priceAlerts = [(e.id, e.to_dict(), request.accountId) for e in response1] + [(e.id, e.to_dict(), request.authorId) for e in response2]
+
+				embed = Embed(title=f"You've created {totalAlertCount} price alert{'' if totalAlertCount == 1 else 's'}.", color=constants.colors["light blue"])
 				try: await ctx.respond(embed=embed)
 				except NotFound: pass
 

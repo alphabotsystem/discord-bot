@@ -178,6 +178,11 @@ class ActionsView(View):
 		except: return
 
 class AuthView(View):
-	def __init__(self):
+	def __init__(self, redirect="account/success"):
 		super().__init__()
-		self.add_item(Button(label="Authorize", url="https://discord.com/oauth2/authorize?client_id=401328409499664394&redirect_uri=https%3A%2F%2Fwww.alpha.bot%2Faccount%2Faction&response_type=code&scope=identify%20email%20guilds%20guilds.join%20role_connections.write", style=ButtonStyle.link))
+		self.add_item(Button(label="Authorize", url=f"https://www.alpha.bot/account/action?mode=authorizeDiscord&continueUrl={redirect}", style=ButtonStyle.link))
+
+class RedirectView(View):
+	def __init__(self, url):
+		super().__init__()
+		self.add_item(Button(label="Open dashboard", url=url, style=ButtonStyle.link))
