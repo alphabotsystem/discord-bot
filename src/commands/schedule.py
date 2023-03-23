@@ -177,10 +177,13 @@ class ScheduleCommand(BaseCommand):
 				elif payload is None:
 					errorMessage = f"Requested chart for `{currentTask.get('ticker').get('name')}` is not available." if responseMessage is None else responseMessage
 					embed = Embed(title=errorMessage, color=constants.colors["gray"])
-					embed.set_author(name="Chart not available", icon_url=static_storage.error_icon)
+					embed.set_author(name="Schedule confirmation", icon_url=self.bot.user.avatar.url)
 					embeds.append(embed)
 				else:
 					files.append(File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, request.authorId, randint(1000, 9999))))
+					embed = Embed(title="Please confirm that you want to schedule this post.", color=constants.colors["pink"])
+					embed.set_author(name="Schedule confirmation", icon_url=self.bot.user.avatar.url)
+					embeds.append(embed)
 
 				confirmation = None if payload is None or payload.get("data") is None else Confirm(user=ctx.author)
 				try: await ctx.interaction.edit_original_response(embeds=embeds, files=files, view=confirmation)
@@ -342,6 +345,9 @@ class ScheduleCommand(BaseCommand):
 					embeds.append(embed)
 				else:
 					files.append(File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, request.authorId, randint(1000, 9999))))
+					embed = Embed(title="Please confirm that you want to schedule this post.", color=constants.colors["pink"])
+					embed.set_author(name="Schedule confirmation", icon_url=self.bot.user.avatar.url)
+					embeds.append(embed)
 
 				confirmation = None if payload is None or payload.get("data") is None else Confirm(user=ctx.author)
 				try: await ctx.interaction.edit_original_response(embeds=embeds, files=files, view=confirmation)
@@ -481,23 +487,30 @@ class ScheduleCommand(BaseCommand):
 				currentTask = task.get(task.get("currentPlatform"))
 				payload, responseMessage = await process_task(task, "quote")
 
+				embeds = []
 				if payload is None or "quotePrice" not in payload:
 					errorMessage = f"Requested quote for `{currentTask.get('ticker').get('name')}` is not available." if responseMessage is None else responseMessage
 					embed = Embed(title=errorMessage, color=constants.colors["gray"])
 					embed.set_author(name="Data not available", icon_url=static_storage.error_icon)
+					embeds.append(embed)
 				else:
 					currentTask = task.get(payload.get("platform"))
 					if payload.get("platform") in ["Alternative.me", "CNN Business"]:
 						embed = Embed(title=f"{payload['quotePrice']} *({payload['change']})*", description=payload.get("quoteConvertedPrice", EmptyEmbed), color=constants.colors[payload["messageColor"]])
 						embed.set_author(name=payload["title"], icon_url=payload.get("thumbnailUrl"))
 						embed.set_footer(text=payload["sourceText"])
+						embeds.append(embed)
 					else:
 						embed = Embed(title="{}{}".format(payload["quotePrice"], f" *({payload['change']})*" if "change" in payload else ""), description=payload.get("quoteConvertedPrice", EmptyEmbed), color=constants.colors[payload["messageColor"]])
 						embed.set_author(name=payload["title"], icon_url=payload.get("thumbnailUrl"))
 						embed.set_footer(text=payload["sourceText"])
+						embeds.append(embed)
+					embed = Embed(title="Please confirm that you want to schedule this post.", color=constants.colors["pink"])
+					embed.set_author(name="Schedule confirmation", icon_url=self.bot.user.avatar.url)
+					embeds.append(embed)
 
 				confirmation = None if payload is None or "quotePrice" not in payload else Confirm(user=ctx.author)
-				try: await ctx.interaction.edit_original_response(embed=embed, view=confirmation)
+				try: await ctx.interaction.edit_original_response(embeds=embeds, view=confirmation)
 				except NotFound: pass
 				await confirmation.wait()
 
@@ -532,7 +545,7 @@ class ScheduleCommand(BaseCommand):
 				except NotFound: pass
 
 				embed = Embed(title="Scheduled post has been created.", description=f"The scheduled price will be posted publicly every {period.removeprefix('1 ')} in this channel, starting {start}.", color=constants.colors["purple"])
-				embed.set_author(name="Chart scheduled", icon_url=self.bot.user.avatar.url)
+				embed.set_author(name="Price scheduled", icon_url=self.bot.user.avatar.url)
 				await ctx.followup.send(embed=embed, ephemeral=True)
 			else:
 				embed = Embed(title=":gem: Scheduled Posting functionality is available as an add-on subscription for communities for only $5.00 per month.", description="If you'd like to start your 30-day free trial, visit [our website](https://www.alpha.bot/pro/scheduled-posting).", color=constants.colors["deep purple"])
@@ -547,7 +560,7 @@ class ScheduleCommand(BaseCommand):
 			await self.unknown_error(ctx)
 
 	@scheduleGroup.command(name="volume", description="Schedule 24-hour volume to get automatically posted periodically.")
-	async def price(
+	async def volume(
 		self,
 		ctx,
 		tickerId: Option(str, "Ticker id of an asset.", name="ticker", autocomplete=BaseCommand.autocomplete_ticker),
@@ -634,18 +647,24 @@ class ScheduleCommand(BaseCommand):
 				currentTask = task.get(task.get("currentPlatform"))
 				payload, responseMessage = await process_task(task, "quote")
 
+				embeds = []
 				if payload is None or "quoteVolume" not in payload:
 					errorMessage = f"Requested volume for `{currentTask.get('ticker').get('name')}` is not available." if responseMessage is None else responseMessage
 					embed = Embed(title=errorMessage, color=constants.colors["gray"])
 					embed.set_author(name="Data not available", icon_url=static_storage.error_icon)
+					embeds.append(embed)
 				else:
 					currentTask = task.get(payload.get("platform"))
 					embed = Embed(title=payload["quoteVolume"], description=payload.get("quoteConvertedVolume", EmptyEmbed), color=constants.colors["orange"])
 					embed.set_author(name=payload["title"], icon_url=payload.get("thumbnailUrl"))
 					embed.set_footer(text=payload["sourceText"])
+					embeds.append(embed)
+					embed = Embed(title="Please confirm that you want to schedule this post.", color=constants.colors["pink"])
+					embed.set_author(name="Schedule confirmation", icon_url=self.bot.user.avatar.url)
+					embeds.append(embed)
 
 				confirmation = None if payload is None or "quoteVolume" not in payload else Confirm(user=ctx.author)
-				try: await ctx.interaction.edit_original_response(embed=embed, view=confirmation)
+				try: await ctx.interaction.edit_original_response(embeds=embeds, view=confirmation)
 				except NotFound: pass
 				await confirmation.wait()
 
@@ -680,7 +699,7 @@ class ScheduleCommand(BaseCommand):
 				except NotFound: pass
 
 				embed = Embed(title="Scheduled post has been created.", description=f"The scheduled 24-hour volume will be posted publicly every {period.removeprefix('1 ')} in this channel, starting {start}.", color=constants.colors["purple"])
-				embed.set_author(name="Chart scheduled", icon_url=self.bot.user.avatar.url)
+				embed.set_author(name="Volume scheduled", icon_url=self.bot.user.avatar.url)
 				await ctx.followup.send(embed=embed, ephemeral=True)
 			else:
 				embed = Embed(title=":gem: Scheduled Posting functionality is available as an add-on subscription for communities for only $5.00 per month.", description="If you'd like to start your 30-day free trial, visit [our website](https://www.alpha.bot/pro/scheduled-posting).", color=constants.colors["deep purple"])
@@ -741,6 +760,7 @@ class ScheduleCommand(BaseCommand):
 
 			elif request.scheduled_posting_available():
 				period = period.lower()
+				category = " ".join(category.lower().split())
 
 				if period not in PERIODS:
 					embed = Embed(title="The provided period is not valid. Please pick one of the available periods.", color=constants.colors["gray"])
@@ -769,7 +789,7 @@ class ScheduleCommand(BaseCommand):
 				while timestamp < time():
 					timestamp += PERIOD_TO_TIME[period] * 60
 
-				category = " ".join(category.lower().split())
+				embeds = []
 				if category == "crypto gainers":
 					rawData = []
 					cg = CoinGeckoAPI()
@@ -791,6 +811,7 @@ class ScheduleCommand(BaseCommand):
 					embed = Embed(title="Top gainers", color=constants.colors["deep purple"])
 					for token in response:
 						embed.add_field(name=token["symbol"], value="Gained {:,.2f} %".format(token["change"]), inline=True)
+					embeds.append(embed)
 
 				elif category == "crypto losers":
 					rawData = []
@@ -813,6 +834,7 @@ class ScheduleCommand(BaseCommand):
 					embed = Embed(title="Top losers", color=constants.colors["deep purple"])
 					for token in response:
 						embed.add_field(name=token["symbol"], value="Lost {:,.2f} %".format(token["change"]), inline=True)
+					embeds.append(embed)
 
 				else:
 					embed = Embed(title="The specified category is invalid.", description="Detailed guide with examples is available on [our website](https://www.alpha.bot/features/lookup).", color=constants.colors["deep purple"])
@@ -820,8 +842,12 @@ class ScheduleCommand(BaseCommand):
 					except NotFound: pass
 					return
 
+				embed = Embed(title="Please confirm that you want to schedule this post.", color=constants.colors["pink"])
+				embed.set_author(name="Schedule confirmation", icon_url=self.bot.user.avatar.url)
+				embeds.append(embed)
+
 				confirmation = Confirm(user=ctx.author)
-				try: await ctx.interaction.edit_original_response(embed=embed, view=confirmation)
+				try: await ctx.interaction.edit_original_response(embeds=embeds, view=confirmation)
 				except NotFound: pass
 				await confirmation.wait()
 
@@ -855,8 +881,8 @@ class ScheduleCommand(BaseCommand):
 				try: await ctx.interaction.edit_original_response(view=None)
 				except NotFound: pass
 
-				embed = Embed(title="Scheduled post has been created.", description=f"The scheduled chart will be posted publicly every {period.removeprefix('1 ')} in this channel, starting {start}.", color=constants.colors["purple"])
-				embed.set_author(name="Chart scheduled", icon_url=self.bot.user.avatar.url)
+				embed = Embed(title="Scheduled post has been created.", description=f"The scheduled list will be posted publicly every {period.removeprefix('1 ')} in this channel, starting {start}.", color=constants.colors["purple"])
+				embed.set_author(name="Top-performers scheduled", icon_url=self.bot.user.avatar.url)
 				await ctx.followup.send(embed=embed, ephemeral=True)
 			else:
 				embed = Embed(title=":gem: Scheduled Posting functionality is available as an add-on subscription for communities for only $5.00 per month.", description="If you'd like to start your 30-day free trial, visit [our website](https://www.alpha.bot/pro/scheduled-posting).", color=constants.colors["deep purple"])
@@ -985,10 +1011,13 @@ class ScheduleCommand(BaseCommand):
 				elif payload is None:
 					errorMessage = f"Requested chart for `{currentTask.get('ticker').get('name')}` is not available." if responseMessage is None else responseMessage
 					embed = Embed(title=errorMessage, color=constants.colors["gray"])
-					embed.set_author(name="Chart not available", icon_url=static_storage.error_icon)
+					embed.set_author(name="Schedule confirmation", icon_url=self.bot.user.avatar.url)
 					embeds.append(embed)
 				else:
 					files.append(File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, request.authorId, randint(1000, 9999))))
+					embed = Embed(title="Please confirm that you want to schedule this post.", color=constants.colors["pink"])
+					embed.set_author(name="Schedule confirmation", icon_url=self.bot.user.avatar.url)
+					embeds.append(embed)
 
 				confirmation = None if payload is None or payload.get("data") is None else Confirm(user=ctx.author)
 				try: await ctx.interaction.edit_original_response(embeds=embeds, files=files, view=confirmation)
