@@ -65,11 +65,12 @@ class AlertCommand(BaseCommand):
 					except NotFound: pass
 					return
 
-				count1, count2 = 0, 0
+				totalAlertCount = 0
 				if request.is_registered():
 					count1 = await self.database.collection(f"details/marketAlerts/{request.accountId}").count().get()
+					totalAlertCount += count1[0][0].value
 				count2 = await self.database.collection(f"details/marketAlerts/{request.authorId}").count().get()
-				totalAlertCount = count1[0][0].value + count2[0][0].value
+				totalAlertCount += count2[0][0].value
 
 				if request.is_registered():
 					if totalAlertCount + len(levels) > 250:
@@ -246,11 +247,12 @@ class AlertCommand(BaseCommand):
 			request = await self.create_request(ctx)
 			if request is None: return
 
-			count1, count2 = 0, 0
+			totalAlertCount = 0
 			if request.is_registered():
 				count1 = await self.database.collection(f"details/marketAlerts/{request.accountId}").count().get()
+				totalAlertCount += count1[0][0].value
 			count2 = await self.database.collection(f"details/marketAlerts/{request.authorId}").count().get()
-			totalAlertCount = count1[0][0].value + count2[0][0].value
+			totalAlertCount += count2[0][0].value
 
 			if totalAlertCount == 0:
 				embed = Embed(title="You haven't set any price alerts yet.", color=constants.colors["gray"])
