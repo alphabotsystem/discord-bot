@@ -11,6 +11,7 @@ spec:
     matchLabels:
       app: licensed-bot
   serviceName: licensed-bot
+  podManagementPolicy: Parallel
   template:
     metadata:
       labels:
@@ -53,6 +54,11 @@ spec:
               secretKeyRef:
                 name: alpha-credentials
                 key: N8V1MEBUJFSVP4IQMUXYYIEDFYI1_TOKEN
+          - name: UAONZKCJMOOQJUUHUXYIIB3TOND2_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: alpha-credentials
+                key: UAONZKCJMOOQJUUHUXYIIB3TOND2_TOKEN
           - name: GOOGLE_ASSISTANT_OAUTH
             valueFrom:
               secretKeyRef:
