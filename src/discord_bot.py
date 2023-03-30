@@ -250,7 +250,7 @@ async def security_check():
 				if guildId in settings["nicknames"]:
 					if guild.me.nick is None:
 						settings["nicknames"].pop(guildId)
-					elif settings["nicknames"][guildId]["nickname"] != guild.me.nick or settings["nicknames"][guildId]["server name"] != guild.name:
+					elif settings["nicknames"][guildId].get("nickname") != guild.me.nick or settings["nicknames"][guildId]["server name"] != guild.name:
 						settings["nicknames"][guildId] = {"nickname": guild.me.nick, "server name": guild.name, "allowed": None}
 				elif guild.me.nick is not None:
 					settings["nicknames"][guildId] = {"nickname": guild.me.nick, "server name": guild.name, "allowed": None}
