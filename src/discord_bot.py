@@ -145,6 +145,8 @@ async def send_messages(messageId, message):
 	if message["botId"] != str(bot.user.id): return
 
 	try:
+		print(f"Sending message: {messageId}")
+
 		content = None
 		embed = Embed(title=message["title"], color=message["color"])
 		if message.get("description") is not None: embed.description = message.get("description")
@@ -214,6 +216,8 @@ async def send_messages(messageId, message):
 				return
 			except:
 				print(format_exc())
+
+		print("Could not send message to any destination.")
 
 	except Exception:
 		print(format_exc())
