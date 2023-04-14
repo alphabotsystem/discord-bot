@@ -8,7 +8,7 @@ from random import randint
 from asyncio import CancelledError, sleep
 from traceback import format_exc
 
-from discord import Embed, File, ButtonStyle, SelectOption, Interaction, Role
+from discord import Embed, File, ButtonStyle, SelectOption, Interaction, Role, Thread
 from discord.embeds import EmptyEmbed
 from discord.commands import slash_command, SlashCommandGroup, Option
 from discord.ui import View, button, Button, Select
@@ -88,7 +88,13 @@ class ScheduleCommand(BaseCommand):
 
 			if request.guildId == -1:
 				embed = Embed(title="You cannot schedule a post in DMs.", color=constants.colors["gray"])
-				embed.set_author(name="Permission denied", icon_url=static_storage.error_icon)
+				embed.set_author(name="Invalid channel", icon_url=static_storage.error_icon)
+				try: await ctx.interaction.edit_original_response(embed=embed)
+				except NotFound: pass
+
+			elif isinstance(ctx.channel, Thread):
+				embed = Embed(title="You cannot schedule a post in a thread.", color=constants.colors["gray"])
+				embed.set_author(name="Invalid channel", icon_url=static_storage.error_icon)
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 
@@ -263,7 +269,13 @@ class ScheduleCommand(BaseCommand):
 
 			if request.guildId == -1:
 				embed = Embed(title="You cannot schedule a post in DMs.", color=constants.colors["gray"])
-				embed.set_author(name="Permission denied", icon_url=static_storage.error_icon)
+				embed.set_author(name="Invalid channel", icon_url=static_storage.error_icon)
+				try: await ctx.interaction.edit_original_response(embed=embed)
+				except NotFound: pass
+
+			elif isinstance(ctx.channel, Thread):
+				embed = Embed(title="You cannot schedule a post in a thread.", color=constants.colors["gray"])
+				embed.set_author(name="Invalid channel", icon_url=static_storage.error_icon)
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 
@@ -422,7 +434,13 @@ class ScheduleCommand(BaseCommand):
 
 			if request.guildId == -1:
 				embed = Embed(title="You cannot schedule a post in DMs.", color=constants.colors["gray"])
-				embed.set_author(name="Permission denied", icon_url=static_storage.error_icon)
+				embed.set_author(name="Invalid channel", icon_url=static_storage.error_icon)
+				try: await ctx.interaction.edit_original_response(embed=embed)
+				except NotFound: pass
+
+			elif isinstance(ctx.channel, Thread):
+				embed = Embed(title="You cannot schedule a post in a thread.", color=constants.colors["gray"])
+				embed.set_author(name="Invalid channel", icon_url=static_storage.error_icon)
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 
@@ -582,7 +600,13 @@ class ScheduleCommand(BaseCommand):
 
 			if request.guildId == -1:
 				embed = Embed(title="You cannot schedule a post in DMs.", color=constants.colors["gray"])
-				embed.set_author(name="Permission denied", icon_url=static_storage.error_icon)
+				embed.set_author(name="Invalid channel", icon_url=static_storage.error_icon)
+				try: await ctx.interaction.edit_original_response(embed=embed)
+				except NotFound: pass
+
+			elif isinstance(ctx.channel, Thread):
+				embed = Embed(title="You cannot schedule a post in a thread.", color=constants.colors["gray"])
+				embed.set_author(name="Invalid channel", icon_url=static_storage.error_icon)
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 
@@ -736,7 +760,13 @@ class ScheduleCommand(BaseCommand):
 
 			if request.guildId == -1:
 				embed = Embed(title="You cannot schedule a post in DMs.", color=constants.colors["gray"])
-				embed.set_author(name="Permission denied", icon_url=static_storage.error_icon)
+				embed.set_author(name="Invalid channel", icon_url=static_storage.error_icon)
+				try: await ctx.interaction.edit_original_response(embed=embed)
+				except NotFound: pass
+
+			elif isinstance(ctx.channel, Thread):
+				embed = Embed(title="You cannot schedule a post in a thread.", color=constants.colors["gray"])
+				embed.set_author(name="Invalid channel", icon_url=static_storage.error_icon)
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 
@@ -918,7 +948,13 @@ class ScheduleCommand(BaseCommand):
 
 			if request.guildId == -1:
 				embed = Embed(title="You cannot schedule a post in DMs.", color=constants.colors["gray"])
-				embed.set_author(name="Permission denied", icon_url=static_storage.error_icon)
+				embed.set_author(name="Invalid channel", icon_url=static_storage.error_icon)
+				try: await ctx.interaction.edit_original_response(embed=embed)
+				except NotFound: pass
+
+			elif isinstance(ctx.channel, Thread):
+				embed = Embed(title="You cannot schedule a post in a thread.", color=constants.colors["gray"])
+				embed.set_author(name="Invalid channel", icon_url=static_storage.error_icon)
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 
