@@ -10,7 +10,7 @@ from traceback import format_exc
 
 from discord import Embed, File, ButtonStyle, SelectOption, Interaction, Role, Thread
 from discord.embeds import EmptyEmbed
-from discord.commands import slash_command, SlashCommandGroup, Option
+from discord.commands import slash_command, default_permissions, SlashCommandGroup, Option
 from discord.ui import View, button, Button, Select
 from discord.errors import NotFound
 from google.cloud.firestore import Increment
@@ -64,9 +64,10 @@ def autocomplete_exclude(ctx):
 
 
 class ScheduleCommand(BaseCommand):
-	scheduleGroup = SlashCommandGroup("schedule", "Schedule bot commands to get automatically posted periodically.")
+	scheduleGroup = SlashCommandGroup("schedule", "Schedule bot commands to get automatically posted periodically.", guild_only=True)
 
 	@scheduleGroup.command(name="chart", description="Schedule a chart to get automatically posted periodically.")
+	@default_permissions(manage_messages=True)
 	async def chart(
 		self,
 		ctx,
@@ -86,21 +87,9 @@ class ScheduleCommand(BaseCommand):
 
 			totalPostCount = await self.database.collection(f"details/scheduledPosts/{request.guildId}").count().get()
 
-			if request.guildId == -1:
-				embed = Embed(title="You cannot schedule a post in DMs.", color=constants.colors["gray"])
-				embed.set_author(name="Invalid channel", icon_url=static_storage.error_icon)
-				try: await ctx.interaction.edit_original_response(embed=embed)
-				except NotFound: pass
-
-			elif isinstance(ctx.channel, Thread):
+			if isinstance(ctx.channel, Thread):
 				embed = Embed(title="You cannot schedule a post in a thread.", color=constants.colors["gray"])
 				embed.set_author(name="Invalid channel", icon_url=static_storage.error_icon)
-				try: await ctx.interaction.edit_original_response(embed=embed)
-				except NotFound: pass
-
-			elif not ctx.channel.permissions_for(ctx.author).manage_messages:
-				embed = Embed(title="You do not have the sufficient permission to create a scheduled post.", description="To be able to create a scheduled post, you must have the `manage messages` permission.", color=constants.colors["red"])
-				embed.set_author(name="Permission denied", icon_url=static_storage.error_icon)
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 
@@ -242,6 +231,7 @@ class ScheduleCommand(BaseCommand):
 			await self.unknown_error(ctx)
 
 	@scheduleGroup.command(name="heatmap", description="Schedule a heatmap to get automatically posted periodically.")
+	@default_permissions(manage_messages=True)
 	async def heatmap(
 		self,
 		ctx,
@@ -267,21 +257,9 @@ class ScheduleCommand(BaseCommand):
 
 			totalPostCount = await self.database.collection(f"details/scheduledPosts/{request.guildId}").count().get()
 
-			if request.guildId == -1:
-				embed = Embed(title="You cannot schedule a post in DMs.", color=constants.colors["gray"])
-				embed.set_author(name="Invalid channel", icon_url=static_storage.error_icon)
-				try: await ctx.interaction.edit_original_response(embed=embed)
-				except NotFound: pass
-
-			elif isinstance(ctx.channel, Thread):
+			if isinstance(ctx.channel, Thread):
 				embed = Embed(title="You cannot schedule a post in a thread.", color=constants.colors["gray"])
 				embed.set_author(name="Invalid channel", icon_url=static_storage.error_icon)
-				try: await ctx.interaction.edit_original_response(embed=embed)
-				except NotFound: pass
-
-			elif not ctx.channel.permissions_for(ctx.author).manage_messages:
-				embed = Embed(title="You do not have the sufficient permission to create a scheduled post.", description="To be able to create a scheduled post, you must have the `manage messages` permission.", color=constants.colors["red"])
-				embed.set_author(name="Permission denied", icon_url=static_storage.error_icon)
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 
@@ -412,6 +390,7 @@ class ScheduleCommand(BaseCommand):
 			await self.unknown_error(ctx)
 
 	@scheduleGroup.command(name="price", description="Schedule a price to get automatically posted periodically.")
+	@default_permissions(manage_messages=True)
 	async def price(
 		self,
 		ctx,
@@ -432,21 +411,9 @@ class ScheduleCommand(BaseCommand):
 
 			totalPostCount = await self.database.collection(f"details/scheduledPosts/{request.guildId}").count().get()
 
-			if request.guildId == -1:
-				embed = Embed(title="You cannot schedule a post in DMs.", color=constants.colors["gray"])
-				embed.set_author(name="Invalid channel", icon_url=static_storage.error_icon)
-				try: await ctx.interaction.edit_original_response(embed=embed)
-				except NotFound: pass
-
-			elif isinstance(ctx.channel, Thread):
+			if isinstance(ctx.channel, Thread):
 				embed = Embed(title="You cannot schedule a post in a thread.", color=constants.colors["gray"])
 				embed.set_author(name="Invalid channel", icon_url=static_storage.error_icon)
-				try: await ctx.interaction.edit_original_response(embed=embed)
-				except NotFound: pass
-
-			elif not ctx.channel.permissions_for(ctx.author).manage_messages:
-				embed = Embed(title="You do not have the sufficient permission to create a scheduled post.", description="To be able to create a scheduled post, you must have the `manage messages` permission.", color=constants.colors["red"])
-				embed.set_author(name="Permission denied", icon_url=static_storage.error_icon)
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 
@@ -578,6 +545,7 @@ class ScheduleCommand(BaseCommand):
 			await self.unknown_error(ctx)
 
 	@scheduleGroup.command(name="volume", description="Schedule 24-hour volume to get automatically posted periodically.")
+	@default_permissions(manage_messages=True)
 	async def volume(
 		self,
 		ctx,
@@ -598,21 +566,9 @@ class ScheduleCommand(BaseCommand):
 
 			totalPostCount = await self.database.collection(f"details/scheduledPosts/{request.guildId}").count().get()
 
-			if request.guildId == -1:
-				embed = Embed(title="You cannot schedule a post in DMs.", color=constants.colors["gray"])
-				embed.set_author(name="Invalid channel", icon_url=static_storage.error_icon)
-				try: await ctx.interaction.edit_original_response(embed=embed)
-				except NotFound: pass
-
-			elif isinstance(ctx.channel, Thread):
+			if isinstance(ctx.channel, Thread):
 				embed = Embed(title="You cannot schedule a post in a thread.", color=constants.colors["gray"])
 				embed.set_author(name="Invalid channel", icon_url=static_storage.error_icon)
-				try: await ctx.interaction.edit_original_response(embed=embed)
-				except NotFound: pass
-
-			elif not ctx.channel.permissions_for(ctx.author).manage_messages:
-				embed = Embed(title="You do not have the sufficient permission to create a scheduled post.", description="To be able to create a scheduled post, you must have the `manage messages` permission.", color=constants.colors["red"])
-				embed.set_author(name="Permission denied", icon_url=static_storage.error_icon)
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 
@@ -738,6 +694,7 @@ class ScheduleCommand(BaseCommand):
 			await self.unknown_error(ctx)
 
 	@scheduleGroup.command(name="top-performers", description="Schedule fear & greed index chart to get automatically posted periodically.")
+	@default_permissions(manage_messages=True)
 	async def lookup_top(
 		self,
 		ctx,
@@ -758,21 +715,9 @@ class ScheduleCommand(BaseCommand):
 
 			totalPostCount = await self.database.collection(f"details/scheduledPosts/{request.guildId}").count().get()
 
-			if request.guildId == -1:
-				embed = Embed(title="You cannot schedule a post in DMs.", color=constants.colors["gray"])
-				embed.set_author(name="Invalid channel", icon_url=static_storage.error_icon)
-				try: await ctx.interaction.edit_original_response(embed=embed)
-				except NotFound: pass
-
-			elif isinstance(ctx.channel, Thread):
+			if isinstance(ctx.channel, Thread):
 				embed = Embed(title="You cannot schedule a post in a thread.", color=constants.colors["gray"])
 				embed.set_author(name="Invalid channel", icon_url=static_storage.error_icon)
-				try: await ctx.interaction.edit_original_response(embed=embed)
-				except NotFound: pass
-
-			elif not ctx.channel.permissions_for(ctx.author).manage_messages:
-				embed = Embed(title="You do not have the sufficient permission to create a scheduled post.", description="To be able to create a scheduled post, you must have the `manage messages` permission.", color=constants.colors["red"])
-				embed.set_author(name="Permission denied", icon_url=static_storage.error_icon)
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 
@@ -927,6 +872,7 @@ class ScheduleCommand(BaseCommand):
 			await self.unknown_error(ctx)
 
 	@scheduleGroup.command(name="fgi", description="Schedule fear & greed index chart to get automatically posted periodically.")
+	@default_permissions(manage_messages=True)
 	async def lookup_fgi(
 		self,
 		ctx,
@@ -946,21 +892,9 @@ class ScheduleCommand(BaseCommand):
 
 			totalPostCount = await self.database.collection(f"details/scheduledPosts/{request.guildId}").count().get()
 
-			if request.guildId == -1:
-				embed = Embed(title="You cannot schedule a post in DMs.", color=constants.colors["gray"])
-				embed.set_author(name="Invalid channel", icon_url=static_storage.error_icon)
-				try: await ctx.interaction.edit_original_response(embed=embed)
-				except NotFound: pass
-
-			elif isinstance(ctx.channel, Thread):
+			if isinstance(ctx.channel, Thread):
 				embed = Embed(title="You cannot schedule a post in a thread.", color=constants.colors["gray"])
 				embed.set_author(name="Invalid channel", icon_url=static_storage.error_icon)
-				try: await ctx.interaction.edit_original_response(embed=embed)
-				except NotFound: pass
-
-			elif not ctx.channel.permissions_for(ctx.author).manage_messages:
-				embed = Embed(title="You do not have the sufficient permission to create a scheduled post.", description="To be able to create a scheduled post, you must have the `manage messages` permission.", color=constants.colors["red"])
-				embed.set_author(name="Permission denied", icon_url=static_storage.error_icon)
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 
