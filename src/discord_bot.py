@@ -2,7 +2,7 @@ from os import environ, _exit
 environ["PRODUCTION"] = environ["PRODUCTION"] if "PRODUCTION" in environ and environ["PRODUCTION"] else ""
 botId = -1 if len(environ["HOSTNAME"].split("-")) != 3 else int(environ["HOSTNAME"].split("-")[-1])
 
-from time import time, sleep as ssleep
+from time import time
 from datetime import datetime
 from pytz import utc
 from requests import post
@@ -23,20 +23,21 @@ from helpers import constants
 from DatabaseConnector import DatabaseConnector
 from CommandRequest import CommandRequest
 
-from commands.assistant import AskCommand
 from commands.alerts import AlertCommand
+from commands.assistant import AskCommand
 from commands.charts import ChartCommand
-from commands.flow import FlowCommand
-from commands.schedule import ScheduleCommand
-from commands.heatmaps import HeatmapCommand
-from commands.depth import DepthCommand
-from commands.prices import PriceCommand
-from commands.volume import VolumeCommand
 from commands.convert import ConvertCommand
+from commands.depth import DepthCommand
 from commands.details import DetailsCommand
+from commands.flow import FlowCommand
+from commands.heatmaps import HeatmapCommand
+from commands.ichibot import IchibotCommand, Ichibot
+from commands.layout import LayoutWrapper
 from commands.lookup import LookupCommand
 from commands.paper import PaperCommand
-from commands.ichibot import IchibotCommand, Ichibot
+from commands.prices import PriceCommand
+from commands.schedule import ScheduleCommand
+from commands.volume import VolumeCommand
 
 
 database = FirestoreAsyncClient()
@@ -114,16 +115,12 @@ async def update_guild_count():
 def update_settings(s, changes, timestamp):
 	global settings
 	settings = s[0].to_dict()
-	botStatus[1] = True
 
 # -------------------------
 # Message processing
 # -------------------------
 
 def process_messages(pendingMessages, changes, timestamp):
-	while not botStatus[0]:
-		ssleep(60)
-
 	# Method should only run in production
 	if not environ["PRODUCTION"]: return
 
@@ -138,11 +135,10 @@ def process_messages(pendingMessages, changes, timestamp):
 		if environ["PRODUCTION"]: logging.report_exception()
 
 async def send_messages(messageId, message):
-	while not botStatus[0]:
-		await sleep(60)
-
 	# Method should only run if the message is addressed to the right bot
 	if message["botId"] != str(bot.user.id): return
+
+	await bot.wait_until_ready()
 
 	try:
 		print(f"Sending message: {messageId}")
@@ -322,7 +318,7 @@ async def on_message(message):
 
 	try:
 		# Skip messages in servers, messages with empty content field, messages from self, or all messages when in startup mode
-		if message.guild is not None or message.clean_content == "" or message.type != MessageType.default or message.author == bot.user or not is_bot_ready(): return
+		if message.guild is not None or message.clean_content == "" or message.type != MessageType.default or message.author == bot.user: return
 
 		# Ignore if user is banned
 		if message.author.id in constants.blockedUsers: return
@@ -473,8 +469,14 @@ bot.add_cog(ConvertCommand(bot, create_request, database, logging))
 bot.add_cog(DetailsCommand(bot, create_request, database, logging))
 bot.add_cog(LookupCommand(bot, create_request, database, logging))
 bot.add_cog(PaperCommand(bot, create_request, database, logging))
+
+# -------------------------
+# Special commands
+# -------------------------
+
 if botId == -1:
 	bot.add_cog(IchibotCommand(bot, create_request, database, logging))
+bot.add_cog(LayoutWrapper(bot, create_request, database, logging))
 
 
 # -------------------------
@@ -492,8 +494,6 @@ async def unknown_error(ctx, authorId):
 # Startup
 # -------------------------
 
-botStatus = [False, False]
-
 settings = {}
 accountProperties = DatabaseConnector(mode="account")
 guildProperties = DatabaseConnector(mode="guild")
@@ -507,10 +507,6 @@ async def on_ready():
 	print(f"[Startup]: {bot.user.name} Bot ({bot.user.id}) is online")
 
 	try:
-		while not await accountProperties.check_status() or not await guildProperties.check_status():
-			await sleep(15)
-		botStatus[0] = True
-
 		if bot.user.id == 401328409499664394:
 			await bot.change_presence(status=Status.online, activity=Activity(type=ActivityType.watching, name="www.alpha.bot"))
 		else:
@@ -528,9 +524,6 @@ async def on_ready():
 		database_sanity_check.start()
 
 	print(f"[Startup]: {bot.user.name} Bot ({bot.user.id}) startup complete")
-
-def is_bot_ready():
-	return all(botStatus)
 
 
 # -------------------------

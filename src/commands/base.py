@@ -36,11 +36,13 @@ class BaseCommand(Cog):
 		"price": "p",
 		"schedule price": "p",
 		"schedule volume": "volume",
+		"layout": "layout"
 	}
 
 	sources = {
 		"alert set": ["IEXC", "CCXT"],
 		"c": ["TradingView", "TradingView Premium", "TradingLite", "Bookmap"],
+		"layout": ["TradingView Relay"],
 		"hmap": ["TradingView Stock Heatmap", "TradingView Crypto Heatmap"],
 		"flow": ["Alpha Flow"],
 		"p": ["IEXC", "CCXT", "CoinGecko"],
@@ -106,27 +108,32 @@ class BaseCommand(Cog):
 		try: await ctx.interaction.edit_original_response(content=None, embed=embed, files=[])
 		except: return
 
-	async def autocomplete_from_ticker(cls, ctx):
-		return await cls._autocomplete_ticker(ctx, "from")
+	@staticmethod
+	async def autocomplete_from_ticker(ctx):
+		return await BaseCommand._autocomplete_ticker(ctx, "from")
 
-	async def autocomplete_to_ticker(cls, ctx):
-		return await cls._autocomplete_ticker(ctx, "to")
+	@staticmethod
+	async def autocomplete_to_ticker(ctx):
+		return await BaseCommand._autocomplete_ticker(ctx, "to")
 
-	async def autocomplete_ticker(cls, ctx):
-		return await cls._autocomplete_ticker(ctx, "ticker")
+	@staticmethod
+	async def autocomplete_ticker(ctx):
+		return await BaseCommand._autocomplete_ticker(ctx, "ticker")
 
-	async def _autocomplete_ticker(cls, ctx, mode):
-		command = cls.commandMap.get(ctx.command.qualified_name, ctx.command.qualified_name)
+	@staticmethod
+	async def _autocomplete_ticker(ctx, mode):
+		command = BaseCommand.commandMap.get(ctx.command.qualified_name, BaseCommand.commandMap.get(ctx.command.full_parent_name, ctx.command.qualified_name))
 		tickerId = " ".join(ctx.options.get(mode, "").lower().split()).split("|")[0]
 
 		if tickerId == "": return []
 
-		platforms = cls.sources[command]
+		platforms = BaseCommand.sources[command]
 		tickers = await autocomplete_ticker(tickerId, ",".join(platforms))
 		return tickers
 
-	async def autocomplete_venues(cls, ctx):
-		command = cls.commandMap.get(ctx.command.qualified_name, ctx.command.qualified_name)
+	@staticmethod
+	async def autocomplete_venues(ctx):
+		command = BaseCommand.commandMap.get(ctx.command.qualified_name, BaseCommand.commandMap.get(ctx.command.full_parent_name, ctx.command.qualified_name))
 		tickerId = ctx.options.get("ticker", "")
 		venue = " ".join(ctx.options.get("venue", "").lower().split())
 
@@ -134,7 +141,7 @@ class BaseCommand(Cog):
 		elif tickerId == "" or tickerId is None: return []
 		else: tickerId = " ".join(tickerId.lower().split()).split("|")[0]
 
-		platforms = cls.sources.get(command)
+		platforms = BaseCommand.sources.get(command)
 		venues = await autocomplete_venues(tickerId, ",".join(platforms))
 		return sorted([v for v in venues if v.lower().startswith(venue)])
 

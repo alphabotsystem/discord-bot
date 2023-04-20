@@ -5,7 +5,7 @@ from uuid import uuid4
 from datetime import datetime, timedelta
 from parsedatetime import Calendar
 from random import randint
-from asyncio import CancelledError, sleep
+from asyncio import CancelledError
 from traceback import format_exc
 
 from discord import Embed, File, ButtonStyle, SelectOption, Interaction, Role, Thread
@@ -767,15 +767,12 @@ class ScheduleCommand(BaseCommand):
 				embeds = []
 				if category == "crypto gainers":
 					rawData = []
-					cg = CoinGeckoAPI()
+					cg = CoinGeckoAPI(api_key=environ["COINGECKO_API_KEY"])
 					page = 1
 					while True:
-						try:
-							rawData += cg.get_coins_markets(vs_currency="usd", order="market_cap_desc", per_page=250, page=page, price_change_percentage="24h")
-							page += 1
-							if page > 4: break
-							await sleep(0.6)
-						except: await sleep(5)
+						rawData += cg.get_coins_markets(vs_currency="usd", order="market_cap_desc", per_page=250, page=page, price_change_percentage="24h")
+						page += 1
+						if page > 4: break
 
 					response = []
 					for e in rawData[:max(10, limit)]:
@@ -790,15 +787,12 @@ class ScheduleCommand(BaseCommand):
 
 				elif category == "crypto losers":
 					rawData = []
-					cg = CoinGeckoAPI()
+					cg = CoinGeckoAPI(api_key=environ["COINGECKO_API_KEY"])
 					page = 1
 					while True:
-						try:
-							rawData += cg.get_coins_markets(vs_currency="usd", order="market_cap_desc", per_page=250, page=page, price_change_percentage="24h")
-							page += 1
-							if page > 4: break
-							await sleep(0.6)
-						except: await sleep(5)
+						rawData += cg.get_coins_markets(vs_currency="usd", order="market_cap_desc", per_page=250, page=page, price_change_percentage="24h")
+						page += 1
+						if page > 4: break
 
 					response = []
 					for e in rawData[:max(10, limit)]:

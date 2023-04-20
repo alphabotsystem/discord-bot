@@ -74,5 +74,10 @@ spec:
               secretKeyRef:
                 name: alpha-credentials
                 key: IEXC_KEY
+          - name: COINGECKO_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: alpha-credentials
+                key: COINGECKO_API_KEY
         ports:
           - containerPort: 6910

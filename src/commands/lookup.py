@@ -1,7 +1,7 @@
 from os import environ
 from time import time
 from random import randint
-from asyncio import gather, CancelledError, sleep
+from asyncio import gather, CancelledError
 from traceback import format_exc
 
 from discord import Embed, ButtonStyle, Interaction, File
@@ -83,15 +83,12 @@ class LookupCommand(BaseCommand):
 			category = " ".join(category.lower().split())
 			if category == "crypto gainers":
 				rawData = []
-				cg = CoinGeckoAPI()
+				cg = CoinGeckoAPI(api_key=environ["COINGECKO_API_KEY"])
 				page = 1
 				while True:
-					try:
-						rawData += cg.get_coins_markets(vs_currency="usd", order="market_cap_desc", per_page=250, page=page, price_change_percentage="24h")
-						page += 1
-						if page > 4: break
-						await sleep(0.6)
-					except: await sleep(5)
+					rawData += cg.get_coins_markets(vs_currency="usd", order="market_cap_desc", per_page=250, page=page, price_change_percentage="24h")
+					page += 1
+					if page > 4: break
 
 				response = []
 				for e in rawData[:max(10, limit)]:
@@ -107,15 +104,12 @@ class LookupCommand(BaseCommand):
 
 			elif category == "crypto losers":
 				rawData = []
-				cg = CoinGeckoAPI()
+				cg = CoinGeckoAPI(api_key=environ["COINGECKO_API_KEY"])
 				page = 1
 				while True:
-					try:
-						rawData += cg.get_coins_markets(vs_currency="usd", order="market_cap_desc", per_page=250, page=page, price_change_percentage="24h")
-						page += 1
-						if page > 4: break
-						await sleep(0.6)
-					except: await sleep(5)
+					rawData += cg.get_coins_markets(vs_currency="usd", order="market_cap_desc", per_page=250, page=page, price_change_percentage="24h")
+					page += 1
+					if page > 4: break
 
 				response = []
 				for e in rawData[:max(10, limit)]:
