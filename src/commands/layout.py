@@ -25,21 +25,27 @@ snapshots = FirestoreClient()
 class LayoutWrapper(BaseCommand):
 	def __init__(self, bot, create_request, database, logging):
 		super().__init__(bot, create_request, database, logging)
+
 		self.timestamp = 0
 		self.layouts = {}
+		self.guildIds = []
+
 		self.observer = snapshots.collection("discord/properties/layouts").on_snapshot(self.listener)
-		self.layoutGroup = self.bot.create_group("layout", "Pull a saved public layout from TradingView.", guild_ids=[])
+		self.layoutGroup = self.bot.create_group("layout", "Pull a saved public layout from TradingView.", guild_ids=self.guildIds)
 
 	def listener(self, snapshot, changes, timestamp):
 		layouts = {}
+		guildIds = set()
 		for e in snapshot:
 			layout = e.to_dict()
 			label = layout["label"]
 			if label not in layouts: layouts[label] = {}
 			guildId = int(layout["guildId"])
+			guildIds.add(guildId)
 			layouts[label][guildId] = layout["url"]
 		self.layouts = layouts
 		self.timestamp = timestamp
+		self.guildIds = list(guildIds)
 
 		self.bot.loop.create_task(self.update_commands(changes, timestamp))
 
@@ -48,15 +54,14 @@ class LayoutWrapper(BaseCommand):
 		if timestamp != self.timestamp: return
 		print(f"Updating layout commands at {timestamp}")
 
-		guildIds = [g.id for g in self.bot.guilds if g.id in self.layouts]
 		old = self.bot.remove_application_command(self.layoutGroup)
 		removals = old.guild_ids
 
-		self.layoutGroup = self.bot.create_group("layout", "Pull a saved public layout from TradingView.", guild_ids=guildIds)
+		self.layoutGroup = self.bot.create_group("layout", "Pull a saved public layout from TradingView.", guild_ids=self.guildIds)
 
 		commands = {}
 		for command, mappings in self.layouts.items():
-			guildMask = [g for g in mappings if g in guildIds]
+			guildMask = [g for g in mappings if g in self.guildIds]
 
 			for guildId in guildMask:
 				try: removals.remove(guildId)
