@@ -34,10 +34,10 @@ class LayoutWrapper(BaseCommand):
 		layouts = {}
 		for e in snapshot:
 			layout = e.to_dict()
-			guildId = int(layout["guildId"])
 			label = layout["label"]
-			if guildId not in layouts: layouts[guildId] = {}
-			layouts[guildId][label] = layout["url"]
+			if label not in layouts: layouts[label] = {}
+			guildId = int(layout["guildId"])
+			layouts[label][guildId] = layout["url"]
 		self.layouts = layouts
 		self.timestamp = timestamp
 
@@ -55,33 +55,36 @@ class LayoutWrapper(BaseCommand):
 		self.layoutGroup = self.bot.create_group("layout", "Pull a saved public layout from TradingView.", guild_ids=guildIds)
 
 		commands = {}
-		for guildId, mappings in self.layouts.items():
-			commands[guildId] = {}
-			for command, url in mappings.items():
-				if guildId not in guildIds: continue
+		for command, mappings in self.layouts.items():
+			guildMask = [g for g in mappings if g in guildIds]
 
-				async def wrapper(ctx, tickerId, timeframe, venue):
-					await self.layout(ctx, url, tickerId, timeframe, venue)
-
-				handler = SlashCommand(
-					wrapper,
-					name=command,
-					description=f"Pull a public layout called {command} from TradingView.",
-					guild_ids=[guildId],
-					parent=self.layoutGroup,
-					options=[
-						Option(str, "Ticker id of an asset.", name="ticker", autocomplete=BaseCommand.autocomplete_ticker),
-						Option(str, "Timeframe and coloring method for the heatmap.", name="timeframe", autocomplete=autocomplete_layout_timeframe, required=False, default=""),
-						Option(str, "Venue to pull the price from.", name="venue", autocomplete=BaseCommand.autocomplete_venues, required=False, default="")
-					]
-				)
-				self.layoutGroup.add_command(handler)
-				commands[guildId][command] = handler
-
+			for guildId in guildMask:
 				try: removals.remove(guildId)
 				except ValueError: pass
 
-		await self.bot.sync_commands(check_guilds=removals)
+			async def wrapper(ctx, tickerId, timeframe, venue):
+				await self.layout(ctx, commands[command][ctx.guild.id], tickerId, timeframe, venue)
+
+			handler = SlashCommand(
+				wrapper,
+				name=command,
+				description=f"Pull a public layout called {command} from TradingView.",
+				guild_ids=guildMask,
+				parent=self.layoutGroup,
+				options=[
+					Option(str, "Ticker id of an asset.", name="ticker", autocomplete=BaseCommand.autocomplete_ticker),
+					Option(str, "Timeframe and coloring method for the heatmap.", name="timeframe", autocomplete=autocomplete_layout_timeframe, required=False, default=""),
+					Option(str, "Venue to pull the price from.", name="venue", autocomplete=BaseCommand.autocomplete_venues, required=False, default="")
+				]
+			)
+			self.layoutGroup.add_command(handler)
+			commands[command] = handler
+
+		try:
+			await self.bot.sync_commands(check_guilds=removals)
+		except:
+			print(format_exc())
+			if environ["PRODUCTION"]: self.logging.report_exception()
 
 	async def layout(self, ctx, url, tickerId, timeframe, venue):
 		try:
