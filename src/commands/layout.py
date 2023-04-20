@@ -68,7 +68,7 @@ class LayoutWrapper(BaseCommand):
 				except ValueError: pass
 
 			async def wrapper(ctx, tickerId, timeframe, venue):
-				await self.layout(ctx, commands[command][ctx.guild.id], tickerId, timeframe, venue)
+				await self.layout(ctx, self.layouts[command][ctx.guild.id], tickerId, timeframe, venue)
 
 			handler = SlashCommand(
 				wrapper,
