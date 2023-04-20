@@ -168,8 +168,7 @@ class LayoutWrapper(BaseCommand):
 			await self.cleanup(ctx, request, removeView=True)
 
 		else:
-			embed = discord.Embed(title=":gem: TradingView Layouts are available for $10.00 per month.", description="If you'd like to start your 30-day free trial, visit [our website](https://www.alpha.bot/pro/tradingview-layouts).", color=constants.colors["deep purple"])
-			# embed.set_image(url="https://www.alpha.bot/files/uploads/pro-hero.jpg")
+			embed = Embed(title=":gem: TradingView Layouts are available for $10.00 per month.", description="If you'd like to start your 30-day free trial, visit [our website](https://www.alpha.bot/pro/tradingview-layouts).", color=constants.colors["deep purple"])
 			try: await ctx.interaction.edit_original_response(embed=embed)
 			except NotFound: pass
 
