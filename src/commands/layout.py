@@ -131,7 +131,7 @@ class LayoutWrapper(BaseCommand):
 		request,
 		task
 	):
-		if request.flow_available():
+		if request.tradingview_layouts_available():
 			start = time()
 			files, embeds = [], []
 
