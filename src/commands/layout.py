@@ -85,11 +85,11 @@ class LayoutWrapper(BaseCommand):
 			self.layoutGroup.add_command(handler)
 			commands[command] = guildMask
 
-		print("Structure", commands)
-		print("Removals", removals)
+		print("Structure:", commands)
+		print("Removals:", removals)
 
 		try:
-			await self.bot.sync_commands(check_guilds=removals)
+			await self.bot.sync_commands(commands=[self.layoutGroup], check_guilds=removals, delete_existing=False)
 		except:
 			print(format_exc())
 			if environ["PRODUCTION"]: self.logging.report_exception()
