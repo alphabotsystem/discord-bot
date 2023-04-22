@@ -85,7 +85,8 @@ class LayoutWrapper(BaseCommand):
 			self.layoutGroup.add_command(handler)
 			commands[command] = guildMask
 
-		print(commands)
+		print("Structure", commands)
+		print("Removals", removals)
 
 		try:
 			await self.bot.sync_commands(check_guilds=removals)
