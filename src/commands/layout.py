@@ -68,7 +68,7 @@ class LayoutWrapper(BaseCommand):
 				except ValueError: pass
 
 			async def wrapper(ctx, tickerId, timeframe, venue):
-				await self.layout(ctx, self.layouts[command][ctx.guild.id], tickerId, timeframe, venue)
+				await self.layout(ctx, command, tickerId, timeframe, venue)
 
 			handler = SlashCommand(
 				wrapper,
@@ -93,7 +93,7 @@ class LayoutWrapper(BaseCommand):
 			print(format_exc())
 			if environ["PRODUCTION"]: self.logging.report_exception()
 
-	async def layout(self, ctx, url, tickerId, timeframe, venue):
+	async def layout(self, ctx, command, tickerId, timeframe, venue):
 		try:
 			request = await self.create_request(ctx)
 			if request is None: return
@@ -101,6 +101,7 @@ class LayoutWrapper(BaseCommand):
 			prelightCheckpoint = time()
 			request.set_delay("prelight", prelightCheckpoint - request.start)
 
+			url = self.layouts[command][ctx.guild.id]
 			arguments = [timeframe, venue]
 			[(responseMessage, task), _] = await gather(
 				process_chart_arguments(arguments, ["TradingView Relay"], tickerId=tickerId.upper()),
@@ -121,7 +122,7 @@ class LayoutWrapper(BaseCommand):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /layout {url} {tickerId} timeframe:{timeframe} venue:{venue}")
+			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /layout {command} {tickerId} timeframe:{timeframe} venue:{venue}, url: {url}")
 			await self.unknown_error(ctx)
 
 	async def respond(
