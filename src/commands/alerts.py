@@ -99,7 +99,7 @@ class AlertCommand(BaseCommand):
 					embed.set_author(name="Data not available", icon_url=static_storage.error_icon)
 					try: await ctx.interaction.edit_original_response(embed=embed)
 					except NotFound: pass
-				elif channel is not None and not channel.permissions_for(ctx.author).send_messages:
+				elif channel is not None and not ctx.interaction.permissions.send_messages:
 					embed = Embed(title="You do not have the permission to send messages in the specified channel.", color=constants.colors["gray"])
 					embed.set_author(name="Permission denied", icon_url=static_storage.error_icon)
 					try: await ctx.interaction.edit_original_response(embed=embed)
@@ -109,7 +109,7 @@ class AlertCommand(BaseCommand):
 					embed.set_author(name="Missing channel", icon_url=static_storage.error_icon)
 					try: await ctx.interaction.edit_original_response(embed=embed)
 					except NotFound: pass
-				elif role is not None and not channel.permissions_for(ctx.author).manage_messages:
+				elif role is not None and not ctx.interaction.permissions.manage_messages:
 					embed = Embed(title="You do not have the sufficient permission to tag other server members.", description="To be able to tag other server members with an alert, you must have the `manage messages` permission.", color=constants.colors["gray"])
 					embed.set_author(name="Permission denied", icon_url=static_storage.error_icon)
 					try: await ctx.interaction.edit_original_response(embed=embed)

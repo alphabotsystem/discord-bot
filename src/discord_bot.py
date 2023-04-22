@@ -439,7 +439,7 @@ async def create_request(ctx, autodelete=-1):
 			if forcedFetch["settings"]["setup"]["completed"]:
 				request.guildProperties = forcedFetch
 				return request
-			elif not ctx.bot and ctx.interaction.channel.permissions_for(ctx.author).administrator:
+			elif not ctx.bot and ctx.interaction.permissions.administrator:
 				embed = Embed(title="Hello world!", description="Thanks for adding Alpha.bot to your Discord community, we're thrilled to have you onboard. We think you're going to love everything Alpha.bot can do. Before you start using it, you must complete a short setup process. Sign into your [Alpha.bot account](https://www.alpha.bot/communities) and visit your [Communities Dashboard](https://www.alpha.bot/communities) to begin.", color=constants.colors["pink"])
 				try: await ctx.respond(embed=embed)
 				except NotFound: pass

@@ -93,7 +93,7 @@ class ScheduleCommand(BaseCommand):
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 
-			elif not ctx.channel.permissions_for(ctx.guild.me).manage_webhooks:
+			elif not ctx.interaction.app_permissions.manage_webhooks:
 				embed = Embed(title=f"{self.bot.user.name} doesn't have the permission to send messages via Webhooks.", description=f"Grant `view channel` and `manage webhooks` permissions to {self.bot.user.name} in this channel to be able to schedule a post.", color=constants.colors["red"])
 				embed.set_author(name="Missing permissions", icon_url=static_storage.error_icon)
 				try: await ctx.interaction.edit_original_response(embed=embed)
@@ -263,7 +263,7 @@ class ScheduleCommand(BaseCommand):
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 
-			elif not ctx.channel.permissions_for(ctx.guild.me).manage_webhooks:
+			elif not ctx.interaction.app_permissions.manage_webhooks:
 				embed = Embed(title=f"{self.bot.user.name} doesn't have the permission to send messages via Webhooks.", description=f"Grant `view channel` and `manage webhooks` permissions to {self.bot.user.name} in this channel to be able to schedule a post.", color=constants.colors["red"])
 				embed.set_author(name="Missing permissions", icon_url=static_storage.error_icon)
 				try: await ctx.interaction.edit_original_response(embed=embed)
@@ -417,7 +417,7 @@ class ScheduleCommand(BaseCommand):
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 
-			elif not ctx.channel.permissions_for(ctx.guild.me).manage_webhooks:
+			elif not ctx.interaction.app_permissions.manage_webhooks:
 				embed = Embed(title=f"{self.bot.user.name} doesn't have the permission to send messages via Webhooks.", description=f"Grant `view channel` and `manage webhooks` permissions to {self.bot.user.name} in this channel to be able to schedule a post.", color=constants.colors["red"])
 				embed.set_author(name="Missing permissions", icon_url=static_storage.error_icon)
 				try: await ctx.interaction.edit_original_response(embed=embed)
@@ -572,7 +572,7 @@ class ScheduleCommand(BaseCommand):
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 
-			elif not ctx.channel.permissions_for(ctx.guild.me).manage_webhooks:
+			elif not ctx.interaction.app_permissions.manage_webhooks:
 				embed = Embed(title=f"{self.bot.user.name} doesn't have the permission to send messages via Webhooks.", description=f"Grant `view channel` and `manage webhooks` permissions to {self.bot.user.name} in this channel to be able to schedule a post.", color=constants.colors["red"])
 				embed.set_author(name="Missing permissions", icon_url=static_storage.error_icon)
 				try: await ctx.interaction.edit_original_response(embed=embed)
@@ -721,7 +721,7 @@ class ScheduleCommand(BaseCommand):
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 
-			elif not ctx.channel.permissions_for(ctx.guild.me).manage_webhooks:
+			elif not ctx.interaction.app_permissions.manage_webhooks:
 				embed = Embed(title=f"{self.bot.user.name} doesn't have the permission to send messages via Webhooks.", description=f"Grant `view channel` and `manage webhooks` permissions to {self.bot.user.name} in this channel to be able to schedule a post.", color=constants.colors["red"])
 				embed.set_author(name="Missing permissions", icon_url=static_storage.error_icon)
 				try: await ctx.interaction.edit_original_response(embed=embed)
@@ -892,7 +892,7 @@ class ScheduleCommand(BaseCommand):
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 
-			elif not ctx.channel.permissions_for(ctx.guild.me).manage_webhooks:
+			elif not ctx.interaction.app_permissions.manage_webhooks:
 				embed = Embed(title=f"{self.bot.user.name} doesn't have the permission to send messages via Webhooks.", description=f"Grant `view channel` and `manage webhooks` permissions to {self.bot.user.name} in this channel to be able to schedule a post.", color=constants.colors["red"])
 				embed.set_author(name="Missing permissions", icon_url=static_storage.error_icon)
 				try: await ctx.interaction.edit_original_response(embed=embed)
