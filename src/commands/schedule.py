@@ -8,9 +8,9 @@ from random import randint
 from asyncio import CancelledError
 from traceback import format_exc
 
-from discord import Embed, File, ButtonStyle, SelectOption, Interaction, Role, Thread
+from discord import Embed, File, ButtonStyle, SelectOption, Interaction, Role, Thread, Permissions
 from discord.embeds import EmptyEmbed
-from discord.commands import slash_command, default_permissions, SlashCommandGroup, Option
+from discord.commands import slash_command, SlashCommandGroup, Option
 from discord.ui import View, button, Button, Select
 from discord.errors import NotFound
 from google.cloud.firestore import Increment
@@ -64,10 +64,9 @@ def autocomplete_exclude(ctx):
 
 
 class ScheduleCommand(BaseCommand):
-	scheduleGroup = SlashCommandGroup("schedule", "Schedule bot commands to get automatically posted periodically.", guild_only=True)
+	scheduleGroup = SlashCommandGroup("schedule", "Schedule bot commands to get automatically posted periodically.", guild_only=True, default_member_permissions=Permissions(manage_messages=True))
 
 	@scheduleGroup.command(name="chart", description="Schedule a chart to get automatically posted periodically.")
-	@default_permissions(manage_messages=True)
 	async def chart(
 		self,
 		ctx,
@@ -231,7 +230,6 @@ class ScheduleCommand(BaseCommand):
 			await self.unknown_error(ctx)
 
 	@scheduleGroup.command(name="heatmap", description="Schedule a heatmap to get automatically posted periodically.")
-	@default_permissions(manage_messages=True)
 	async def heatmap(
 		self,
 		ctx,
@@ -390,7 +388,6 @@ class ScheduleCommand(BaseCommand):
 			await self.unknown_error(ctx)
 
 	@scheduleGroup.command(name="price", description="Schedule a price to get automatically posted periodically.")
-	@default_permissions(manage_messages=True)
 	async def price(
 		self,
 		ctx,
@@ -545,7 +542,6 @@ class ScheduleCommand(BaseCommand):
 			await self.unknown_error(ctx)
 
 	@scheduleGroup.command(name="volume", description="Schedule 24-hour volume to get automatically posted periodically.")
-	@default_permissions(manage_messages=True)
 	async def volume(
 		self,
 		ctx,
@@ -694,7 +690,6 @@ class ScheduleCommand(BaseCommand):
 			await self.unknown_error(ctx)
 
 	@scheduleGroup.command(name="top-performers", description="Schedule fear & greed index chart to get automatically posted periodically.")
-	@default_permissions(manage_messages=True)
 	async def lookup_top(
 		self,
 		ctx,
@@ -866,7 +861,6 @@ class ScheduleCommand(BaseCommand):
 			await self.unknown_error(ctx)
 
 	@scheduleGroup.command(name="fgi", description="Schedule fear & greed index chart to get automatically posted periodically.")
-	@default_permissions(manage_messages=True)
 	async def lookup_fgi(
 		self,
 		ctx,
