@@ -78,8 +78,8 @@ class LayoutWrapper(BaseCommand):
 				parent=self.layoutGroup,
 				options=[
 					Option(str, "Ticker id of an asset.", name="ticker", autocomplete=BaseCommand.autocomplete_ticker),
-					Option(str, "Timeframe and coloring method for the heatmap.", name="timeframe", autocomplete=autocomplete_layout_timeframe, required=False, default=""),
-					Option(str, "Venue to pull the price from.", name="venue", autocomplete=BaseCommand.autocomplete_venues, required=False, default="")
+					Option(str, "Preferred chart timeframe to use.", name="timeframe", autocomplete=autocomplete_layout_timeframe, required=False, default=""),
+					Option(str, "Venue to pull the chart from.", name="venue", autocomplete=BaseCommand.autocomplete_venues, required=False, default="")
 				]
 			)
 			self.layoutGroup.add_command(handler)
