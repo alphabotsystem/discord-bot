@@ -55,7 +55,7 @@ class LayoutWrapper(BaseCommand):
 		print(f"Updating layout commands at {timestamp}")
 
 		old = self.bot.remove_application_command(self.layoutGroup)
-		removals = old.guild_ids
+		removals = [g for g in old.guild_ids if g in self.guildIds]
 
 		self.layoutGroup = self.bot.create_group("layout", "Pull a saved public layout from TradingView.", guild_ids=self.guildIds)
 
