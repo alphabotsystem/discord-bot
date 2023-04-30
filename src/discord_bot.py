@@ -15,6 +15,7 @@ from discord.errors import NotFound
 from google.cloud.firestore import AsyncClient as FirestoreAsyncClient
 from google.cloud.firestore import Client as FirestoreClient
 from google.cloud.firestore import Increment
+from google.cloud.firestore import Query
 from google.cloud.error_reporting import Client as ErrorReportingClient
 
 from assets import static_storage
@@ -107,6 +108,37 @@ async def update_guild_count():
 	await database.document("discord/statistics").set({"{}-{:02d}".format(t.year, t.month): {"servers": len(bot.guilds)}}, merge=True)
 	post(f"https://top.gg/api/bots/{bot.user.id}/stats", data={"server_count": len(bot.guilds)}, headers={"Authorization": environ["TOPGG_KEY"]})
 
+@tasks.loop(minutes=1.0)
+async def update_paid_guilds():
+	# Method should not run on licensed bots
+	if bot.user.id not in constants.PRIMARY_BOTS: return
+	# Method should only run in production and after the guild cache is populated
+	if not environ["PRODUCTION"]: return
+
+	await bot.wait_until_ready()
+
+	BLACKLIST = ["ebOX1w1N2DgMtXVN978fnL0FKCP2"]
+
+	try:
+		response = await database.collection("accounts").order_by("customer.subscriptions", direction=Query.DESCENDING).limit(200).get()
+		data = [e.to_dict() for e in response if e.id not in BLACKLIST]
+		data.sort(key=lambda e: sum(e["customer"]["subscriptions"].values()), reverse=True)
+
+		servers = []
+		for account in data:
+			for feature in account["customer"]["slots"]:
+				for guildId in account["customer"]["slots"][feature].keys():
+					if guildId != "personal" and guildId not in servers:
+						servers.append(guildId)
+
+		guilds = [bot.get_guild(int(guildId)) for guildId in servers]
+		icons = [g.icon for g in guilds if g is not None and g.icon is not None]
+
+		await database.document("examples/servers").set({"paid": icons})
+	except:
+		print(format_exc())
+		if environ["PRODUCTION"]: logging.report_exception()
+
 
 # -------------------------
 # Database management
@@ -115,6 +147,7 @@ async def update_guild_count():
 def update_settings(s, changes, timestamp):
 	global settings
 	settings = s[0].to_dict()
+
 
 # -------------------------
 # Message processing
@@ -219,6 +252,7 @@ async def send_messages(messageId, message):
 		print(format_exc())
 		if environ["PRODUCTION"]: logging.report_exception()
 
+
 # -------------------------
 # Job functions
 # -------------------------
@@ -306,6 +340,7 @@ async def guild_secure_fetch(guildId):
 		if properties is None: properties = {}
 
 	return properties
+
 
 # -------------------------
 # Message handling
@@ -518,6 +553,8 @@ async def on_ready():
 
 	if not update_guild_count.is_running():
 		update_guild_count.start()
+	if not update_paid_guilds.is_running():
+		update_paid_guilds.start()
 	if not security_check.is_running():
 		security_check.start()
 	if not database_sanity_check.is_running():
