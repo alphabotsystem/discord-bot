@@ -47,6 +47,8 @@ class LayoutWrapper(BaseCommand):
 		self.timestamp = timestamp
 		self.guildIds = guildIds
 
+		print("Snapshot:", self.layouts)
+
 		self.bot.loop.create_task(self.update_commands(changes, timestamp))
 
 	async def update_commands(self, changes, timestamp):
@@ -125,7 +127,7 @@ class LayoutWrapper(BaseCommand):
 		except CancelledError: pass
 		except Exception:
 			print(format_exc())
-			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /layout {command} {tickerId} timeframe:{timeframe} venue:{venue}, url: {url}")
+			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /layout {command} {tickerId} timeframe:{timeframe} venue:{venue}, url: {self.layouts[command][ctx.guild.id]}")
 			await self.unknown_error(ctx)
 
 	async def respond(
