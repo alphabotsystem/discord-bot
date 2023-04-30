@@ -108,7 +108,7 @@ async def update_guild_count():
 	await database.document("discord/statistics").set({"{}-{:02d}".format(t.year, t.month): {"servers": len(bot.guilds)}}, merge=True)
 	post(f"https://top.gg/api/bots/{bot.user.id}/stats", data={"server_count": len(bot.guilds)}, headers={"Authorization": environ["TOPGG_KEY"]})
 
-@tasks.loop(hours=12.0)
+@tasks.loop(minutes=5.0)
 async def update_paid_guilds():
 	# Method should not run on licensed bots
 	if bot.user.id not in constants.PRIMARY_BOTS: return
@@ -121,17 +121,21 @@ async def update_paid_guilds():
 
 	try:
 		response = await database.collection("accounts").order_by("customer.subscriptions", direction=Query.DESCENDING).limit(200).get()
-		data = [e.to_dict() for e in response if e.id not in BLACKLIST]
-		data.sort(key=lambda e: sum(e["customer"]["subscriptions"].values()), reverse=True)
+		ids = set()
+		guilds = []
 
-		servers = []
-		for account in data:
-			for feature in account["customer"]["slots"]:
-				for guildId in account["customer"]["slots"][feature].keys():
-					if guildId != "personal" and guildId not in servers:
-						servers.append(guildId)
+		for account in response:
+			if account.id in BLACKLIST: continue
+			properties = account.to_dict()
 
-		guilds = [bot.get_guild(int(guildId)) for guildId in servers]
+			for feature in properties["customer"]["slots"]:
+				for guildId in properties["customer"]["slots"][feature].keys():
+					if guildId != "personal" and guildId not in ids:
+						ids.add(guildId)
+						guild = await bot.fetch_guild(int(guildId), with_counts=True)
+						guilds.append(guild)
+
+		guilds.sort(key=lambda g: g.approximate_member_count, reverse=True)
 		icons = [g.icon.url for g in guilds if g is not None and g.icon is not None]
 
 		await database.document("examples/servers").set({"paid": icons})
