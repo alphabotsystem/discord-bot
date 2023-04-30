@@ -108,7 +108,7 @@ async def update_guild_count():
 	await database.document("discord/statistics").set({"{}-{:02d}".format(t.year, t.month): {"servers": len(bot.guilds)}}, merge=True)
 	post(f"https://top.gg/api/bots/{bot.user.id}/stats", data={"server_count": len(bot.guilds)}, headers={"Authorization": environ["TOPGG_KEY"]})
 
-@tasks.loop(minutes=1.0)
+@tasks.loop(hours=12.0)
 async def update_paid_guilds():
 	# Method should not run on licensed bots
 	if bot.user.id not in constants.PRIMARY_BOTS: return
