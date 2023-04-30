@@ -137,7 +137,7 @@ async def update_paid_guilds():
 						guilds.append(guild)
 
 		guilds.sort(key=lambda g: g.approximate_member_count, reverse=True)
-		icons = [g.icon.url for g in guilds if g is not None and g.icon is not None]
+		icons = [{"url": g.icon.url, "name": g.name, "members": g.approximate_member_count} for g in guilds if g is not None and g.icon is not None]
 
 		await database.document("examples/servers").set({"paid": icons})
 	except:
