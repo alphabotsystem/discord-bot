@@ -132,7 +132,8 @@ async def update_paid_guilds():
 				for guildId in properties["customer"]["slots"][feature].keys():
 					if guildId != "personal" and guildId not in ids:
 						ids.add(guildId)
-						guild = await bot.fetch_guild(int(guildId), with_counts=True)
+						try: guild = await bot.fetch_guild(int(guildId), with_counts=True)
+						except: continue
 						guilds.append(guild)
 
 		guilds.sort(key=lambda g: g.approximate_member_count, reverse=True)
