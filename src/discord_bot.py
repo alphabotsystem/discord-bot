@@ -132,7 +132,7 @@ async def update_paid_guilds():
 						servers.append(guildId)
 
 		guilds = [bot.get_guild(int(guildId)) for guildId in servers]
-		icons = [g.icon for g in guilds if g is not None and g.icon is not None]
+		icons = [g.icon.url for g in guilds if g is not None and g.icon is not None]
 
 		await database.document("examples/servers").set({"paid": icons})
 	except:
