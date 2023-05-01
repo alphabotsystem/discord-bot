@@ -35,8 +35,7 @@ class BaseCommand(Cog):
 		"chart": "c",
 		"price": "p",
 		"schedule price": "p",
-		"schedule volume": "volume",
-		"layout": "layout"
+		"schedule volume": "volume"
 	}
 
 	sources = {

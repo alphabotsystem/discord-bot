@@ -33,7 +33,7 @@ from commands.details import DetailsCommand
 from commands.flow import FlowCommand
 from commands.heatmaps import HeatmapCommand
 from commands.ichibot import IchibotCommand, Ichibot
-from commands.layout import LayoutWrapper
+from commands.layout import LayoutCommand
 from commands.lookup import LookupCommand
 from commands.paper import PaperCommand
 from commands.prices import PriceCommand
@@ -496,19 +496,20 @@ async def create_request(ctx, autodelete=-1):
 # Slash commands
 # -------------------------
 
-bot.add_cog(AskCommand(bot, create_request, database, logging))
 bot.add_cog(AlertCommand(bot, create_request, database, logging))
+bot.add_cog(AskCommand(bot, create_request, database, logging))
 bot.add_cog(ChartCommand(bot, create_request, database, logging))
-# bot.add_cog(FlowCommand(bot, create_request, database, logging))
-bot.add_cog(ScheduleCommand(bot, create_request, database, logging))
-bot.add_cog(HeatmapCommand(bot, create_request, database, logging))
-bot.add_cog(DepthCommand(bot, create_request, database, logging))
-bot.add_cog(PriceCommand(bot, create_request, database, logging))
-bot.add_cog(VolumeCommand(bot, create_request, database, logging))
 bot.add_cog(ConvertCommand(bot, create_request, database, logging))
+bot.add_cog(DepthCommand(bot, create_request, database, logging))
 bot.add_cog(DetailsCommand(bot, create_request, database, logging))
+# bot.add_cog(FlowCommand(bot, create_request, database, logging))
+bot.add_cog(HeatmapCommand(bot, create_request, database, logging))
+bot.add_cog(LayoutCommand(bot, create_request, database, logging))
 bot.add_cog(LookupCommand(bot, create_request, database, logging))
 bot.add_cog(PaperCommand(bot, create_request, database, logging))
+bot.add_cog(PriceCommand(bot, create_request, database, logging))
+bot.add_cog(ScheduleCommand(bot, create_request, database, logging))
+bot.add_cog(VolumeCommand(bot, create_request, database, logging))
 
 # -------------------------
 # Special commands
@@ -516,7 +517,6 @@ bot.add_cog(PaperCommand(bot, create_request, database, logging))
 
 if botId == -1:
 	bot.add_cog(IchibotCommand(bot, create_request, database, logging))
-bot.add_cog(LayoutWrapper(bot, create_request, database, logging))
 
 
 # -------------------------

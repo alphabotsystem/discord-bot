@@ -5,11 +5,12 @@ from asyncio import gather, CancelledError, sleep
 from traceback import format_exc
 
 from discord import Embed, File, ButtonStyle, SelectOption, Interaction, PartialEmoji
-from discord.commands import slash_command, SlashCommand, SlashCommandGroup, Option
+from discord.commands import slash_command, Option
 from discord.ui import View, button, Button, Select
 from discord.errors import NotFound
-from google.cloud.firestore import Client as FirestoreClient
+from google.cloud.firestore import AsyncClient as FirestoreAsyncClient
 from google.cloud.firestore import Increment
+from google.cloud.firestore_v1.base_query import FieldFilter
 
 from helpers import constants
 from assets import static_storage
@@ -19,86 +20,26 @@ from commands.base import BaseCommand, ActionsView
 from commands.ichibot import Ichibot
 
 
-snapshots = FirestoreClient()
+database = FirestoreAsyncClient()
 
 
-class LayoutWrapper(BaseCommand):
-	def __init__(self, bot, create_request, database, logging):
-		super().__init__(bot, create_request, database, logging)
+async def autocomplete_layouts(ctx):
+	layouts = await database.collection(f"discord/properties/layouts").where(filter=FieldFilter("guildId", "==", str(ctx.interaction.guild_id))).get()
+	layouts = [e.to_dict()["label"] for e in layouts]
+	currentInput = " ".join(ctx.options.get("name", "").lower().split())
+	return [e for e in layouts if currentInput in e.lower()]
 
-		self.timestamp = 0
-		self.layouts = {}
-		self.guildIds = set()
 
-		self.observer = snapshots.collection("discord/properties/layouts").on_snapshot(self.listener)
-		self.layoutGroup = self.bot.create_group("layout", "Pull a saved public layout from TradingView.", guild_ids=list(self.guildIds))
-
-	def listener(self, snapshot, changes, timestamp):
-		layouts = {}
-		guildIds = set()
-		for e in snapshot:
-			layout = e.to_dict()
-			label = layout["label"]
-			if label not in layouts: layouts[label] = {}
-			guildId = int(layout["guildId"])
-			guildIds.add(guildId)
-			layouts[label][guildId] = layout["url"]
-		self.layouts = layouts
-		self.timestamp = timestamp
-		self.guildIds = guildIds
-
-		print("Layouts snapshot:", self.layouts)
-
-		self.bot.loop.create_task(self.update_commands(changes, timestamp))
-
-	async def update_commands(self, changes, timestamp):
-		await self.bot.wait_until_ready()
-		if timestamp != self.timestamp: return
-		print(f"Updating layout commands at {timestamp}")
-
-		guildIds = set([g.id for g in self.bot.guilds]).intersection(self.guildIds)
-
-		old = self.bot.remove_application_command(self.layoutGroup)
-		removals = [g for g in old.guild_ids if g in guildIds]
-
-		self.layoutGroup = self.bot.create_group("layout", "Pull a saved public layout from TradingView.", guild_ids=list(guildIds))
-
-		commands = {}
-		for command, mappings in self.layouts.items():
-			guildMask = [g for g in mappings if g in guildIds]
-
-			for guildId in guildMask:
-				try: removals.remove(guildId)
-				except ValueError: pass
-
-			async def wrapper(ctx, tickerId, timeframe, venue):
-				await self.layout(ctx, command, tickerId, timeframe, venue)
-
-			handler = SlashCommand(
-				wrapper,
-				name=command,
-				description=f"Pull a public layout called {command} from TradingView.",
-				guild_ids=guildMask,
-				parent=self.layoutGroup,
-				options=[
-					Option(str, "Ticker id of an asset.", name="ticker", autocomplete=BaseCommand.autocomplete_ticker),
-					Option(str, "Preferred chart timeframe to use.", name="timeframe", autocomplete=autocomplete_layout_timeframe, required=False, default=""),
-					Option(str, "Venue to pull the chart from.", name="venue", autocomplete=BaseCommand.autocomplete_venues, required=False, default="")
-				]
-			)
-			self.layoutGroup.add_command(handler)
-			commands[command] = guildMask
-
-		print("Layouts command structure:", commands)
-		print("Layouts command removals:", removals)
-
-		try:
-			await self.bot.sync_commands(commands=[self.layoutGroup], check_guilds=removals, delete_existing=False)
-		except:
-			print(format_exc())
-			if environ["PRODUCTION"]: self.logging.report_exception()
-
-	async def layout(self, ctx, command, tickerId, timeframe, venue):
+class LayoutCommand(BaseCommand):
+	@slash_command(name="layout", description="Pull charts from TradingView, TradingLite and more.", guild_only=True)
+	async def layout(
+		self,
+		ctx,
+		name: Option(str, "Name of the layout to pull.", name="name", autocomplete=autocomplete_layouts),
+		tickerId: Option(str, "Ticker id of an asset.", name="ticker", autocomplete=BaseCommand.autocomplete_ticker),
+		timeframe: Option(str, "Preferred chart timeframe to use.", name="timeframe", autocomplete=autocomplete_layout_timeframe, required=False, default=""),
+		venue: Option(str, "Venue to pull the chart from.", name="venue", autocomplete=BaseCommand.autocomplete_venues, required=False, default="")
+	):
 		try:
 			request = await self.create_request(ctx)
 			if request is None: return
@@ -106,15 +47,16 @@ class LayoutWrapper(BaseCommand):
 			prelightCheckpoint = time()
 			request.set_delay("prelight", prelightCheckpoint - request.start)
 
-			url = self.layouts[command][ctx.guild.id]
 			arguments = [timeframe, venue]
-			[(responseMessage, task), _] = await gather(
+			[(responseMessage, task), layout, _] = await gather(
 				process_chart_arguments(arguments, ["TradingView Relay"], tickerId=tickerId.upper()),
+				self.database.collection(f"discord/properties/layouts").where(filter=FieldFilter("label", "==", name)).where(filter=FieldFilter("guildId", "==", str(request.guildId))).get(),
 				ctx.defer()
 			)
+			url = layout[0].to_dict()["url"]
 
 			if responseMessage is not None:
-				description = "[Advanced Charting add-on](https://www.alpha.bot/pro/advanced-charting) unlocks additional assets, indicators, timeframes and more." if responseMessage.endswith("add-on.") else "Detailed guide with examples is available on [our website](https://www.alpha.bot/features/charting)."
+				description = "Detailed guide with examples is available on [our website](https://www.alpha.bot/features/charting)."
 				embed = Embed(title=responseMessage, description=description, color=constants.colors["gray"])
 				embed.set_author(name="Invalid argument", icon_url=static_storage.error_icon)
 				try: await ctx.interaction.edit_original_response(embed=embed)
