@@ -31,7 +31,7 @@ class LayoutWrapper(BaseCommand):
 		self.guildIds = set()
 
 		self.observer = snapshots.collection("discord/properties/layouts").on_snapshot(self.listener)
-		self.layoutGroup = self.bot.create_group("layout", "Pull a saved public layout from TradingView.", guild_ids=[])
+		self.layoutGroup = self.bot.create_group("layout", "Pull a saved public layout from TradingView.", guild_ids=list(self.guildIds))
 
 	def listener(self, snapshot, changes, timestamp):
 		layouts = {}
@@ -61,7 +61,7 @@ class LayoutWrapper(BaseCommand):
 		old = self.bot.remove_application_command(self.layoutGroup)
 		removals = [g for g in old.guild_ids if g in guildIds]
 
-		self.layoutGroup = self.bot.create_group("layout", "Pull a saved public layout from TradingView.")
+		self.layoutGroup = self.bot.create_group("layout", "Pull a saved public layout from TradingView.", guild_ids=list(guildIds))
 
 		commands = {}
 		for command, mappings in self.layouts.items():
