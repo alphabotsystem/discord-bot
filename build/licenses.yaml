@@ -54,11 +54,6 @@ spec:
               secretKeyRef:
                 name: alpha-credentials
                 key: N8V1MEBUJFSVP4IQMUXYYIEDFYI1_TOKEN
-          - name: ORDWBC0DEITMQZQLF7075B4BRE22_TOKEN
-            valueFrom:
-              secretKeyRef:
-                name: alpha-credentials
-                key: ORDWBC0DEITMQZQLF7075B4BRE22_TOKEN
           - name: GOOGLE_ASSISTANT_OAUTH
             valueFrom:
               secretKeyRef:
