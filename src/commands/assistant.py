@@ -16,6 +16,7 @@ from google.assistant.embedded.v1alpha2 import embedded_assistant_pb2, embedded_
 
 from helpers import constants
 from assets import static_storage
+from assets import jokes
 
 from commands.base import BaseCommand
 
@@ -70,8 +71,7 @@ class AskCommand(BaseCommand):
 				if "Here are some things you can ask for:" in response:
 					return "You can learn more about Alpha.bot's features at https://www.alpha.bot/features"
 				elif any(trigger in response for trigger in constants.badPunTrigger):
-					with open("src/assets/jokes.json") as json_data:
-						return f"Here's a pun that might make you laugh :smile:\n{choice(load(json_data))}"
+					return f"Here's a pun that might make you laugh :smile:\n{choice(jokes.jokes)}"
 				else:
 					for override in constants.messageOverrides:
 						for trigger in constants.messageOverrides[override]:

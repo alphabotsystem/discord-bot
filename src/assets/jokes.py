@@ -1,4 +1,4 @@
-[
+jokes = [
 	"To the guy who invented Zero: Thanks for nothing!",
 	"Enough with the cripple jokes! ... I just can't stand them.",
 	"You can swim in lava. Once.",
@@ -48,7 +48,7 @@
 	"The center of a donut is 100% fat free.",
 	"I couldn't work out how to fasten my seatbelt. Then it clicked.",
 	"I would lose weight but I hate losing.",
-	"When I die, I want to go peacefully like my grandfather did &mdash; in his sleep. Not yelling and screaming like the passengers in his car.",
+	"When I die, I want to go peacefully like my grandfather did - in his sleep. Not yelling and screaming like the passengers in his car.",
 	"My therapist told me the way to achieve true inner peace is to finish what I start. So far I've finished two bags of M&Ms and a chocolate cake. I feel better already.",
 	"Dogs have masters. Cats have staff.",
 	"I love deadlines. I like the whooshing sound they make as they fly by.",
