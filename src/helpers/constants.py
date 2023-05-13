@@ -19,10 +19,11 @@ ICHIBOT_TESTING = [
 ]
 
 REFERRALS = {
-	"binance": "https://accounts.binance.com/en-GB/register?ref=PJF2KLMW",
-	"binanceusdm": "https://accounts.binance.com/en-GB/register?ref=PJF2KLMW",
-	"binancecoinm": "https://accounts.binance.com/en-GB/register?ref=PJF2KLMW",
-	"bybit": "https://www.bybit.com/en-US/invite?ref=9OXPG3"
+	"binance": ["Save 10% on Binance fees", "https://accounts.binance.com/en-GB/register?ref=PJF2KLMW"],
+	"binanceusdm": ["Save 10% on Binance fees", "https://accounts.binance.com/en-GB/register?ref=PJF2KLMW"],
+	"binancecoinm": ["Save 10% on Binance fees", "https://accounts.binance.com/en-GB/register?ref=PJF2KLMW"],
+	"bitmex": ["Save 10% on BitMEX fees", "https://www.bitmex.com/app/register/cv1ZSO"],
+	"bybit": ["Sign up & trade on ByBit", "https://www.bybit.com/en-US/invite?ref=9OXPG3"]
 }
 
 colors = {
