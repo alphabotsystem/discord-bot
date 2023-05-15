@@ -182,10 +182,11 @@ class ScheduleCommand(BaseCommand):
 				confirmation = None if payload is None or payload.get("data") is None else Confirm(user=ctx.author)
 				try: await ctx.interaction.edit_original_response(embeds=embeds, files=files, view=confirmation)
 				except NotFound: pass
-				await confirmation.wait()
 
 				if confirmation is None:
 					return
+				await confirmation.wait()
+
 				if confirmation.value is None or not confirmation.value:
 					try: await ctx.interaction.delete_original_response()
 					except NotFound: pass
@@ -340,10 +341,11 @@ class ScheduleCommand(BaseCommand):
 				confirmation = None if payload is None or payload.get("data") is None else Confirm(user=ctx.author)
 				try: await ctx.interaction.edit_original_response(embeds=embeds, files=files, view=confirmation)
 				except NotFound: pass
-				await confirmation.wait()
 
 				if confirmation is None:
 					return
+				await confirmation.wait()
+
 				if confirmation.value is None or not confirmation.value:
 					try: await ctx.interaction.delete_original_response()
 					except NotFound: pass
@@ -494,10 +496,11 @@ class ScheduleCommand(BaseCommand):
 				confirmation = None if payload is None or "quotePrice" not in payload else Confirm(user=ctx.author)
 				try: await ctx.interaction.edit_original_response(embeds=embeds, view=confirmation)
 				except NotFound: pass
-				await confirmation.wait()
 
 				if confirmation is None:
 					return
+				await confirmation.wait()
+
 				if confirmation.value is None or not confirmation.value:
 					try: await ctx.interaction.delete_original_response()
 					except NotFound: pass
@@ -642,10 +645,11 @@ class ScheduleCommand(BaseCommand):
 				confirmation = None if payload is None or "quoteVolume" not in payload else Confirm(user=ctx.author)
 				try: await ctx.interaction.edit_original_response(embeds=embeds, view=confirmation)
 				except NotFound: pass
-				await confirmation.wait()
 
 				if confirmation is None:
 					return
+				await confirmation.wait()
+
 				if confirmation.value is None or not confirmation.value:
 					try: await ctx.interaction.delete_original_response()
 					except NotFound: pass
@@ -813,10 +817,11 @@ class ScheduleCommand(BaseCommand):
 				confirmation = Confirm(user=ctx.author)
 				try: await ctx.interaction.edit_original_response(embeds=embeds, view=confirmation)
 				except NotFound: pass
-				await confirmation.wait()
 
 				if confirmation is None:
 					return
+				await confirmation.wait()
+
 				if confirmation.value is None or not confirmation.value:
 					try: await ctx.interaction.delete_original_response()
 					except NotFound: pass
@@ -980,10 +985,11 @@ class ScheduleCommand(BaseCommand):
 				confirmation = None if payload is None or payload.get("data") is None else Confirm(user=ctx.author)
 				try: await ctx.interaction.edit_original_response(embeds=embeds, files=files, view=confirmation)
 				except NotFound: pass
-				await confirmation.wait()
 
 				if confirmation is None:
 					return
+				await confirmation.wait()
+
 				if confirmation.value is None or not confirmation.value:
 					try: await ctx.interaction.delete_original_response()
 					except NotFound: pass
