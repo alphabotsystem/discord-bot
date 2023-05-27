@@ -42,11 +42,11 @@ spec:
               secretKeyRef:
                 name: alpha-credentials
                 key: GOOGLE_ASSISTANT_OAUTH
-          - name: IEXC_KEY
+          - name: TWELVEDATA_KEY
             valueFrom:
               secretKeyRef:
                 name: alpha-credentials
-                key: IEXC_KEY
+                key: TWELVEDATA_KEY
           - name: COINGECKO_API_KEY
             valueFrom:
               secretKeyRef:

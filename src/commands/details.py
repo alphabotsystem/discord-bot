@@ -85,8 +85,10 @@ class DetailsCommand(BaseCommand):
 				assetPriceDetails += ("\n1-year high: {:,.%df} {}" % add_decimal_zeros(payload["price"]["1y high"])).format(payload["price"]["1y high"], ticker.get("quote"))
 			if payload["price"].get("1y low") is not None:
 				assetPriceDetails += ("\n1-year low: {:,.%df} {}" % add_decimal_zeros(payload["price"]["1y low"])).format(payload["price"]["1y low"], ticker.get("quote"))
-			if payload["price"].get("per") is not None:
-				assetPriceDetails += "\nPrice-to-earnings ratio: {:,.2f}".format(payload["price"]["per"])
+			if payload["price"].get("52w high") is not None:
+				assetPriceDetails += ("\n52-week high: {:,.%df} {}" % add_decimal_zeros(payload["price"]["52w high"])).format(payload["price"]["52w high"], ticker.get("quote"))
+			if payload["price"].get("52w low") is not None:
+				assetPriceDetails += ("\n52-week low: {:,.%df} {}" % add_decimal_zeros(payload["price"]["52w low"])).format(payload["price"]["52w low"], ticker.get("quote"))
 			if assetPriceDetails != "":
 				embed.add_field(name="Price", value=assetPriceDetails[1:], inline=True)
 
@@ -99,6 +101,8 @@ class DetailsCommand(BaseCommand):
 				change30d = "\nPast month: {:+,.2f} %".format(payload["change"]["past month"])
 			if payload["change"].get("past year") is not None:
 				change1y = "\nPast year: {:+,.2f} %".format(payload["change"]["past year"])
+			if payload["change"].get("past 52w") is not None:
+				change1y = "\nPast 52 weeks: {:+,.2f} %".format(payload["change"]["past 52w"])
 			embed.add_field(name="Price change", value=(change24h + change30d + change1y), inline=True)
 			embed.set_footer(text=payload["sourceText"])
 

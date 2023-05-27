@@ -166,7 +166,11 @@ class AlertCommand(BaseCommand):
 							thumbnailUrl = ticker.get("image")
 						else:
 							async with ClientSession() as session:
-								async with session.get(f"https://cloud.iexapis.com/stable/stock/{ticker.get('symbol')}/logo?token={environ['IEXC_KEY']}") as resp:
+								if ticker['exchange'].get("id") is not None and ticker['exchange']['id'] != "forex":
+									url = f"https://api.twelvedata.com/logo?apikey={environ['TWELVEDATA_KEY']}&interval=1min&type={ticket['metadata']['type'].replace(' ', '%20')}&format=JSON&symbol={ticker.get('symbol')}&exchange={ticker['exchange']['name']}"
+								else:
+									url = f"https://api.twelvedata.com/logo?apikey={environ['TWELVEDATA_KEY']}&interval=1min&type={ticket['metadata']['type'].replace(' ', '%20')}&format=JSON&symbol={ticker.get('symbol')}"
+								async with session.get(url) as resp:
 									response = await resp.json()
 									thumbnailUrl = response["url"]
 									currentTask["ticker"]["image"] = thumbnailUrl
@@ -194,7 +198,7 @@ class AlertCommand(BaseCommand):
 							description += "No channel was specified, so the price alert will be sent to your DMs. "
 						else:
 							description += f"The price alert will be sent to the <#{channel.id}> channel. "
-						if currentPlatform == "IEXC":
+						if currentPlatform == "Twelvedata":
 							description += "The price alert might trigger with up to 15-minute delay due to data licensing requirements on different exchanges."
 						if description == "":
 							description = None
@@ -206,7 +210,7 @@ class AlertCommand(BaseCommand):
 							description += "No channel was specified, so price alerts will be sent to your DMs. "
 						else:
 							description += f"Price alerts will be sent to the <#{channel.id}> channel. "
-						if currentPlatform == "IEXC":
+						if currentPlatform == "Twelvedata":
 							description += "Alerts might trigger with up to 15-minute delay due to data licensing requirements on different exchanges."
 						if description == "":
 							description = None

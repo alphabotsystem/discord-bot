@@ -508,9 +508,14 @@ class PaperCommand(BaseCommand):
 			execPriceText = "{:,.6f}".format(execPrice)
 			execAmountText = "{:,.6f}".format(execAmount)
 			async with ClientSession() as session:
-				async with session.get(f"https://cloud.iexapis.com/stable/stock/{ticker.get('symbol')}/logo?token={environ['IEXC_KEY']}") as resp:
+				if ticker['exchange'].get("id") is not None and ticker['exchange']['id'] != "forex":
+					url = f"https://api.twelvedata.com/logo?apikey={environ['TWELVEDATA_KEY']}&interval=1min&type={ticket['metadata']['type'].replace(' ', '%20')}&format=JSON&symbol={ticker.get('symbol')}&exchange={ticker['exchange']['name']}"
+				else:
+					url = f"https://api.twelvedata.com/logo?apikey={environ['TWELVEDATA_KEY']}&interval=1min&type={ticket['metadata']['type'].replace(' ', '%20')}&format=JSON&symbol={ticker.get('symbol')}"
+				async with session.get(url) as resp:
 					response = await resp.json()
 					thumbnailUrl = response["url"]
+					currentTask["ticker"]["image"] = thumbnailUrl
 
 		baseValue = execAmount
 		quoteValue = execAmount * execPrice

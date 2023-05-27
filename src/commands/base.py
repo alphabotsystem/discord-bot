@@ -39,19 +39,19 @@ class BaseCommand(Cog):
 	}
 
 	sources = {
-		"alert set": ["IEXC", "CCXT"],
+		"alert set": ["Twelvedata", "CCXT"],
 		"c": ["TradingView", "TradingView Premium", "TradingLite", "Bookmap"],
 		"layout": ["TradingView Relay"],
 		"hmap": ["TradingView Stock Heatmap", "TradingView Crypto Heatmap"],
 		"flow": ["Alpha Flow"],
-		"p": ["IEXC", "CCXT", "CoinGecko"],
-		"convert": ["IEXC", "CCXT", "CoinGecko"],
-		"volume": ["IEXC", "CoinGecko", "CCXT"],
-		"depth": ["IEXC", "CCXT"],
-		"info": ["IEXC", "CoinGecko"],
-		"lookup markets": ["IEXC", "CCXT", "CoinGecko", "TradingView", "TradingView Premium", "TradingLite", "Bookmap"],
-		"paper buy": ["IEXC", "CCXT"],
-		"paper sell": ["IEXC", "CCXT"],
+		"p": ["Twelvedata", "CCXT", "CoinGecko"],
+		"convert": ["Twelvedata", "CCXT", "CoinGecko"],
+		"volume": ["Twelvedata", "CoinGecko", "CCXT"],
+		"depth": ["Twelvedata", "CCXT"],
+		"info": ["Twelvedata", "CoinGecko"],
+		"lookup markets": ["Twelvedata", "CCXT", "CoinGecko", "TradingView", "TradingView Premium", "TradingLite", "Bookmap"],
+		"paper buy": ["Twelvedata", "CCXT"],
+		"paper sell": ["Twelvedata", "CCXT"],
 		"ichibot": ["Ichibot"]
 	}
 
