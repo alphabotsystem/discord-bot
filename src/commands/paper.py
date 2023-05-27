@@ -485,7 +485,7 @@ class PaperCommand(BaseCommand):
 		ticker = request.get("ticker")
 
 		if "balance" not in paper:
-			paper["balance"] = {"USD": 10000, "CCXT": {}, "IEXC": {}}
+			paper["balance"] = {"USD": 10000, "CCXT": {}, "Twelvedata": {}}
 		if ticker.get("base") in ["USD", "USDT", "USDC", "DAI", "HUSD", "TUSD", "PAX", "USDK", "USDN", "BUSD", "GUSD", "USDS"]:
 			baseBalance = paper["balance"].get("USD")
 		else:
