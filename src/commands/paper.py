@@ -509,9 +509,9 @@ class PaperCommand(BaseCommand):
 			execAmountText = "{:,.6f}".format(execAmount)
 			async with ClientSession() as session:
 				if ticker['exchange'].get("id") is not None and ticker['exchange']['id'] != "forex":
-					url = f"https://api.twelvedata.com/logo?apikey={environ['TWELVEDATA_KEY']}&interval=1min&type={ticket['metadata']['type'].replace(' ', '%20')}&format=JSON&symbol={ticker.get('symbol')}&exchange={ticker['exchange']['name']}"
+					url = f"https://api.twelvedata.com/logo?apikey={environ['TWELVEDATA_KEY']}&interval=1min&type={ticker['metadata']['type'].replace(' ', '%20')}&format=JSON&symbol={ticker.get('symbol')}&exchange={ticker['exchange']['name']}"
 				else:
-					url = f"https://api.twelvedata.com/logo?apikey={environ['TWELVEDATA_KEY']}&interval=1min&type={ticket['metadata']['type'].replace(' ', '%20')}&format=JSON&symbol={ticker.get('symbol')}"
+					url = f"https://api.twelvedata.com/logo?apikey={environ['TWELVEDATA_KEY']}&interval=1min&type={ticker['metadata']['type'].replace(' ', '%20')}&format=JSON&symbol={ticker.get('symbol')}"
 				async with session.get(url) as resp:
 					response = await resp.json()
 					thumbnailUrl = response["url"]
