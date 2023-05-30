@@ -53,7 +53,6 @@ class LayoutCommand(BaseCommand):
 				self.database.collection(f"discord/properties/layouts").where(filter=FieldFilter("label", "==", name)).where(filter=FieldFilter("guildId", "==", str(request.guildId))).get(),
 				ctx.defer()
 			)
-			url = layout[0].to_dict()["url"]
 
 			if responseMessage is not None:
 				description = "Detailed guide with examples is available on [our website](https://www.alpha.bot/features/charting)."
@@ -62,6 +61,15 @@ class LayoutCommand(BaseCommand):
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 				return
+			elif len(layout) == 0:
+				description = "Detailed guide with examples is available on [our website](https://www.alpha.bot/features/charting)."
+				embed = Embed(title="Layout not found", description=description, color=constants.colors["gray"])
+				embed.set_author(name="Invalid argument", icon_url=static_storage.error_icon)
+				try: await ctx.interaction.edit_original_response(embed=embed)
+				except NotFound: pass
+				return
+
+			url = layout[0].to_dict()["url"]
 
 			request.set_delay("parser", time() - prelightCheckpoint)
 			await self.respond(ctx, url, request, task)
