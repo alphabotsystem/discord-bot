@@ -62,7 +62,7 @@ class LookupCommand(BaseCommand):
 			await self.database.document("discord/statistics").set({request.snapshot: {"mk": Increment(1)}}, merge=True)
 
 		except CancelledError: pass
-		except Exception:
+		except:
 			print(format_exc())
 			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /lookup markets {tickerId}")
 			await self.unknown_error(ctx)
@@ -131,7 +131,7 @@ class LookupCommand(BaseCommand):
 			await self.database.document("discord/statistics").set({request.snapshot: {"t": Increment(1)}}, merge=True)
 
 		except CancelledError: pass
-		except Exception:
+		except:
 			print(format_exc())
 			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /lookup top {category} limit: {limit}")
 			await self.unknown_error(ctx)
@@ -194,7 +194,7 @@ class LookupCommand(BaseCommand):
 			await self.cleanup(ctx, request, removeView=True)
 
 		except CancelledError: pass
-		except Exception:
+		except:
 			print(format_exc())
 			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /lookup fgi {assetType}")
 			await self.unknown_error(ctx)

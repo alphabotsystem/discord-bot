@@ -48,7 +48,7 @@ class ConvertCommand(BaseCommand):
 			await self.database.document("discord/statistics").set({request.snapshot: {"convert": Increment(1)}}, merge=True)
 
 		except CancelledError: pass
-		except Exception:
+		except:
 			print(format_exc())
 			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /convert {fromTicker} {toTicker} {amount}")
 			await self.unknown_error(ctx)

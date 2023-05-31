@@ -237,7 +237,7 @@ class AlertCommand(BaseCommand):
 				except NotFound: pass
 
 		except CancelledError: pass
-		except Exception:
+		except:
 			print(format_exc())
 			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /alert set {tickerId} {levels} {venue} {message} {None if channel is None else channel.id}")
 			await self.unknown_error(ctx)
@@ -289,7 +289,7 @@ class AlertCommand(BaseCommand):
 					await ctx.followup.send(embed=embed, view=DeleteView(database=self.database, pathId=f"details/marketAlerts/{matchedId}/{key}", userId=request.authorId), ephemeral=True)
 
 		except CancelledError: pass
-		except Exception:
+		except:
 			print(format_exc())
 			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /alert list")
 

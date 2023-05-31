@@ -55,7 +55,7 @@ class AskCommand(BaseCommand):
 			await self.database.document("discord/statistics").set({request.snapshot: {"alpha": Increment(1)}}, merge=True)
 
 		except CancelledError: pass
-		except Exception:
+		except:
 			print(format_exc())
 			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /ask {question}")
 			await self.unknown_error(ctx)

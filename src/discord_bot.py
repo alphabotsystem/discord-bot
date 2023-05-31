@@ -80,7 +80,7 @@ async def on_guild_join(guild):
 		properties = CommandRequest.create_guild_settings(properties)
 		await database.document(f"discord/properties/guilds/{guild.id}").set(properties)
 		await update_guild_count()
-	except Exception:
+	except:
 		print(format_exc())
 		if environ["PRODUCTION"]: logging.report_exception(user=str(guild.id))
 
@@ -93,7 +93,7 @@ async def on_guild_remove(guild):
 
 	try:
 		await update_guild_count()
-	except Exception:
+	except:
 		print(format_exc())
 		if environ["PRODUCTION"]: logging.report_exception(user=str(guild.id))
 
@@ -168,7 +168,7 @@ def process_messages(pendingMessages, changes, timestamp):
 			if change.type.name in ["ADDED", "MODIFIED"]:
 				bot.loop.create_task(send_messages(change.document.id, message))
 
-	except Exception:
+	except:
 		print(format_exc())
 		if environ["PRODUCTION"]: logging.report_exception()
 
@@ -253,7 +253,7 @@ async def send_messages(messageId, message):
 
 		print("Could not send message to any destination.")
 
-	except Exception:
+	except:
 		print(format_exc())
 		if environ["PRODUCTION"]: logging.report_exception()
 
@@ -300,7 +300,7 @@ async def security_check():
 			await database.document("discord/settings").set(settings)
 
 	except CancelledError: pass
-	except Exception:
+	except:
 		print(format_exc())
 		if environ["PRODUCTION"]: logging.report_exception()
 
@@ -332,7 +332,7 @@ async def database_sanity_check():
 		if len(tasks) > 0:
 			await wait(tasks)
 
-	except Exception:
+	except:
 		print(format_exc())
 		if environ["PRODUCTION"]: logging.report_exception()
 
@@ -382,7 +382,7 @@ async def on_message(message):
 			await database.document("discord/statistics").set({_snapshot: {"x": Increment(1)}}, merge=True)
 
 	except CancelledError: pass
-	except Exception:
+	except:
 		print(format_exc())
 		if environ["PRODUCTION"]: logging.report_exception()
 
@@ -422,7 +422,7 @@ async def process_ichibot_command(message, commandRequest, requestSlice):
 			await message.channel.send(embed=embed)
 
 	except CancelledError: pass
-	except Exception:
+	except:
 		print(format_exc())
 		if environ["PRODUCTION"]: logging.report_exception(user=f"{message.author.id}: {message.clean_content}")
 		await unknown_error(message, commandRequest.authorId)

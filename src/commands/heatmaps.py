@@ -94,7 +94,7 @@ class HeatmapCommand(BaseCommand):
 			await self.respond(ctx, request, [task])
 
 		except CancelledError: pass
-		except Exception:
+		except:
 			print(format_exc())
 			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /hmap assetType:{assetType} color:{timeframe} market:{market} category:{category} size:{size} group:{group} theme:{theme} autodelete:{autodelete}")
 			await self.unknown_error(ctx)

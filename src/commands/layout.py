@@ -75,7 +75,7 @@ class LayoutCommand(BaseCommand):
 			await self.respond(ctx, url, request, task)
 
 		except CancelledError: pass
-		except Exception:
+		except:
 			print(format_exc())
 			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /layout {command} {tickerId} timeframe:{timeframe} venue:{venue}, url: {self.layouts[command][ctx.guild.id]}")
 			await self.unknown_error(ctx)

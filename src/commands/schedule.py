@@ -225,7 +225,7 @@ class ScheduleCommand(BaseCommand):
 				except NotFound: pass
 
 		except CancelledError: pass
-		except Exception:
+		except:
 			print(format_exc())
 			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /schedule chart {arguments} period:{period} start:{start}")
 			await self.unknown_error(ctx)
@@ -384,7 +384,7 @@ class ScheduleCommand(BaseCommand):
 				except NotFound: pass
 
 		except CancelledError: pass
-		except Exception:
+		except:
 			print(format_exc())
 			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /schedule heatmap assetType:{assetType} color:{timeframe} market:{market} category:{category} size:{size} group:{group} theme:{theme} period:{period} start:{start}")
 			await self.unknown_error(ctx)
@@ -539,7 +539,7 @@ class ScheduleCommand(BaseCommand):
 				except NotFound: pass
 
 		except CancelledError: pass
-		except Exception:
+		except:
 			print(format_exc())
 			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /schedule chart {arguments} period:{period} start:{start}")
 			await self.unknown_error(ctx)
@@ -688,7 +688,7 @@ class ScheduleCommand(BaseCommand):
 				except NotFound: pass
 
 		except CancelledError: pass
-		except Exception:
+		except:
 			print(format_exc())
 			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /schedule chart {arguments} period:{period} start:{start}")
 			await self.unknown_error(ctx)
@@ -860,7 +860,7 @@ class ScheduleCommand(BaseCommand):
 				except NotFound: pass
 
 		except CancelledError: pass
-		except Exception:
+		except:
 			print(format_exc())
 			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /schedule chart {arguments} period:{period} start:{start}")
 			await self.unknown_error(ctx)
@@ -1028,7 +1028,7 @@ class ScheduleCommand(BaseCommand):
 				except NotFound: pass
 
 		except CancelledError: pass
-		except Exception:
+		except:
 			print(format_exc())
 			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /schedule chart {arguments} period:{period} start:{start}")
 			await self.unknown_error(ctx)
@@ -1053,7 +1053,7 @@ class ScheduleCommand(BaseCommand):
 				except NotFound: pass
 
 		except CancelledError: pass
-		except Exception:
+		except:
 			print(format_exc())
 			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /schedule list")
 			await self.unknown_error(ctx)

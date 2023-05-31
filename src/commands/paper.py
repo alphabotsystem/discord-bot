@@ -150,7 +150,7 @@ class PaperCommand(BaseCommand):
 			await self.respond(ctx, request, task, payload, amount, level, orderType)
 
 		except CancelledError: pass
-		except Exception:
+		except:
 			print(format_exc())
 			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /paper {orderType} {tickerId} {amount} {level}")
 			await self.unknown_error(ctx)
@@ -263,7 +263,7 @@ class PaperCommand(BaseCommand):
 			except NotFound: pass
 
 		except CancelledError: pass
-		except Exception:
+		except:
 			print(format_exc())
 			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /paper balance")
 			await self.unknown_error(ctx)
@@ -303,7 +303,7 @@ class PaperCommand(BaseCommand):
 	# 				await ctx.followup.send(embed=embed, view=DeleteView(database=self.database, pathId=request.accountId, orderId=element.id, userId=request.authorId), ephemeral=True)
 
 	# 	except CancelledError: pass
-	# 	except Exception:
+	# 	except:
 	# 		print(format_exc())
 	# 		if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /paper orders")
 	# 		await self.unknown_error(ctx)
@@ -343,7 +343,7 @@ class PaperCommand(BaseCommand):
 				except NotFound: pass
 
 		except CancelledError: pass
-		except Exception:
+		except:
 			print(format_exc())
 			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /paper history")
 			await self.unknown_error(ctx)
@@ -397,7 +397,7 @@ class PaperCommand(BaseCommand):
 	# 		except NotFound: pass
 
 	# 	except CancelledError: pass
-	# 	except Exception:
+	# 	except:
 	# 		print(format_exc())
 	# 		if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /paper leaderboard")
 	# 		await self.unknown_error(ctx)
@@ -473,7 +473,7 @@ class PaperCommand(BaseCommand):
 					except NotFound: pass
 
 		except CancelledError: pass
-		except Exception:
+		except:
 			print(format_exc())
 			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /paper reset")
 			await self.unknown_error(ctx)
