@@ -198,8 +198,8 @@ class AlertCommand(BaseCommand):
 							description += "No channel was specified, so the price alert will be sent to your DMs. "
 						else:
 							description += f"The price alert will be sent to the <#{channel.id}> channel. "
-						if currentPlatform == "Twelvedata":
-							description += "The price alert might trigger with up to 15-minute delay due to data licensing requirements on different exchanges."
+						if exchange["availability"] != "Real-time":
+							description += f"The price alert will trigger with a {exchange['availability']} delay due to data licensing requirements."
 						if description == "":
 							description = None
 						embed = Embed(title=f"Price alert set for {ticker.get('name')}{exchangeName} at {newAlerts[0]['levelText']}{pairQuoteName}.", description=description, color=constants.colors["deep purple"])
@@ -210,8 +210,8 @@ class AlertCommand(BaseCommand):
 							description += "No channel was specified, so price alerts will be sent to your DMs. "
 						else:
 							description += f"Price alerts will be sent to the <#{channel.id}> channel. "
-						if currentPlatform == "Twelvedata":
-							description += "Alerts might trigger with up to 15-minute delay due to data licensing requirements on different exchanges."
+						if exchange["availability"] != "Real-time":
+							description += f"Alerts will trigger with a {exchange['availability']} delay due to data licensing requirements."
 						if description == "":
 							description = None
 						levelsText = ", ".join([e["levelText"] for e in newAlerts])
