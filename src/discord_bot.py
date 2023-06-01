@@ -3,8 +3,7 @@ environ["PRODUCTION"] = environ["PRODUCTION"] if "PRODUCTION" in environ and env
 botId = -1 if len(environ["HOSTNAME"].split("-")) != 3 else int(environ["HOSTNAME"].split("-")[-1])
 
 from time import time
-from datetime import datetime
-from pytz import utc
+from datetime import datetime, timezone
 from requests import post
 from asyncio import CancelledError, sleep, gather, wait, create_task
 from traceback import format_exc
@@ -104,7 +103,7 @@ async def update_guild_count():
 	# Method should only run in production and after the guild cache is populated
 	if not environ["PRODUCTION"] or len(bot.guilds) < 25000: return
 
-	t = datetime.now().astimezone(utc)
+	t = datetime.now().astimezone(timezone.utc)
 	await database.document("discord/statistics").set({"{}-{:02d}".format(t.year, t.month): {"servers": len(bot.guilds)}}, merge=True)
 	post(f"https://top.gg/api/bots/{bot.user.id}/stats", data={"server_count": len(bot.guilds)}, headers={"Authorization": environ["TOPGG_KEY"]})
 

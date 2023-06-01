@@ -4,7 +4,6 @@ google-cloud-firestore>=2.9.1
 google-assistant-grpc>=0.3.0
 google-assistant-sdk>=0.6.0
 pycoingecko>=3.0.0
-pytz>=2022.5
 parsedatetime>=2.6
 pyzmq>=24.0.1
 orjson>=3.8.1

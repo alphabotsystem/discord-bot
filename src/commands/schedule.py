@@ -1,6 +1,5 @@
 from os import environ
 from time import time
-from pytz import utc
 from uuid import uuid4
 from datetime import datetime, timedelta
 from parsedatetime import Calendar
