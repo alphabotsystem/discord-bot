@@ -122,7 +122,7 @@ class BaseCommand(Cog):
 	@staticmethod
 	async def _autocomplete_ticker(ctx, mode):
 		command = BaseCommand.commandMap.get(ctx.command.qualified_name, BaseCommand.commandMap.get(ctx.command.full_parent_name, ctx.command.qualified_name))
-		tickerId = " ".join(ctx.options.get(mode, "").lower().split()).split("|")[0]
+		tickerId = " ".join(ctx.options.get(mode, "").lower().split()).split("|")[0].strip()
 
 		if tickerId == "": return []
 
@@ -138,7 +138,7 @@ class BaseCommand(Cog):
 
 		if command == "ichibot": tickerId = "btc"
 		elif tickerId == "" or tickerId is None: return []
-		else: tickerId = " ".join(tickerId.lower().split()).split("|")[0]
+		else: tickerId = " ".join(tickerId.lower().split()).split("|")[0].strip()
 
 		platforms = BaseCommand.sources.get(command)
 		venues = await autocomplete_venues(tickerId, ",".join(platforms))
