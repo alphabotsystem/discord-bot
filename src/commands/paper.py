@@ -515,7 +515,6 @@ class PaperCommand(BaseCommand):
 				async with session.get(url) as resp:
 					response = await resp.json()
 					thumbnailUrl = response["url"]
-					currentTask["ticker"]["image"] = thumbnailUrl
 
 		baseValue = execAmount
 		quoteValue = execAmount * execPrice
