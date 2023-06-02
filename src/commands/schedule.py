@@ -174,7 +174,7 @@ class ScheduleCommand(BaseCommand):
 					embeds.append(embed)
 				else:
 					files.append(File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, request.authorId, randint(1000, 9999))))
-					embed = Embed(title="Please confirm that you want to schedule this post.", color=constants.colors["pink"])
+					embed = Embed(title="Are you sure you want to schedule this post?", color=constants.colors["pink"])
 					embed.set_author(name="Schedule confirmation", icon_url=self.bot.user.avatar.url)
 					embeds.append(embed)
 
@@ -211,7 +211,7 @@ class ScheduleCommand(BaseCommand):
 					"url": webhook.url
 				})
 
-				try: await ctx.interaction.edit_original_response(view=None)
+				try: await ctx.interaction.edit_original_response(embeds=[], view=None)
 				except NotFound: pass
 
 				embed = Embed(title="Scheduled post has been created.", description=f"The scheduled chart will be posted publicly every {period.removeprefix('1 ')} in this channel, starting {start}.", color=constants.colors["purple"])
@@ -333,7 +333,7 @@ class ScheduleCommand(BaseCommand):
 					embeds.append(embed)
 				else:
 					files.append(File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, request.authorId, randint(1000, 9999))))
-					embed = Embed(title="Please confirm that you want to schedule this post.", color=constants.colors["pink"])
+					embed = Embed(title="Are you sure you want to schedule this post?", color=constants.colors["pink"])
 					embed.set_author(name="Schedule confirmation", icon_url=self.bot.user.avatar.url)
 					embeds.append(embed)
 
@@ -370,7 +370,7 @@ class ScheduleCommand(BaseCommand):
 					"url": webhook.url
 				})
 
-				try: await ctx.interaction.edit_original_response(view=None)
+				try: await ctx.interaction.edit_original_response(embeds=[], view=None)
 				except NotFound: pass
 
 				embed = Embed(title="Scheduled post has been created.", description=f"The scheduled heatmap will be posted publicly every {period.removeprefix('1 ')} in this channel, starting {start}.", color=constants.colors["purple"])
@@ -488,7 +488,7 @@ class ScheduleCommand(BaseCommand):
 						embed.set_author(name=payload["title"], icon_url=payload.get("thumbnailUrl"))
 						embed.set_footer(text=payload["sourceText"])
 						embeds.append(embed)
-					embed = Embed(title="Please confirm that you want to schedule this post.", color=constants.colors["pink"])
+					embed = Embed(title="Are you sure you want to schedule this post?", color=constants.colors["pink"])
 					embed.set_author(name="Schedule confirmation", icon_url=self.bot.user.avatar.url)
 					embeds.append(embed)
 
@@ -525,7 +525,7 @@ class ScheduleCommand(BaseCommand):
 					"url": webhook.url
 				})
 
-				try: await ctx.interaction.edit_original_response(view=None)
+				try: await ctx.interaction.edit_original_response(embeds=[], view=None)
 				except NotFound: pass
 
 				embed = Embed(title="Scheduled post has been created.", description=f"The scheduled price will be posted publicly every {period.removeprefix('1 ')} in this channel, starting {start}.", color=constants.colors["purple"])
@@ -637,7 +637,7 @@ class ScheduleCommand(BaseCommand):
 					embed.set_author(name=payload["title"], icon_url=payload.get("thumbnailUrl"))
 					embed.set_footer(text=payload["sourceText"])
 					embeds.append(embed)
-					embed = Embed(title="Please confirm that you want to schedule this post.", color=constants.colors["pink"])
+					embed = Embed(title="Are you sure you want to schedule this post?", color=constants.colors["pink"])
 					embed.set_author(name="Schedule confirmation", icon_url=self.bot.user.avatar.url)
 					embeds.append(embed)
 
@@ -674,7 +674,7 @@ class ScheduleCommand(BaseCommand):
 					"url": webhook.url
 				})
 
-				try: await ctx.interaction.edit_original_response(view=None)
+				try: await ctx.interaction.edit_original_response(embeds=[], view=None)
 				except NotFound: pass
 
 				embed = Embed(title="Scheduled post has been created.", description=f"The scheduled 24-hour volume will be posted publicly every {period.removeprefix('1 ')} in this channel, starting {start}.", color=constants.colors["purple"])
@@ -809,7 +809,7 @@ class ScheduleCommand(BaseCommand):
 					except NotFound: pass
 					return
 
-				embed = Embed(title="Please confirm that you want to schedule this post.", color=constants.colors["pink"])
+				embed = Embed(title="Are you sure you want to schedule this post?", color=constants.colors["pink"])
 				embed.set_author(name="Schedule confirmation", icon_url=self.bot.user.avatar.url)
 				embeds.append(embed)
 
@@ -846,7 +846,7 @@ class ScheduleCommand(BaseCommand):
 					"url": webhook.url
 				})
 
-				try: await ctx.interaction.edit_original_response(view=None)
+				try: await ctx.interaction.edit_original_response(embeds=[], view=None)
 				except NotFound: pass
 
 				embed = Embed(title="Scheduled post has been created.", description=f"The scheduled list will be posted publicly every {period.removeprefix('1 ')} in this channel, starting {start}.", color=constants.colors["purple"])
@@ -977,7 +977,7 @@ class ScheduleCommand(BaseCommand):
 					embeds.append(embed)
 				else:
 					files.append(File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, request.authorId, randint(1000, 9999))))
-					embed = Embed(title="Please confirm that you want to schedule this post.", color=constants.colors["pink"])
+					embed = Embed(title="Are you sure you want to schedule this post?", color=constants.colors["pink"])
 					embed.set_author(name="Schedule confirmation", icon_url=self.bot.user.avatar.url)
 					embeds.append(embed)
 
@@ -1014,7 +1014,7 @@ class ScheduleCommand(BaseCommand):
 					"url": webhook.url
 				})
 
-				try: await ctx.interaction.edit_original_response(view=None)
+				try: await ctx.interaction.edit_original_response(embeds=[], view=None)
 				except NotFound: pass
 
 				embed = Embed(title="Scheduled post has been created.", description=f"The scheduled chart will be posted publicly every {period.removeprefix('1 ')} in this channel, starting {start}.", color=constants.colors["purple"])
