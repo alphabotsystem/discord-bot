@@ -211,7 +211,7 @@ class ScheduleCommand(BaseCommand):
 					"url": webhook.url
 				})
 
-				try: await ctx.interaction.edit_original_response(embeds=[], view=None)
+				try: await ctx.interaction.edit_original_response(embeds=embeds[:-1], view=None)
 				except NotFound: pass
 
 				embed = Embed(title="Scheduled post has been created.", description=f"The scheduled chart will be posted publicly every {period.removeprefix('1 ')} in this channel, starting {start}.", color=constants.colors["purple"])
@@ -226,7 +226,7 @@ class ScheduleCommand(BaseCommand):
 		except CancelledError: pass
 		except:
 			print(format_exc())
-			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /schedule chart {arguments} period:{period} start:{start}")
+			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /schedule chart {' '.join(arguments)} period:{period} start:{start}")
 			await self.unknown_error(ctx)
 
 	@scheduleGroup.command(name="heatmap", description="Schedule a heatmap to get automatically posted periodically.")
@@ -370,7 +370,7 @@ class ScheduleCommand(BaseCommand):
 					"url": webhook.url
 				})
 
-				try: await ctx.interaction.edit_original_response(embeds=[], view=None)
+				try: await ctx.interaction.edit_original_response(embeds=embeds[:-1], view=None)
 				except NotFound: pass
 
 				embed = Embed(title="Scheduled post has been created.", description=f"The scheduled heatmap will be posted publicly every {period.removeprefix('1 ')} in this channel, starting {start}.", color=constants.colors["purple"])
@@ -525,7 +525,7 @@ class ScheduleCommand(BaseCommand):
 					"url": webhook.url
 				})
 
-				try: await ctx.interaction.edit_original_response(embeds=[], view=None)
+				try: await ctx.interaction.edit_original_response(embeds=embeds[:-1], view=None)
 				except NotFound: pass
 
 				embed = Embed(title="Scheduled post has been created.", description=f"The scheduled price will be posted publicly every {period.removeprefix('1 ')} in this channel, starting {start}.", color=constants.colors["purple"])
@@ -540,7 +540,7 @@ class ScheduleCommand(BaseCommand):
 		except CancelledError: pass
 		except:
 			print(format_exc())
-			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /schedule chart {arguments} period:{period} start:{start}")
+			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /schedule price ticker:{tickerId} venue:{venue} period:{period} start:{start}")
 			await self.unknown_error(ctx)
 
 	@scheduleGroup.command(name="volume", description="Schedule 24-hour volume to get automatically posted periodically.")
@@ -674,7 +674,7 @@ class ScheduleCommand(BaseCommand):
 					"url": webhook.url
 				})
 
-				try: await ctx.interaction.edit_original_response(embeds=[], view=None)
+				try: await ctx.interaction.edit_original_response(embeds=embeds[:-1], view=None)
 				except NotFound: pass
 
 				embed = Embed(title="Scheduled post has been created.", description=f"The scheduled 24-hour volume will be posted publicly every {period.removeprefix('1 ')} in this channel, starting {start}.", color=constants.colors["purple"])
@@ -689,7 +689,7 @@ class ScheduleCommand(BaseCommand):
 		except CancelledError: pass
 		except:
 			print(format_exc())
-			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /schedule chart {arguments} period:{period} start:{start}")
+			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /schedule volume ticker:{tickerId} venue:{venue} period:{period} start:{start}")
 			await self.unknown_error(ctx)
 
 	@scheduleGroup.command(name="top-performers", description="Schedule fear & greed index chart to get automatically posted periodically.")
@@ -846,7 +846,7 @@ class ScheduleCommand(BaseCommand):
 					"url": webhook.url
 				})
 
-				try: await ctx.interaction.edit_original_response(embeds=[], view=None)
+				try: await ctx.interaction.edit_original_response(embeds=embeds[:-1], view=None)
 				except NotFound: pass
 
 				embed = Embed(title="Scheduled post has been created.", description=f"The scheduled list will be posted publicly every {period.removeprefix('1 ')} in this channel, starting {start}.", color=constants.colors["purple"])
@@ -861,7 +861,7 @@ class ScheduleCommand(BaseCommand):
 		except CancelledError: pass
 		except:
 			print(format_exc())
-			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /schedule chart {arguments} period:{period} start:{start}")
+			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /schedule top category:{category} limit:{limit} period:{period} start:{start}")
 			await self.unknown_error(ctx)
 
 	@scheduleGroup.command(name="fgi", description="Schedule fear & greed index chart to get automatically posted periodically.")
@@ -1014,7 +1014,7 @@ class ScheduleCommand(BaseCommand):
 					"url": webhook.url
 				})
 
-				try: await ctx.interaction.edit_original_response(embeds=[], view=None)
+				try: await ctx.interaction.edit_original_response(embeds=embeds[:-1], view=None)
 				except NotFound: pass
 
 				embed = Embed(title="Scheduled post has been created.", description=f"The scheduled chart will be posted publicly every {period.removeprefix('1 ')} in this channel, starting {start}.", color=constants.colors["purple"])
@@ -1029,7 +1029,7 @@ class ScheduleCommand(BaseCommand):
 		except CancelledError: pass
 		except:
 			print(format_exc())
-			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /schedule chart {arguments} period:{period} start:{start}")
+			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /schedule fgi assetType:{assetType} period:{period} start:{start}")
 			await self.unknown_error(ctx)
 
 	@scheduleGroup.command(name="list", description="List all scheduled posts.")
