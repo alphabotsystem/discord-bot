@@ -4,7 +4,7 @@ from uuid import uuid4
 from datetime import datetime, timedelta
 from parsedatetime import Calendar
 from random import randint
-from asyncio import CancelledError
+from asyncio import gather, CancelledError
 from traceback import format_exc
 
 from discord import Embed, File, ButtonStyle, SelectOption, Interaction, Role, Thread, Permissions
@@ -13,15 +13,16 @@ from discord.commands import slash_command, SlashCommandGroup, Option
 from discord.ui import View, button, Button, Select
 from discord.errors import NotFound
 from google.cloud.firestore import Increment
+from google.cloud.firestore_v1.base_query import FieldFilter
 from pycoingecko import CoinGeckoAPI
 
 from helpers import constants
 from assets import static_storage
-from Processor import process_chart_arguments, process_heatmap_arguments, process_quote_arguments, process_task, autocomplete_hmap_timeframe, autocomplete_market, autocomplete_category, autocomplete_size, autocomplete_group
+from Processor import process_chart_arguments, process_heatmap_arguments, process_quote_arguments, process_task, autocomplete_hmap_timeframe, autocomplete_market, autocomplete_category, autocomplete_size, autocomplete_group, autocomplete_layout_timeframe
 from commands.heatmaps import autocomplete_theme
 from DatabaseConnector import DatabaseConnector
 
-from commands.base import BaseCommand, RedirectView, Confirm, autocomplete_type, autocomplete_performers_categories
+from commands.base import BaseCommand, RedirectView, Confirm, autocomplete_type, autocomplete_performers_categories, autocomplete_layouts
 
 
 cal = Calendar()
@@ -227,6 +228,168 @@ class ScheduleCommand(BaseCommand):
 		except:
 			print(format_exc())
 			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /schedule chart {' '.join(arguments)} period:{period} start:{start}")
+			await self.unknown_error(ctx)
+
+	@scheduleGroup.command(name="layout", description="Schedule a TradingView Layout to get automatically posted periodically.")
+	async def layout(
+		self,
+		ctx,
+		name: Option(str, "Name of the layout to pull.", name="name", autocomplete=autocomplete_layouts),
+		tickerId: Option(str, "Ticker id of an asset.", name="ticker", autocomplete=BaseCommand.autocomplete_ticker),
+		period: Option(str, "Period of time every which the chart will be posted.", name="period", autocomplete=autocomplete_period),
+		timeframe: Option(str, "Preferred chart timeframe to use.", name="timeframe", autocomplete=autocomplete_layout_timeframe, required=False, default=""),
+		venue: Option(str, "Venue to pull the chart from.", name="venue", autocomplete=BaseCommand.autocomplete_venues, required=False, default=""),
+		start: Option(str, "Time at which the first chart will be posted.", name="start", autocomplete=autocomplete_date, required=False, default=None),
+		exclude: Option(str, "Times to exclude from posting.", name="skip", autocomplete=autocomplete_exclude, required=False, default=None),
+		message: Option(str, "Message to post with the chart.", name="message", required=False, default=None),
+		role: Option(Role, "Role to tag on trigger.", name="role", required=False, default=None)
+	):
+		try:
+			request = await self.create_request(ctx)
+			if request is None: return
+
+			try: await ctx.defer(ephemeral=True)
+			except: return
+
+			totalPostCount = await self.database.collection(f"details/scheduledPosts/{request.guildId}").count().get()
+
+			if isinstance(ctx.channel, Thread):
+				embed = Embed(title="You cannot schedule a post in a thread.", color=constants.colors["gray"])
+				embed.set_author(name="Invalid channel", icon_url=static_storage.error_icon)
+				try: await ctx.interaction.edit_original_response(embed=embed)
+				except NotFound: pass
+
+			elif not ctx.interaction.app_permissions.manage_webhooks:
+				embed = Embed(title=f"{self.bot.user.name} doesn't have the permission to send messages via Webhooks.", description=f"Grant `view channel` and `manage webhooks` permissions to {self.bot.user.name} in this channel to be able to schedule a post.", color=constants.colors["red"])
+				embed.set_author(name="Missing permissions", icon_url=static_storage.error_icon)
+				try: await ctx.interaction.edit_original_response(embed=embed)
+				except NotFound: pass
+
+			elif totalPostCount[0][0].value >= 100:
+				embed = Embed(title="You can only create up to 100 scheduled posts per community. Remove some before creating new ones by calling </schedule list:1041362666872131675>", color=constants.colors["red"])
+				embed.set_author(name="Maximum number of scheduled posts reached", icon_url=static_storage.error_icon)
+				try: await ctx.interaction.edit_original_response(embed=embed)
+				except NotFound: pass
+
+			elif request.scheduled_posting_available() and request.tradingview_layouts_available():
+				period = period.lower()
+
+				if period not in PERIODS:
+					embed = Embed(title="The provided period is not valid. Please pick one of the available periods.", color=constants.colors["gray"])
+					embed.set_author(name="Invalid period", icon_url=static_storage.error_icon)
+					try: await ctx.interaction.edit_original_response(embed=embed)
+					except NotFound: pass
+					return
+				elif exclude is not None and exclude not in EXCLUDE:
+					embed = Embed(title="The provided skip value is not valid. Please pick one of the available options.", color=constants.colors["gray"])
+					embed.set_author(name="Invalid skip value", icon_url=static_storage.error_icon)
+					try: await ctx.interaction.edit_original_response(embed=embed)
+					except NotFound: pass
+					return
+
+				if start is None:
+					start = datetime.now().strftime("%b %d %Y %H:%M") + " UTC"
+				try:
+					timestamp = datetime.strptime(start, "%b %d %Y %H:%M UTC").timestamp()
+				except:
+					embed = Embed(title="The provided start date is not valid. Please provide a valid date and time.", color=constants.colors["gray"])
+					embed.set_author(name="Invalid start time", icon_url=static_storage.error_icon)
+					try: await ctx.interaction.edit_original_response(embed=embed)
+					except NotFound: pass
+					return
+
+				while timestamp < time():
+					timestamp += PERIOD_TO_TIME[period] * 60
+
+				arguments = [venue, timeframe]
+				[(responseMessage, task), layout] = await gather(
+					process_chart_arguments(arguments, ["TradingView Relay"], tickerId=tickerId.upper()),
+					self.database.collection(f"discord/properties/layouts").where(filter=FieldFilter("label", "==", name)).where(filter=FieldFilter("guildId", "==", str(request.guildId))).get()
+				)
+
+				if responseMessage is not None:
+					description = "Detailed guide with examples is available on [our website](https://www.alpha.bot/features/layouts)."
+					embed = Embed(title=responseMessage, description=description, color=constants.colors["gray"])
+					embed.set_author(name="Invalid argument", icon_url=static_storage.error_icon)
+					try: await ctx.interaction.edit_original_response(embed=embed)
+					except NotFound: pass
+					return
+				elif task.get("requestCount") > 1:
+					embed = Embed(title="Only one timeframe is allowed per request when scheduling a post.", color=constants.colors["gray"])
+					embed.set_author(name="Too many requests", icon_url=static_storage.error_icon)
+					try: await ctx.interaction.edit_original_response(embed=embed)
+					except NotFound: pass
+					return
+
+				url = layout[0].to_dict()["url"]
+				task["TradingView Relay"]["url"] = url
+
+				currentTask = task.get(task.get("currentPlatform"))
+				timeframes = task.pop("timeframes")
+				for p, t in timeframes.items(): task[p]["currentTimeframe"] = t[0]
+				payload, responseMessage = await process_task(task, "chart", origin=request.origin)
+
+				files, embeds = [], []
+				if payload is None:
+					errorMessage = f"Requested chart for `{currentTask.get('ticker').get('name')}` is not available." if responseMessage is None else responseMessage
+					embed = Embed(title=errorMessage, color=constants.colors["gray"])
+					embed.set_author(name="Schedule confirmation", icon_url=self.bot.user.avatar.url)
+					embeds.append(embed)
+				else:
+					files.append(File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, request.authorId, randint(1000, 9999))))
+					embed = Embed(title="Are you sure you want to schedule this post?", color=constants.colors["pink"])
+					embed.set_author(name="Schedule confirmation", icon_url=self.bot.user.avatar.url)
+					embeds.append(embed)
+
+				confirmation = None if payload is None or payload.get("data") is None else Confirm(user=ctx.author)
+				try: await ctx.interaction.edit_original_response(embeds=embeds, files=files, view=confirmation)
+				except NotFound: pass
+
+				if confirmation is None:
+					return
+				await confirmation.wait()
+
+				if confirmation.value is None or not confirmation.value:
+					try: await ctx.interaction.delete_original_response()
+					except NotFound: pass
+					return
+
+				webhooks = await ctx.channel.webhooks()
+				webhook = next((w for w in webhooks if w.user.id == self.bot.user.id), None)
+				if webhook is None:
+					avatar = await self.bot.user.avatar.read()
+					webhook = await ctx.channel.create_webhook(name=self.bot.user.name, avatar=avatar)
+
+				await self.database.document(f"details/scheduledPosts/{request.guildId}/{str(uuid4())}").set({
+					"arguments": [url, tickerId, venue, timeframe],
+					"authorId": str(request.authorId),
+					"botId": str(self.bot.user.id),
+					"channelId": str(request.channelId),
+					"command": "layout",
+					"exclude": None if exclude is None else exclude.lower(),
+					"message": message,
+					"period": PERIOD_TO_TIME[period],
+					"role": None if role is None else str(role.id),
+					"start": timestamp,
+					"url": webhook.url
+				})
+
+				try: await ctx.interaction.edit_original_response(embeds=embeds[:-1], view=None)
+				except NotFound: pass
+
+				embed = Embed(title="Scheduled post has been created.", description=f"The scheduled TradingView Layout will be posted publicly every {period.removeprefix('1 ')} in this channel, starting {start}.", color=constants.colors["purple"])
+				embed.set_author(name="TradingView Layout scheduled", icon_url=self.bot.user.avatar.url)
+				await ctx.followup.send(embed=embed, ephemeral=True)
+			else:
+				embed = Embed(title=":gem: Scheduled Posting functionality and TradingView Layouts are available as add-on subscriptions for communities for a total of only $15.00 per month.", description="If you'd like to start your 30-day free trial, visit [our website](https://www.alpha.bot/pro).", color=constants.colors["deep purple"])
+				# embed.set_image(url="https://www.alpha.bot/files/uploads/pro-hero.jpg")
+				try: await ctx.interaction.edit_original_response(embed=embed)
+				except NotFound: pass
+
+		except CancelledError: pass
+		except:
+			print(format_exc())
+			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /schedule layout ticker:{tickerId} venue:{venue} timeframe:{timeframe} period:{period} start:{start}")
 			await self.unknown_error(ctx)
 
 	@scheduleGroup.command(name="heatmap", description="Schedule a heatmap to get automatically posted periodically.")
@@ -947,7 +1110,7 @@ class ScheduleCommand(BaseCommand):
 				responseMessage, task = await process_chart_arguments([assetType], platforms, tickerId="FGI")
 
 				if responseMessage is not None:
-					description = "[Advanced Charting add-on](https://www.alpha.bot/pro/advanced-charting) unlocks additional assets, indicators, timeframes and more." if responseMessage.endswith("add-on.") else "Detailed guide with examples is available on [our website](https://www.alpha.bot/features/charting)."
+					description = "[Advanced Charting add-on](https://www.alpha.bot/pro/advanced-charting) unlocks additional assets, indicators, timeframes and more." if responseMessage.endswith("add-on.") else "Detailed guide with examples is available on [our website](https://www.alpha.bot/features/lookup)."
 					embed = Embed(title=responseMessage, description=description, color=constants.colors["gray"])
 					embed.set_author(name="Invalid argument", icon_url=static_storage.error_icon)
 					try: await ctx.interaction.edit_original_response(embed=embed)

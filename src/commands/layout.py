@@ -8,7 +8,6 @@ from discord import Embed, File, ButtonStyle, SelectOption, Interaction, Partial
 from discord.commands import slash_command, Option
 from discord.ui import View, button, Button, Select
 from discord.errors import NotFound
-from google.cloud.firestore import AsyncClient as FirestoreAsyncClient
 from google.cloud.firestore import Increment
 from google.cloud.firestore_v1.base_query import FieldFilter
 
@@ -16,18 +15,8 @@ from helpers import constants
 from assets import static_storage
 from Processor import autocomplete_layout_timeframe, process_chart_arguments, process_task
 
-from commands.base import BaseCommand, ActionsView
+from commands.base import BaseCommand, ActionsView, autocomplete_layouts
 from commands.ichibot import Ichibot
-
-
-database = FirestoreAsyncClient()
-
-
-async def autocomplete_layouts(ctx):
-	layouts = await database.collection(f"discord/properties/layouts").where(filter=FieldFilter("guildId", "==", str(ctx.interaction.guild_id))).get()
-	layouts = [e.to_dict()["label"] for e in layouts]
-	currentInput = " ".join(ctx.options.get("name", "").lower().split())
-	return [e for e in layouts if currentInput in e.lower()]
 
 
 class LayoutCommand(BaseCommand):
@@ -55,14 +44,14 @@ class LayoutCommand(BaseCommand):
 			)
 
 			if responseMessage is not None:
-				description = "Detailed guide with examples is available on [our website](https://www.alpha.bot/features/charting)."
+				description = "Detailed guide with examples is available on [our website](https://www.alpha.bot/features/layouts)."
 				embed = Embed(title=responseMessage, description=description, color=constants.colors["gray"])
 				embed.set_author(name="Invalid argument", icon_url=static_storage.error_icon)
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 				return
 			elif len(layout) == 0:
-				description = "Detailed guide with examples is available on [our website](https://www.alpha.bot/features/charting)."
+				description = "Detailed guide with examples is available on [our website](https://www.alpha.bot/features/layouts)."
 				embed = Embed(title="Layout not found", description=description, color=constants.colors["gray"])
 				embed.set_author(name="Invalid argument", icon_url=static_storage.error_icon)
 				try: await ctx.interaction.edit_original_response(embed=embed)

@@ -8,12 +8,15 @@ from traceback import format_exc
 from discord import Embed, ButtonStyle, Interaction, PartialEmoji
 from discord.ext.commands import Cog
 from discord.ui import View, button, Button
+from google.cloud.firestore import AsyncClient as FirestoreAsyncClient
+from google.cloud.firestore_v1.base_query import FieldFilter
 from google.cloud import pubsub_v1
 
 from helpers import constants
 from assets import static_storage
 from Processor import autocomplete_ticker, autocomplete_venues
 
+database = FirestoreAsyncClient()
 publisher = pubsub_v1.PublisherClient()
 REQUESTS_TOPIC_NAME = "projects/nlc-bot-36685/topics/discord-requests"
 TELEMETRY_TOPIC_NAME = "projects/nlc-bot-36685/topics/discord-telemetry"
@@ -29,13 +32,20 @@ async def autocomplete_performers_categories(ctx):
 	currentInput = " ".join(ctx.options.get("category", "").lower().split())
 	return [e for e in options if e.startswith(currentInput)]
 
+async def autocomplete_layouts(ctx):
+	layouts = await database.collection(f"discord/properties/layouts").where(filter=FieldFilter("guildId", "==", str(ctx.interaction.guild_id))).get()
+	layouts = [e.to_dict()["label"] for e in layouts]
+	currentInput = " ".join(ctx.options.get("name", "").lower().split())
+	return [e for e in layouts if currentInput in e.lower()]
+
 
 class BaseCommand(Cog):
 	commandMap = {
 		"chart": "c",
 		"price": "p",
 		"schedule price": "p",
-		"schedule volume": "volume"
+		"schedule volume": "volume",
+		"schedule layout": "layout"
 	}
 
 	sources = {
