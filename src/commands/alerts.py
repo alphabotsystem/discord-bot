@@ -172,7 +172,7 @@ class AlertCommand(BaseCommand):
 									url = f"https://api.twelvedata.com/logo?apikey={environ['TWELVEDATA_KEY']}&interval=1min&type={ticker['metadata']['type'].replace(' ', '%20')}&format=JSON&symbol={ticker.get('symbol')}"
 								async with session.get(url) as resp:
 									response = await resp.json()
-									thumbnailUrl = response["url"]
+									thumbnailUrl = response.get("url")
 									currentTask["ticker"]["image"] = thumbnailUrl
 
 						newAlerts.append({
