@@ -442,7 +442,7 @@ async def create_request(ctx, autodelete=-1):
 	if authorId in constants.blockedUsers or guildId in constants.blockedGuilds: return
 
 	# Check if the bot has the permission to operate in this guild
-	if bot.user.id not in constants.PRIMARY_BOTS and constants.LICENSED_BOTS.get(guildId) != bot.user.id: return
+	if bot.user.id not in constants.PRIMARY_BOTS and guildId not in constants.LICENSED_BOTS: return
 
 	[accountId, user, guild] = await gather(
 		accountProperties.match(authorId),
@@ -586,5 +586,7 @@ elif botId == 3:
 	token = environ["H59TRYWEQLSI0U1UZLDFZRTXPXC2_TOKEN"]
 elif botId == 4:
 	token = environ["K4OIVMRPJBA3OLYBULWAYCNHGJK2_TOKEN"]
+elif botId == 5:
+	token = environ["CIPIGOZSPUQQZHUVQ9SOIS6MAH53_TOKEN"]
 
 bot.loop.run_until_complete(bot.start(token))
