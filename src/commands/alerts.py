@@ -199,7 +199,7 @@ class AlertCommand(BaseCommand):
 						else:
 							description += f"The price alert will be sent to the <#{channel.id}> channel. "
 						if exchange["availability"] != "Real-time":
-							description += f"The price alert will trigger with a {exchange['availability']} delay due to data licensing requirements."
+							description += f"The price alert will trigger with a {exchange['availability']} delay due to data licensing requirements on {exchange['name']}."
 						if description == "":
 							description = None
 						embed = Embed(title=f"Price alert set for {ticker.get('name')}{exchangeName} at {newAlerts[0]['levelText']}{pairQuoteName}.", description=description, color=constants.colors["deep purple"])
@@ -211,7 +211,7 @@ class AlertCommand(BaseCommand):
 						else:
 							description += f"Price alerts will be sent to the <#{channel.id}> channel. "
 						if exchange["availability"] != "Real-time":
-							description += f"Alerts will trigger with a {exchange['availability']} delay due to data licensing requirements."
+							description += f"Alerts will trigger with a {exchange['availability']} delay due to data licensing requirements on {exchange['name']}."
 						if description == "":
 							description = None
 						levelsText = ", ".join([e["levelText"] for e in newAlerts])
