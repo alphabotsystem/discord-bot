@@ -23,7 +23,7 @@ TELEMETRY_TOPIC_NAME = "projects/nlc-bot-36685/topics/discord-telemetry"
 
 
 MARKET_MOVERS_OPTIONS = []
-for m in ["crypto", "stocks", "ETF", "mutual funds" "forex"]:
+for m in ["crypto", "stocks", "ETF", "forex", "mutual funds"]:
 	MARKET_MOVERS_OPTIONS.extend([f"{m} gainers", f"{m} losers"])
 MARKET_MOVERS_OPTIONS.sort()
 
@@ -35,7 +35,7 @@ async def autocomplete_type(ctx):
 
 async def autocomplete_movers_categories(ctx):
 	currentInput = " ".join(ctx.options.get("category", "").lower().split())
-	return [e for e in MARKET_MOVERS_OPTIONS if e.startswith(currentInput)]
+	return [e for e in MARKET_MOVERS_OPTIONS if currentInput in e]
 
 async def autocomplete_layouts(ctx):
 	layouts = await database.collection(f"discord/properties/layouts").where(filter=FieldFilter("guildId", "==", str(ctx.interaction.guild_id))).get()
