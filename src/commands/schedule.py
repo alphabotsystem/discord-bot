@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from parsedatetime import Calendar
 from random import randint
 from asyncio import gather, CancelledError
+from aiohttp import ClientSession
 from traceback import format_exc
 
 from discord import Embed, File, ButtonStyle, SelectOption, Interaction, Role, Thread, Permissions

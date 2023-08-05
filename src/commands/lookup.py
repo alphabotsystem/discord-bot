@@ -2,6 +2,7 @@ from os import environ
 from time import time
 from random import randint
 from asyncio import gather, CancelledError
+from aiohttp import ClientSession
 from traceback import format_exc
 
 from discord import Embed, ButtonStyle, Interaction, File
