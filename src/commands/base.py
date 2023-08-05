@@ -22,15 +22,20 @@ REQUESTS_TOPIC_NAME = "projects/nlc-bot-36685/topics/discord-requests"
 TELEMETRY_TOPIC_NAME = "projects/nlc-bot-36685/topics/discord-telemetry"
 
 
+MARKET_MOVERS_OPTIONS = []
+for m in ["crypto", "stocks", "ETF", "mutual funds" "forex"]:
+	MARKET_MOVERS_OPTIONS.extend([f"{m} gainers", f"{m} losers"])
+MARKET_MOVERS_OPTIONS.sort()
+
+
 async def autocomplete_type(ctx):
 	options = ["crypto", "stocks"]
 	currentInput = " ".join(ctx.options.get("type", "").lower().split())
 	return [e for e in options if e.startswith(currentInput)]
 
-async def autocomplete_performers_categories(ctx):
-	options = ["crypto gainers", "crypto losers"]
+async def autocomplete_movers_categories(ctx):
 	currentInput = " ".join(ctx.options.get("category", "").lower().split())
-	return [e for e in options if e.startswith(currentInput)]
+	return [e for e in MARKET_MOVERS_OPTIONS if e.startswith(currentInput)]
 
 async def autocomplete_layouts(ctx):
 	layouts = await database.collection(f"discord/properties/layouts").where(filter=FieldFilter("guildId", "==", str(ctx.interaction.guild_id))).get()
@@ -59,7 +64,7 @@ class BaseCommand(Cog):
 		"volume": ["Twelvedata", "CoinGecko", "CCXT"],
 		"depth": ["Twelvedata", "CCXT"],
 		"info": ["Twelvedata", "CoinGecko"],
-		"lookup markets": ["Twelvedata", "CCXT", "CoinGecko", "TradingView", "TradingView Premium", "TradingLite", "Bookmap"],
+		"lookup listings": ["Twelvedata", "CCXT", "CoinGecko", "TradingView", "TradingView Premium", "TradingLite", "Bookmap"],
 		"paper buy": ["Twelvedata", "CCXT"],
 		"paper sell": ["Twelvedata", "CCXT"],
 		"ichibot": ["Ichibot"]

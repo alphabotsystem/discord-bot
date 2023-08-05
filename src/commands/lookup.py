@@ -15,14 +15,14 @@ from helpers import constants
 from assets import static_storage
 from Processor import process_chart_arguments, process_quote_arguments, process_task, get_listings
 
-from commands.base import BaseCommand, ActionsView, autocomplete_type, autocomplete_performers_categories
+from commands.base import BaseCommand, ActionsView, autocomplete_type, autocomplete_movers_categories, MARKET_MOVERS_OPTIONS
 
 
 class LookupCommand(BaseCommand):
 	lookupGroup = SlashCommandGroup("lookup", "Look up or screen the market for various properties.")
 
-	@lookupGroup.command(name="markets", description="Look up available markets for a particular asset.")
-	async def markets(
+	@lookupGroup.command(name="listings", description="Look up exchange listings for a particular asset.")
+	async def listings(
 		self,
 		ctx,
 		tickerId: Option(str, "Ticker id of an asset.", name="ticker", autocomplete=BaseCommand.autocomplete_ticker)
@@ -64,14 +64,14 @@ class LookupCommand(BaseCommand):
 		except CancelledError: pass
 		except:
 			print(format_exc())
-			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /lookup markets {tickerId}")
+			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /lookup listings {tickerId}")
 			await self.unknown_error(ctx)
 
-	@lookupGroup.command(name="top-performers", description="Look up top gainers and losers in the market.")
+	@lookupGroup.command(name="market-movers", description="Look up top gainers or losers in the market.")
 	async def top(
 		self,
 		ctx,
-		category: Option(str, "Ranking type.", name="category", autocomplete=autocomplete_performers_categories),
+		category: Option(str, "Ranking type.", name="category", autocomplete=autocomplete_movers_categories),
 		limit: Option(int, "Asset count limit. Defaults to top 250 by market cap, maximum is 1000.", name="limit", required=False, default=250)
 	):
 		try:
@@ -81,28 +81,18 @@ class LookupCommand(BaseCommand):
 			await ctx.defer()
 
 			category = " ".join(category.lower().split())
-			if category == "crypto gainers":
-				rawData = []
-				cg = CoinGeckoAPI(api_key=environ["COINGECKO_API_KEY"])
-				page = 1
-				while True:
-					rawData += cg.get_coins_markets(vs_currency="usd", order="market_cap_desc", per_page=250, page=page, price_change_percentage="24h")
-					page += 1
-					if page > 4: break
-
-				response = []
-				for e in rawData[:max(10, limit)]:
-					if e.get("price_change_percentage_24h_in_currency", None) is not None:
-						response.append({"symbol": e["symbol"].upper(), "change": e["price_change_percentage_24h_in_currency"]})
-				response = sorted(response, key=lambda k: k["change"], reverse=True)[:10]
-
-				embed = Embed(title="Top gainers", color=constants.colors["deep purple"])
-				for token in response:
-					embed.add_field(name=token["symbol"], value="Gained {:,.2f} %".format(token["change"]), inline=True)
+			if category not in MARKET_MOVERS_OPTIONS:
+				embed = Embed(title="The specified category is invalid.", description="Detailed guide with examples is available on [our website](https://www.alpha.bot/features/lookup).", color=constants.colors["deep purple"])
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
+				return
 
-			elif category == "crypto losers":
+			parts = category.split(" ")
+			direction = parts.pop()
+			market = " ".join(parts)
+			embed = Embed(title=f"Top {direction}", color=constants.colors["deep purple"])
+
+			if market == "crypto":
 				rawData = []
 				cg = CoinGeckoAPI(api_key=environ["COINGECKO_API_KEY"])
 				page = 1
@@ -115,16 +105,26 @@ class LookupCommand(BaseCommand):
 				for e in rawData[:max(10, limit)]:
 					if e.get("price_change_percentage_24h_in_currency", None) is not None:
 						response.append({"symbol": e["symbol"].upper(), "change": e["price_change_percentage_24h_in_currency"]})
-				response = sorted(response, key=lambda k: k["change"])[:10]
 
-				embed = Embed(title="Top losers", color=constants.colors["deep purple"])
+				if direction == "gainers":
+					response = sorted(response, key=lambda k: k["change"], reverse=True)[:10]
+				elif direction == "losers":
+					response = sorted(response, key=lambda k: k["change"])[:10]
+
 				for token in response:
-					embed.add_field(name=token["symbol"], value="Lost {:,.2f} %".format(token["change"]), inline=True)
+					embed.add_field(name=f"{token['name']} ({token['symbol']})", value="{:+,.2f}%".format(token["change"]), inline=True)
+
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 
 			else:
-				embed = Embed(title="The specified category is invalid.", description="Detailed guide with examples is available on [our website](https://www.alpha.bot/features/lookup).", color=constants.colors["deep purple"])
+				async with ClientSession() as session:
+					url = f"https://api.twelvedata.com/market_movers/{market.replace(' ', '_')}?apikey={environ['TWELVEDATA_KEY']}&direction={direction}&outputsize=10"
+					async with session.get(url) as resp:
+						response = await resp.json()
+						for asset in response["values"]:
+							embed.add_field(name=f"{asset['name']} ({asset['symbol']})", value="{:+,.2f}%".format(asset["percent_change"]), inline=True)
+
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 
@@ -133,7 +133,7 @@ class LookupCommand(BaseCommand):
 		except CancelledError: pass
 		except:
 			print(format_exc())
-			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /lookup top {category} limit: {limit}")
+			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /lookup market-movers category:{category} limit:{limit}")
 			await self.unknown_error(ctx)
 
 	@lookupGroup.command(name="fgi", description="Look up the current and historic fear & greed index.")

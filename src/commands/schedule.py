@@ -22,7 +22,7 @@ from Processor import process_chart_arguments, process_heatmap_arguments, proces
 from commands.heatmaps import autocomplete_theme
 from DatabaseConnector import DatabaseConnector
 
-from commands.base import BaseCommand, RedirectView, Confirm, autocomplete_type, autocomplete_performers_categories, autocomplete_layouts
+from commands.base import BaseCommand, RedirectView, Confirm, autocomplete_type, autocomplete_movers_categories, autocomplete_layouts, MARKET_MOVERS_OPTIONS
 
 
 cal = Calendar()
@@ -855,11 +855,11 @@ class ScheduleCommand(BaseCommand):
 			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /schedule volume ticker:{tickerId} venue:{venue} period:{period} start:{start}")
 			await self.unknown_error(ctx)
 
-	@scheduleGroup.command(name="top-performers", description="Schedule fear & greed index chart to get automatically posted periodically.")
+	@scheduleGroup.command(name="market-movers", description="Schedule fear & greed index chart to get automatically posted periodically.")
 	async def lookup_top(
 		self,
 		ctx,
-		category: Option(str, "Ranking type.", name="category", autocomplete=autocomplete_performers_categories),
+		category: Option(str, "Ranking type.", name="category", autocomplete=autocomplete_movers_categories),
 		period: Option(str, "Period of time every which the chart will be posted.", name="period", autocomplete=autocomplete_period),
 		limit: Option(int, "Asset count limit. Defaults to top 250 by market cap, maximum is 1000.", name="limit", required=False, default=250),
 		start: Option(str, "Time at which the first chart will be posted.", name="start", autocomplete=autocomplete_date, required=False, default=None),
@@ -896,7 +896,6 @@ class ScheduleCommand(BaseCommand):
 
 			elif request.scheduled_posting_available():
 				period = period.lower()
-				category = " ".join(category.lower().split())
 
 				if period not in PERIODS:
 					embed = Embed(title="The provided period is not valid. Please pick one of the available periods.", color=constants.colors["gray"])
@@ -925,52 +924,49 @@ class ScheduleCommand(BaseCommand):
 				while timestamp < time():
 					timestamp += PERIOD_TO_TIME[period] * 60
 
-				embeds = []
-				if category == "crypto gainers":
-					rawData = []
-					cg = CoinGeckoAPI(api_key=environ["COINGECKO_API_KEY"])
-					page = 1
-					while True:
-						rawData += cg.get_coins_markets(vs_currency="usd", order="market_cap_desc", per_page=250, page=page, price_change_percentage="24h")
-						page += 1
-						if page > 4: break
-
-					response = []
-					for e in rawData[:max(10, limit)]:
-						if e.get("price_change_percentage_24h_in_currency", None) is not None:
-							response.append({"symbol": e["symbol"].upper(), "change": e["price_change_percentage_24h_in_currency"]})
-					response = sorted(response, key=lambda k: k["change"], reverse=True)[:10]
-
-					embed = Embed(title="Top gainers", color=constants.colors["deep purple"])
-					for token in response:
-						embed.add_field(name=token["symbol"], value="Gained {:,.2f} %".format(token["change"]), inline=True)
-					embeds.append(embed)
-
-				elif category == "crypto losers":
-					rawData = []
-					cg = CoinGeckoAPI(api_key=environ["COINGECKO_API_KEY"])
-					page = 1
-					while True:
-						rawData += cg.get_coins_markets(vs_currency="usd", order="market_cap_desc", per_page=250, page=page, price_change_percentage="24h")
-						page += 1
-						if page > 4: break
-
-					response = []
-					for e in rawData[:max(10, limit)]:
-						if e.get("price_change_percentage_24h_in_currency", None) is not None:
-							response.append({"symbol": e["symbol"].upper(), "change": e["price_change_percentage_24h_in_currency"]})
-					response = sorted(response, key=lambda k: k["change"])[:10]
-
-					embed = Embed(title="Top losers", color=constants.colors["deep purple"])
-					for token in response:
-						embed.add_field(name=token["symbol"], value="Lost {:,.2f} %".format(token["change"]), inline=True)
-					embeds.append(embed)
-
-				else:
+				category = " ".join(category.lower().split())
+				if category not in MARKET_MOVERS_OPTIONS:
 					embed = Embed(title="The specified category is invalid.", description="Detailed guide with examples is available on [our website](https://www.alpha.bot/features/lookup).", color=constants.colors["deep purple"])
 					try: await ctx.interaction.edit_original_response(embed=embed)
 					except NotFound: pass
 					return
+
+				parts = category.split(" ")
+				direction = parts.pop()
+				market = " ".join(parts)
+				embed = Embed(title=f"Top {direction}", color=constants.colors["deep purple"])
+
+				if market == "crypto":
+					rawData = []
+					cg = CoinGeckoAPI(api_key=environ["COINGECKO_API_KEY"])
+					page = 1
+					while True:
+						rawData += cg.get_coins_markets(vs_currency="usd", order="market_cap_desc", per_page=250, page=page, price_change_percentage="24h")
+						page += 1
+						if page > 4: break
+
+					response = []
+					for e in rawData[:max(10, limit)]:
+						if e.get("price_change_percentage_24h_in_currency", None) is not None:
+							response.append({"symbol": e["symbol"].upper(), "change": e["price_change_percentage_24h_in_currency"]})
+
+					if direction == "gainers":
+						response = sorted(response, key=lambda k: k["change"], reverse=True)[:10]
+					elif direction == "losers":
+						response = sorted(response, key=lambda k: k["change"])[:10]
+
+					for token in response:
+						embed.add_field(name=f"{token['name']} ({token['symbol']})", value="{:+,.2f}%".format(token["change"]), inline=True)
+
+				else:
+					async with ClientSession() as session:
+						url = f"https://api.twelvedata.com/market_movers/{market.replace(' ', '_')}?apikey={environ['TWELVEDATA_KEY']}&direction={direction}&outputsize=10"
+						async with session.get(url) as resp:
+							response = await resp.json()
+							for asset in response["values"]:
+								embed.add_field(name=f"{asset['name']} ({asset['symbol']})", value="{:+,.2f}%".format(asset["percent_change"]), inline=True)
+
+				embeds = [embed]
 
 				embed = Embed(title="Are you sure you want to schedule this post?", color=constants.colors["pink"])
 				embed.set_author(name="Schedule confirmation", icon_url=self.bot.user.avatar.url)
@@ -1000,7 +996,7 @@ class ScheduleCommand(BaseCommand):
 					"authorId": str(request.authorId),
 					"botId": str(self.bot.user.id),
 					"channelId": str(request.channelId),
-					"command": "lookup top-performers",
+					"command": "lookup market-movers",
 					"exclude": None if exclude is None else exclude.lower(),
 					"message": message,
 					"period": PERIOD_TO_TIME[period],
@@ -1013,7 +1009,7 @@ class ScheduleCommand(BaseCommand):
 				except NotFound: pass
 
 				embed = Embed(title="Scheduled post has been created.", description=f"The scheduled list will be posted publicly every {period.removeprefix('1 ')} in this channel, starting {start}.", color=constants.colors["purple"])
-				embed.set_author(name="Top-performers scheduled", icon_url=self.bot.user.avatar.url)
+				embed.set_author(name="Market-movers scheduled", icon_url=self.bot.user.avatar.url)
 				await ctx.followup.send(embed=embed, ephemeral=True)
 			else:
 				embed = Embed(title=":gem: Scheduled Posting functionality is available as an add-on subscription for communities for only $5.00 per month.", description="If you'd like to start your 30-day free trial, visit [our website](https://www.alpha.bot/pro/scheduled-posting).", color=constants.colors["deep purple"])
