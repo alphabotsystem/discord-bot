@@ -143,7 +143,7 @@ class ScheduleCommand(BaseCommand):
 
 				platforms = request.get_platform_order_for("c")
 				arguments = arguments.lower().split()
-				responseMessage, task = await process_chart_arguments(arguments[1:], platforms, tickerId=arguments[0].upper())
+				responseMessage, task = await process_chart_arguments(arguments[1:], platforms, tickerId=arguments[0].upper(), defaults=request.guildProperties["charting"])
 
 				if responseMessage is not None:
 					description = "[Advanced Charting add-on](https://www.alpha.bot/pro/advanced-charting) unlocks additional assets, indicators, timeframes and more." if responseMessage.endswith("add-on.") else "Detailed guide with examples is available on [our website](https://www.alpha.bot/features/charting)."
@@ -304,7 +304,7 @@ class ScheduleCommand(BaseCommand):
 
 				arguments = [venue, timeframe]
 				[(responseMessage, task), layout] = await gather(
-					process_chart_arguments(arguments, ["TradingView Relay"], tickerId=tickerId.upper()),
+					process_chart_arguments(arguments, ["TradingView Relay"], tickerId=tickerId.upper(), defaults=request.guildProperties["charting"]),
 					self.database.collection(f"discord/properties/layouts").where(filter=FieldFilter("label", "==", name)).where(filter=FieldFilter("guildId", "==", str(request.guildId))).get()
 				)
 

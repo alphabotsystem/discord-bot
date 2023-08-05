@@ -38,7 +38,7 @@ class LayoutCommand(BaseCommand):
 
 			arguments = [timeframe, venue]
 			[(responseMessage, task), layout, _] = await gather(
-				process_chart_arguments(arguments, ["TradingView Relay"], tickerId=tickerId.upper()),
+				process_chart_arguments(arguments, ["TradingView Relay"], tickerId=tickerId.upper(), defaults=request.guildProperties["charting"]),
 				self.database.collection(f"discord/properties/layouts").where(filter=FieldFilter("label", "==", name)).where(filter=FieldFilter("guildId", "==", str(request.guildId))).get(),
 				ctx.defer()
 			)
