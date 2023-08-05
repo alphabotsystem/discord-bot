@@ -91,7 +91,7 @@ class LookupCommand(BaseCommand):
 			parts = category.split(" ")
 			direction = parts.pop()
 			market = " ".join(parts)
-			embed = Embed(title=f"Top {direction}", color=constants.colors["deep purple"])
+			embed = Embed(title=f"Top {category}", color=constants.colors["deep purple"])
 
 			if market == "crypto":
 				rawData = []
