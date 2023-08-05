@@ -112,7 +112,7 @@ class LookupCommand(BaseCommand):
 					response = sorted(response, key=lambda k: k["change"])[:10]
 
 				for token in response:
-					embed.add_field(name=f"{token['name']} ({token['symbol']})", value="{:+,.2f}%".format(token["change"]), inline=True)
+					embed.add_field(name=f"{token['name']} (`{token['symbol']}`)", value="{:+,.2f}%".format(token["change"]), inline=True)
 
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
@@ -123,7 +123,7 @@ class LookupCommand(BaseCommand):
 					async with session.get(url) as resp:
 						response = await resp.json()
 						for asset in response["values"]:
-							embed.add_field(name=f"{asset['name']} ({asset['symbol']})", value="{:+,.2f}%".format(asset["percent_change"]), inline=True)
+							embed.add_field(name=f"{asset['name']} (`{asset['symbol']}`)", value="{:+,.2f}%".format(asset["percent_change"]), inline=True)
 
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
