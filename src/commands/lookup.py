@@ -104,7 +104,7 @@ class LookupCommand(BaseCommand):
 				response = []
 				for e in rawData[:max(10, limit)]:
 					if e.get("price_change_percentage_24h_in_currency", None) is not None:
-						response.append({"symbol": e["symbol"].upper(), "change": e["price_change_percentage_24h_in_currency"]})
+						response.append({"name": e["name"], "symbol": e["symbol"].upper(), "change": e["price_change_percentage_24h_in_currency"]})
 
 				if direction == "gainers":
 					response = sorted(response, key=lambda k: k["change"], reverse=True)[:10]
