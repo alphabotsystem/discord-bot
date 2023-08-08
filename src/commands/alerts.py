@@ -73,15 +73,15 @@ class AlertCommand(BaseCommand):
 				totalAlertCount += count2[0][0].value
 
 				if request.is_registered():
-					if totalAlertCount + len(levels) > 250:
-						embed = Embed(title="You can only create up to 250 price alerts. Remove some before creating new ones by calling </alert list:928980578739568651>", color=constants.colors["gray"])
+					if totalAlertCount + len(levels) > 200:
+						embed = Embed(title="You can only create up to 200 price alerts. Remove some before creating new ones by calling </alert list:928980578739568651>", color=constants.colors["gray"])
 						embed.set_author(name="Maximum number of price alerts reached", icon_url=static_storage.error_icon)
 						try: await ctx.respond(embed=embed, view=RedirectView(f"https://www.alpha.bot/account/alerts"), ephemeral=True)
 						except NotFound: pass
 						return
 				else:
-					if totalAlertCount + len(levels) > 10:
-						embed = Embed(title="Create more than 10 price alerts by authorizing Alpha.bot, or remove some before creating new ones by calling </alert list:928980578739568651>", description="You can increase your limit to 250 by signing up for a free account on [our website](https://www.alpha.bot/sign-up) or via the button below.", color=constants.colors["gray"])
+					if totalAlertCount + len(levels) > 20:
+						embed = Embed(title="Create more than 20 price alerts by authorizing Alpha.bot, or remove some before creating new ones by calling </alert list:928980578739568651>", description="You can increase your limit to 200 by signing up for a free account on [our website](https://www.alpha.bot/sign-up) or via the button below.", color=constants.colors["gray"])
 						embed.set_author(name="Maximum number of price alerts reached", icon_url=static_storage.error_icon)
 						try: await ctx.respond(embed=embed, view=AuthView(redirect="account/alerts"), ephemeral=True)
 						except NotFound: pass
