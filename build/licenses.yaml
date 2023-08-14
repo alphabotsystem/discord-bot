@@ -29,41 +29,46 @@ spec:
         env:
           - name: PRODUCTION
             value: "1"
-          - name: HG60DTuv5GYWDUVX1ENONGdvEJ43_TOKEN
+          - name: TOKEN_HG60DTuv5GYWDUVX1ENONGdvEJ43
             valueFrom:
               secretKeyRef:
                 name: alpha-credentials
-                key: HG60DTuv5GYWDUVX1ENONGdvEJ43_TOKEN
-          - name: N8V1MEBUJFSVP4IQMUXYYIEDFYI1_TOKEN
+                key: TOKEN_HG60DTuv5GYWDUVX1ENONGdvEJ43
+          - name: TOKEN_N8V1MEBUJFSVP4IQMUXYYIEDFYI1
             valueFrom:
               secretKeyRef:
                 name: alpha-credentials
-                key: N8V1MEBUJFSVP4IQMUXYYIEDFYI1_TOKEN
-          - name: H59TRYWEQLSI0U1UZLDFZRTXPXC2_TOKEN
+                key: TOKEN_N8V1MEBUJFSVP4IQMUXYYIEDFYI1
+          - name: TOKEN_H59TRYWEQLSI0U1UZLDFZRTXPXC2
             valueFrom:
               secretKeyRef:
                 name: alpha-credentials
-                key: H59TRYWEQLSI0U1UZLDFZRTXPXC2_TOKEN
-          - name: K4OIVMRPJBA3OLYBULWAYCNHGJK2_TOKEN
+                key: TOKEN_H59TRYWEQLSI0U1UZLDFZRTXPXC2
+          - name: TOKEN_K4OIVMRPJBA3OLYBULWAYCNHGJK2
             valueFrom:
               secretKeyRef:
                 name: alpha-credentials
-                key: K4OIVMRPJBA3OLYBULWAYCNHGJK2_TOKEN
-          - name: CIPIGOZSPUQQZHUVQ9SOIS6MAH53_TOKEN
+                key: TOKEN_K4OIVMRPJBA3OLYBULWAYCNHGJK2
+          - name: TOKEN_CIPIGOZSPUQQZHUVQ9SOIS6MAH53
             valueFrom:
               secretKeyRef:
                 name: alpha-credentials
-                key: CIPIGOZSPUQQZHUVQ9SOIS6MAH53_TOKEN
-          - name: LY69ID57NRBR26T7QGZFBY7BY2E3_TOKEN
+                key: TOKEN_CIPIGOZSPUQQZHUVQ9SOIS6MAH53
+          - name: TOKEN_LY69ID57NRBR26T7QGZFBY7BY2E3
             valueFrom:
               secretKeyRef:
                 name: alpha-credentials
-                key: LY69ID57NRBR26T7QGZFBY7BY2E3_TOKEN
-          - name: AYJTC6QA2SRUV3GXAMQSAPMVMZF2_TOKEN
+                key: TOKEN_LY69ID57NRBR26T7QGZFBY7BY2E3
+          - name: TOKEN_AYJTC6QA2SRUV3GXAMQSAPMVMZF2
             valueFrom:
               secretKeyRef:
                 name: alpha-credentials
-                key: AYJTC6QA2SRUV3GXAMQSAPMVMZF2_TOKEN
+                key: TOKEN_AYJTC6QA2SRUV3GXAMQSAPMVMZF2
+          - name: TOKEN_173T1ODOTSXHYM1GRAIVQYDVW0I1
+            valueFrom:
+              secretKeyRef:
+                name: alpha-credentials
+                key: TOKEN_173T1ODOTSXHYM1GRAIVQYDVW0I1
           - name: GOOGLE_ASSISTANT_OAUTH
             valueFrom:
               secretKeyRef:
