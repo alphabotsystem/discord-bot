@@ -81,15 +81,15 @@ class LookupCommand(BaseCommand):
 
 			await ctx.defer()
 
-			category = " ".join(category.lower().split())
-			if category.replace("etf", "ETF") not in MARKET_MOVERS_OPTIONS:
+			category = " ".join(category.lower().split()).replace("etf", "ETF")
+			if category not in MARKET_MOVERS_OPTIONS:
 				embed = Embed(title="The specified category is invalid.", description="Detailed guide with examples is available on [our website](https://www.alpha.bot/features/lookup).", color=constants.colors["deep purple"])
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 				return
 
 			parts = category.split(" ")
-			direction = parts.pop()
+			direction = parts.pop().lower()
 			market = " ".join(parts)
 			embed = Embed(title=f"Top {category}", color=constants.colors["deep purple"])
 
