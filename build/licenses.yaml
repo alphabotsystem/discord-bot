@@ -6,7 +6,7 @@ metadata:
   labels:
     app: licensed-bot
 spec:
-  replicas: 6
+  replicas: 7
   selector:
     matchLabels:
       app: licensed-bot
@@ -59,6 +59,11 @@ spec:
               secretKeyRef:
                 name: alpha-credentials
                 key: TOKEN_173T1ODOTSXHYM1GRAIVQYDVW0I1
+          - name: TOKEN_NI7GCMTB8LGCLNV7H2YEJ2VUFHI1
+            valueFrom:
+              secretKeyRef:
+                name: alpha-credentials
+                key: TOKEN_NI7GCMTB8LGCLNV7H2YEJ2VUFHI1
           - name: GOOGLE_ASSISTANT_OAUTH
             valueFrom:
               secretKeyRef:
