@@ -31,11 +31,11 @@ MARKET_MOVERS_OPTIONS.sort()
 async def autocomplete_type(ctx):
 	options = ["crypto", "stocks"]
 	currentInput = " ".join(ctx.options.get("type", "").lower().split())
-	return [e for e in options if e.startswith(currentInput)]
+	return [e for e in options if e.lower().startswith(currentInput)]
 
 async def autocomplete_movers_categories(ctx):
 	currentInput = " ".join(ctx.options.get("category", "").lower().split())
-	return [e for e in MARKET_MOVERS_OPTIONS if currentInput in e]
+	return [e for e in MARKET_MOVERS_OPTIONS if currentInput in e.lower()]
 
 async def autocomplete_layouts(ctx):
 	layouts = await database.collection(f"discord/properties/layouts").where(filter=FieldFilter("guildId", "==", str(ctx.interaction.guild_id))).get()

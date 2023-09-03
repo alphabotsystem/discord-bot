@@ -90,7 +90,7 @@ class LookupCommand(BaseCommand):
 
 			parts = category.split(" ")
 			direction = parts.pop().lower()
-			market = " ".join(parts)
+			market = " ".join(parts).lower()
 			embed = Embed(title=f"Top {category}", color=constants.colors["deep purple"])
 
 			if market == "crypto":
