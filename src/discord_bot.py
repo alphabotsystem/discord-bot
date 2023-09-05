@@ -496,7 +496,6 @@ async def create_request(ctx, autodelete=-1):
 # -------------------------
 
 bot.add_cog(AlertCommand(bot, create_request, database, logging))
-bot.add_cog(AskCommand(bot, create_request, database, logging))
 bot.add_cog(ChartCommand(bot, create_request, database, logging))
 bot.add_cog(ConvertCommand(bot, create_request, database, logging))
 bot.add_cog(DepthCommand(bot, create_request, database, logging))
@@ -514,8 +513,10 @@ bot.add_cog(VolumeCommand(bot, create_request, database, logging))
 # Special commands
 # -------------------------
 
-if botId == -1:
+if botId in [-1]:
 	bot.add_cog(IchibotCommand(bot, create_request, database, logging))
+if botId not in [6]:
+	bot.add_cog(AskCommand(bot, create_request, database, logging))
 
 
 # -------------------------
