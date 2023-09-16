@@ -565,7 +565,10 @@ async def on_ready():
 	if not database_sanity_check.is_running():
 		database_sanity_check.start()
 
-	print(f"[Startup]: {bot.user.name} Bot ({bot.user.id}) startup complete")
+	if not environ["PRODUCTION"] or botId == -1:
+		print(f"[Startup]: {bot.user.name} Bot ({bot.user.id}) startup complete")
+	else:
+		print(f"[Startup]: licensed bot #{botId}: {bot.user.name} ({bot.user.id}) startup complete")
 
 
 # -------------------------
