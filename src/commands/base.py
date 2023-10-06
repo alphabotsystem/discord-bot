@@ -79,32 +79,31 @@ class BaseCommand(Cog):
 	async def log_request(self, command, request, tasks, telemetry=None):
 		if not environ["PRODUCTION"]: return
 		timestamp = int(time())
-		if command in ["charts", "heatmaps", "prices", "volume", "details", "depth"]:
-			for task in tasks:
-				currentTask = task.get(task.get("currentPlatform"))
-				base = currentTask.get("ticker").get("base")
-				if base is None: base = currentTask.get("ticker").get("id")
-				publisher.publish(REQUESTS_TOPIC_NAME, dumps({
-					"timestamp": timestamp,
-					"command": command,
-					"user": str(request.authorId),
-					"guild": str(request.guildId),
-					"channel": str(request.channelId),
-					"base": base,
-					"platform": task.get("currentPlatform"),
-					"count": task.get("requestCount", 1)
-				}))
-			if telemetry is not None:
-				publisher.publish(TELEMETRY_TOPIC_NAME, dumps({
-					"timestamp": timestamp,
-					"command": command,
-					"database": telemetry["database"],
-					"prelight": telemetry["prelight"],
-					"parser": telemetry["parser"],
-					"request": telemetry["request"],
-					"response": telemetry["response"],
-					"count": task.get("requestCount", 1)
-				}))
+		for task in tasks:
+			currentTask = task.get(task.get("currentPlatform"))
+			base = currentTask.get("ticker").get("base")
+			if base is None: base = currentTask.get("ticker").get("id")
+			publisher.publish(REQUESTS_TOPIC_NAME, dumps({
+				"timestamp": timestamp,
+				"command": command,
+				"user": str(request.authorId),
+				"guild": str(request.guildId),
+				"channel": str(request.channelId),
+				"base": base,
+				"platform": task.get("currentPlatform"),
+				"count": task.get("requestCount", 1)
+			}))
+		if telemetry is not None:
+			publisher.publish(TELEMETRY_TOPIC_NAME, dumps({
+				"timestamp": timestamp,
+				"command": command,
+				"database": telemetry["database"],
+				"prelight": telemetry["prelight"],
+				"parser": telemetry["parser"],
+				"request": telemetry["request"],
+				"response": telemetry["response"],
+				"count": task.get("requestCount", 1)
+			}))
 
 	async def cleanup(self, ctx, request, removeView=False):
 		if request.autodelete is not None:
