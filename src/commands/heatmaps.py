@@ -29,6 +29,7 @@ class HeatmapCommand(BaseCommand):
 		request,
 		tasks
 	):
+		start = time()
 		files, embeds = [], []
 		for task in tasks:
 			currentTask = task.get(task.get("currentPlatform"))
