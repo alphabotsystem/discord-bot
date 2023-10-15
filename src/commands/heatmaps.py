@@ -49,10 +49,14 @@ class HeatmapCommand(BaseCommand):
 		if len(files) != 0:
 			actions = ActionsView(user=ctx.author, command=ctx.command.mention)
 
+		requestCheckpoint = time()
+		request.set_delay("request", (requestCheckpoint - start) / (len(files) + len(embeds)))
 		try: await ctx.interaction.edit_original_response(embeds=embeds, files=files, view=actions)
 		except NotFound: pass
+		request.set_delay("response", time() - requestCheckpoint)
 
 		await self.database.document("discord/statistics").set({request.snapshot: {"hmap": Increment(len(tasks))}}, merge=True)
+		await self.log_request("hmap", request, tasks, telemetry=request.telemetry)
 		await self.cleanup(ctx, request)
 
 	@slash_command(name="hmap", description="Pull market heatmaps from TradingView.")

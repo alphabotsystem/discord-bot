@@ -81,8 +81,8 @@ class BaseCommand(Cog):
 		timestamp = int(time())
 		for task in tasks:
 			currentTask = task.get(task.get("currentPlatform"))
-			base = currentTask.get("ticker").get("base")
-			if base is None: base = currentTask.get("ticker").get("id")
+			base = currentTask.get("ticker", {}).get("base")
+			if base is None: base = currentTask.get("ticker", {}).get("id", "")
 			publisher.publish(REQUESTS_TOPIC_NAME, dumps({
 				"timestamp": timestamp,
 				"command": command,
