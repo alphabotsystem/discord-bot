@@ -78,6 +78,10 @@ class HeatmapCommand(BaseCommand):
 			if request is None: return
 
 			platforms = request.get_platform_order_for("hmap", assetType=assetType)
+
+			prelightCheckpoint = time()
+			request.set_delay("prelight", prelightCheckpoint - request.start)
+
 			arguments = [assetType, timeframe, market, category, size, group, theme]
 			[(responseMessage, task), _] = await gather(
 				process_heatmap_arguments(arguments, platforms),
@@ -96,6 +100,7 @@ class HeatmapCommand(BaseCommand):
 				except NotFound: pass
 				return
 
+			request.set_delay("parser", time() - prelightCheckpoint)
 			await self.respond(ctx, request, [task])
 
 		except CancelledError: pass
