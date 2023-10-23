@@ -98,6 +98,8 @@ async def on_guild_remove(guild):
 
 @tasks.loop(hours=8.0)
 async def update_guild_count():
+	await bot.wait_until_ready()
+
 	# Method should not run on licensed bots
 	if bot.user.id not in constants.PRIMARY_BOTS: return
 	# Method should only run in production and after the guild cache is populated
@@ -109,6 +111,8 @@ async def update_guild_count():
 
 @tasks.loop(hours=12.0)
 async def update_paid_guilds():
+	await bot.wait_until_ready()
+
 	# Method should not run on licensed bots
 	if bot.user.id not in constants.PRIMARY_BOTS: return
 	# Method should only run in production and after the guild cache is populated
@@ -172,10 +176,10 @@ def process_messages(pendingMessages, changes, timestamp):
 		if environ["PRODUCTION"]: logging.report_exception()
 
 async def send_messages(messageId, message):
+	await bot.wait_until_ready()
+
 	# Method should only run if the message is addressed to the right bot
 	if message["botId"] != str(bot.user.id): return
-
-	await bot.wait_until_ready()
 
 	try:
 		print(f"Sending message: {messageId}")
@@ -263,6 +267,8 @@ async def send_messages(messageId, message):
 
 @tasks.loop(minutes=60.0)
 async def security_check():
+	await bot.wait_until_ready()
+
 	# Method should not run on licensed bots
 	if bot.user.id not in constants.PRIMARY_BOTS: return
 	# Method should only run after the guild cache is populated
@@ -305,6 +311,8 @@ async def security_check():
 
 @tasks.loop(minutes=15.0)
 async def database_sanity_check():
+	await bot.wait_until_ready()
+
 	# Method should not run on licensed bots
 	if bot.user.id not in constants.PRIMARY_BOTS: return
 	# Method should only run in production and after the guild cache is populated
