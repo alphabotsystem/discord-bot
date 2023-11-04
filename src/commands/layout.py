@@ -36,12 +36,24 @@ class LayoutCommand(BaseCommand):
 			prelightCheckpoint = time()
 			request.set_delay("prelight", prelightCheckpoint - request.start)
 
-			arguments = [timeframe, venue]
-			[(responseMessage, task), layout, _] = await gather(
-				process_chart_arguments(arguments, ["TradingView Relay"], tickerId=tickerId.upper(), defaults=request.guildProperties["charting"]),
+			[layout, _] = await gather(
 				self.database.collection(f"discord/properties/layouts").where(filter=FieldFilter("label", "==", name)).where(filter=FieldFilter("guildId", "==", str(request.guildId))).get(),
 				ctx.defer()
 			)
+
+			if len(layout) == 0:
+				description = "Detailed guide with examples is available on [our website](https://www.alpha.bot/features/layouts)."
+				embed = Embed(title="Layout not found", description=description, color=constants.colors["gray"])
+				embed.set_author(name="Invalid argument", icon_url=static_storage.error_icon)
+				try: await ctx.interaction.edit_original_response(embed=embed)
+				except NotFound: pass
+				return
+
+			layout = layout[0].to_dict()
+			theme = layout.get("theme")
+
+			arguments = [timeframe, venue] + ([] if theme is None else [theme])
+			(responseMessage, task) = await process_chart_arguments(arguments, ["TradingView Relay"], tickerId=tickerId.upper(), defaults=request.guildProperties["charting"])
 
 			if responseMessage is not None:
 				description = "Detailed guide with examples is available on [our website](https://www.alpha.bot/features/layouts)."
@@ -50,18 +62,9 @@ class LayoutCommand(BaseCommand):
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 				return
-			elif len(layout) == 0:
-				description = "Detailed guide with examples is available on [our website](https://www.alpha.bot/features/layouts)."
-				embed = Embed(title="Layout not found", description=description, color=constants.colors["gray"])
-				embed.set_author(name="Invalid argument", icon_url=static_storage.error_icon)
-				try: await ctx.interaction.edit_original_response(embed=embed)
-				except NotFound: pass
-				return
-
-			url = layout[0].to_dict()["url"]
 
 			request.set_delay("parser", time() - prelightCheckpoint)
-			await self.respond(ctx, url, request, task)
+			await self.respond(ctx, layout["url"], request, task)
 
 		except CancelledError: pass
 		except:
