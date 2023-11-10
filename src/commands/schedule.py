@@ -952,19 +952,20 @@ class ScheduleCommand(BaseCommand):
 							response.append({"name": e["name"], "symbol": e["symbol"].upper(), "change": e["price_change_percentage_24h_in_currency"]})
 
 					if direction == "gainers":
-						response = sorted(response, key=lambda k: k["change"], reverse=True)[:10]
+						response = sorted(response, key=lambda k: k["change"], reverse=True)
 					elif direction == "losers":
-						response = sorted(response, key=lambda k: k["change"])[:10]
+						response = sorted(response, key=lambda k: k["change"])
 
-					for token in response:
+					for token in response[:9]:
 						embed.add_field(name=f"{token['name']} (`{token['symbol']}`)", value="{:+,.2f}%".format(token["change"]), inline=True)
 
 				else:
 					async with ClientSession() as session:
-						url = f"https://api.twelvedata.com/market_movers/{market.replace(' ', '_')}?apikey={environ['TWELVEDATA_KEY']}&direction={direction}&outputsize=10"
+						url = f"https://api.twelvedata.com/market_movers/{market.replace(' ', '_')}?apikey={environ['TWELVEDATA_KEY']}&direction={direction}&outputsize=50"
 						async with session.get(url) as resp:
 							response = await resp.json()
-							for asset in response["values"]:
+							assets = [e for e in response["values"] if not e['name'].lower().startswith("test")]
+							for asset in assets[:9]:
 								embed.add_field(name=f"{asset['name']} (`{asset['symbol']}`)", value="{:+,.2f}%".format(asset["percent_change"]), inline=True)
 
 				embeds = [embed]
