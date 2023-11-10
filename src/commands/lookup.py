@@ -124,7 +124,7 @@ class LookupCommand(BaseCommand):
 					async with session.get(url) as resp:
 						response = await resp.json()
 						assets = filter(
-							lambda e: not e['name'].lower().startswith("test") and "testfund" not in e['name'].replace(" ", ""),
+							lambda e: not e['name'].lower().startswith("test") and "testfund" not in e['name'].lower().replace(" ", ""),
 							response["values"]
 						)
 						for asset in list(assets)[:9]:
