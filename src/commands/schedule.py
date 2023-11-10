@@ -964,7 +964,10 @@ class ScheduleCommand(BaseCommand):
 						url = f"https://api.twelvedata.com/market_movers/{market.replace(' ', '_')}?apikey={environ['TWELVEDATA_KEY']}&direction={direction}&outputsize=50"
 						async with session.get(url) as resp:
 							response = await resp.json()
-							assets = [e for e in response["values"] if not e['name'].lower().startswith("test")]
+							assets = filter(
+								lambda e: not e['name'].lower().startswith("test") and "testfund" not in e['name'].replace(" ", ""),
+								response["values"]
+							)
 							for asset in assets[:9]:
 								embed.add_field(name=f"{asset['name']} (`{asset['symbol']}`)", value="{:+,.2f}%".format(asset["percent_change"]), inline=True)
 
