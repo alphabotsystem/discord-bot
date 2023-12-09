@@ -413,7 +413,7 @@ async def process_ichibot_command(message, commandRequest, requestSlice):
 				socket = Ichibot.sockets.get(origin)
 				await socket.send_multipart([commandRequest.accountId.encode(), b"", commandRequest.raw.split(" ", 1)[1].encode()])
 
-				if requestSlice in ["q", "quit", "exit", "logout"]:
+				if requestSlice in ["q", "quit", "exit"]:
 					Ichibot.sockets.pop(origin)
 					embed = Embed(title="Ichibot connection has been closed.", color=constants.colors["deep purple"])
 					embed.set_author(name="Ichibot", icon_url=static_storage.ichibot)
@@ -609,8 +609,6 @@ elif botId == 8:
 elif botId == 9:
 	token = environ["TOKEN_LYSQMRSJONMYQI8KSGXCMLO54IE2"]
 elif botId == 10:
-	token = environ["TOKEN_WFFADSYKGWP2CH8W9PUHI2DBCQD2"]
-elif botId == 11:
 	token = environ["TOKEN_ATGZKMDQWWUUKWC6CSJDBXR4IH02"]
 
 bot.loop.run_until_complete(bot.start(token))
