@@ -608,5 +608,7 @@ elif botId == 8:
 	token = environ["TOKEN_LYSQMRSJONMYQI8KSGXCMLO54IE2"]
 elif botId == 9:
 	token = environ["TOKEN_ATGZKMDQWWUUKWC6CSJDBXR4IH02"]
+elif botId == 10:
+	token = environ["TOKEN_UIVTZSUV8YD74TLPRGQBIGTWNQG2"]
 
 bot.loop.run_until_complete(bot.start(token))
