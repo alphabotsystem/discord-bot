@@ -6,7 +6,7 @@ metadata:
   labels:
     app: licensed-bot
 spec:
-  replicas: 11
+  replicas: 10
   selector:
     matchLabels:
       app: licensed-bot
@@ -49,11 +49,6 @@ spec:
               secretKeyRef:
                 name: alpha-credentials
                 key: TOKEN_CIPIGOZSPUQQZHUVQ9SOIS6MAH53
-          - name: TOKEN_173T1ODOTSXHYM1GRAIVQYDVW0I1
-            valueFrom:
-              secretKeyRef:
-                name: alpha-credentials
-                key: TOKEN_173T1ODOTSXHYM1GRAIVQYDVW0I1
           - name: TOKEN_NI7GCMTB8LGCLNV7H2YEJ2VUFHI1
             valueFrom:
               secretKeyRef:
