@@ -55,7 +55,7 @@ class BaseCommand(Cog):
 
 	sources = {
 		"alert set": ["Twelvedata", "CCXT"],
-		"c": ["TradingView", "TradingView Premium", "TradingLite", "Bookmap"],
+		"c": ["TradingView", "TradingView Premium", "TradingLite"],
 		"layout": ["TradingView Relay"],
 		"hmap": ["TradingView Stock Heatmap", "TradingView Crypto Heatmap"],
 		"flow": ["Alpha Flow"],
@@ -64,7 +64,7 @@ class BaseCommand(Cog):
 		"volume": ["Twelvedata", "CoinGecko", "CCXT"],
 		"depth": ["Twelvedata", "CCXT"],
 		"info": ["Twelvedata", "CoinGecko"],
-		"lookup listings": ["Twelvedata", "CCXT", "CoinGecko", "TradingView", "TradingView Premium", "TradingLite", "Bookmap"],
+		"lookup listings": ["Twelvedata", "CCXT", "CoinGecko", "TradingView", "TradingView Premium", "TradingLite"],
 		"paper buy": ["Twelvedata", "CCXT"],
 		"paper sell": ["Twelvedata", "CCXT"],
 		"ichibot": ["Ichibot"]
