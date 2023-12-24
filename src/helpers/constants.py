@@ -28,11 +28,16 @@ ICHIBOT_TESTING = [
 ]
 
 REFERRALS = {
-	"binance": ["Save 10% on Binance fees", "https://accounts.binance.com/en-GB/register?ref=PJF2KLMW"],
-	"binanceusdm": ["Save 10% on Binance fees", "https://accounts.binance.com/en-GB/register?ref=PJF2KLMW"],
-	"binancecoinm": ["Save 10% on Binance fees", "https://accounts.binance.com/en-GB/register?ref=PJF2KLMW"],
-	"bitmex": ["Save 10% on BitMEX fees", "https://www.bitmex.com/app/register/cv1ZSO"],
-	"bybit": ["Sign up & trade on ByBit", "https://www.bybit.com/en-US/invite?ref=9OXPG3"]
+	"default": {
+		"binance": ["Save 10% on Binance fees", "https://accounts.binance.com/en-GB/register?ref=PJF2KLMW"],
+		"binanceusdm": ["Save 10% on Binance fees", "https://accounts.binance.com/en-GB/register?ref=PJF2KLMW"],
+		"binancecoinm": ["Save 10% on Binance fees", "https://accounts.binance.com/en-GB/register?ref=PJF2KLMW"],
+		"bitmex": ["Save 10% on BitMEX fees", "https://www.bitmex.com/app/register/cv1ZSO"],
+		"bybit": ["Sign up & trade on ByBit", "https://www.bybit.com/en-US/invite?ref=9OXPG3"]
+	},
+	1188452093024026674: {
+		"binance": ["وفر 10% من رسوم باينانس", "https://accounts.binance.com/register?ref=FF2BH3FA"]
+	}
 }
 
 colors = {
