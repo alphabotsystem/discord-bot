@@ -62,7 +62,7 @@ class BaseCommand(Cog):
 		"p": ["Twelvedata", "CCXT", "CoinGecko"],
 		"convert": ["Twelvedata", "CCXT", "CoinGecko"],
 		"volume": ["Twelvedata", "CoinGecko", "CCXT"],
-		"depth": ["Twelvedata", "CCXT"],
+		"depth": ["CCXT"],
 		"info": ["Twelvedata", "CoinGecko"],
 		"lookup listings": ["Twelvedata", "CCXT", "CoinGecko", "TradingView", "TradingView Premium", "TradingLite"],
 		"paper buy": ["Twelvedata", "CCXT"],

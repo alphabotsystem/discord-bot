@@ -61,15 +61,6 @@ class DetailsCommand(BaseCommand):
 					assetSupply += "\nTotal supply: {:,.0f} {}".format(payload["supply"]["total"], ticker.get("base"))
 				if payload["supply"].get("circulating") is not None:
 					assetSupply += "\nCirculating supply: {:,.0f} {}".format(payload["supply"]["circulating"], ticker.get("base"))
-			if payload.get("score") is not None:
-				if payload["score"].get("developer") is not None:
-					assetScore += "\nDeveloper score: {:,.1f}/100".format(payload["score"]["developer"])
-				if payload["score"].get("community") is not None:
-					assetScore += "\nCommunity score: {:,.1f}/100".format(payload["score"]["community"])
-				if payload["score"].get("liquidity") is not None:
-					assetScore += "\nLiquidity score: {:,.1f}/100".format(payload["score"]["liquidity"])
-				if payload["score"].get("public interest") is not None:
-					assetScore += "\nPublic interest: {:,.3f}".format(payload["score"]["public interest"])
 			detailsText = assetFundamentals[1:] + assetInfo + assetSupply + assetScore
 			if detailsText != "":
 				embed.add_field(name="Details", value=detailsText, inline=False)
