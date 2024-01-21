@@ -48,7 +48,8 @@ class HeatmapCommand(BaseCommand):
 
 		actions = None
 		if len(files) != 0:
-			actions = ActionsView(user=ctx.author, command=ctx.command.mention)
+			if self.bot.user.id not in DISABLE_DELETE_BUTTON:
+				actions = ActionsView(user=ctx.author, command=ctx.command.mention)
 
 		requestCheckpoint = time()
 		request.set_delay("request", (requestCheckpoint - start) / (len(files) + len(embeds)))
@@ -108,3 +109,6 @@ class HeatmapCommand(BaseCommand):
 			print(format_exc())
 			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /hmap assetType:{assetType} color:{timeframe} market:{market} category:{category} size:{size} group:{group} theme:{theme} autodelete:{autodelete}")
 			await self.unknown_error(ctx)
+
+
+DISABLE_DELETE_BUTTON = [1198295072681246883]
