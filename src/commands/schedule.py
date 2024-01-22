@@ -23,7 +23,7 @@ from Processor import process_chart_arguments, process_heatmap_arguments, proces
 from commands.heatmaps import autocomplete_theme
 from DatabaseConnector import DatabaseConnector
 
-from commands.base import BaseCommand, RedirectView, Confirm, autocomplete_type, autocomplete_movers_categories, autocomplete_layouts, MARKET_MOVERS_OPTIONS
+from commands.base import BaseCommand, RedirectView, Confirm, autocomplete_fgi_type, autocomplete_hmap_type, autocomplete_movers_categories, autocomplete_layouts, MARKET_MOVERS_OPTIONS
 
 
 cal = Calendar()
@@ -398,7 +398,7 @@ class ScheduleCommand(BaseCommand):
 		self,
 		ctx,
 		period: Option(str, "Period of time every which the heatmap will be posted.", name="period", autocomplete=autocomplete_period),
-		assetType: Option(str, "Heatmap asset class.", name="type", autocomplete=autocomplete_type, required=False, default=""),
+		assetType: Option(str, "Heatmap asset class.", name="type", autocomplete=autocomplete_hmap_type, required=False, default=""),
 		timeframe: Option(str, "Timeframe and coloring method for the heatmap.", name="color", autocomplete=autocomplete_hmap_timeframe, required=False, default=""),
 		market: Option(str, "Heatmap market.", name="market", autocomplete=autocomplete_market, required=False, default=""),
 		category: Option(str, "Specific asset category.", name="category", autocomplete=autocomplete_category, required=False, default=""),
@@ -1033,7 +1033,7 @@ class ScheduleCommand(BaseCommand):
 		self,
 		ctx,
 		period: Option(str, "Period of time every which the chart will be posted.", name="period", autocomplete=autocomplete_period),
-		assetType: Option(str, "Fear & greed market type", name="market", autocomplete=autocomplete_type, required=False, default=""),
+		assetType: Option(str, "Fear & greed market type", name="market", autocomplete=autocomplete_fgi_type, required=False, default=""),
 		start: Option(str, "Time at which the first chart will be posted.", name="start", autocomplete=autocomplete_date, required=False, default=None),
 		exclude: Option(str, "Times to exclude from posting.", name="skip", autocomplete=autocomplete_exclude, required=False, default=None),
 		message: Option(str, "Message to post with the chart.", name="message", required=False, default=None),

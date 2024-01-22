@@ -16,7 +16,7 @@ from helpers import constants
 from assets import static_storage
 from Processor import process_chart_arguments, process_quote_arguments, process_task, get_listings
 
-from commands.base import BaseCommand, ActionsView, autocomplete_type, autocomplete_movers_categories, MARKET_MOVERS_OPTIONS
+from commands.base import BaseCommand, ActionsView, autocomplete_fgi_type, autocomplete_movers_categories, MARKET_MOVERS_OPTIONS
 
 
 class LookupCommand(BaseCommand):
@@ -145,7 +145,7 @@ class LookupCommand(BaseCommand):
 	async def fgi(
 		self,
 		ctx,
-		assetType: Option(str, "Fear & greed market type", name="market", autocomplete=autocomplete_type, required=False, default=""),
+		assetType: Option(str, "Fear & greed market type", name="market", autocomplete=autocomplete_fgi_type, required=False, default=""),
 	):
 		try:
 			request = await self.create_request(ctx)

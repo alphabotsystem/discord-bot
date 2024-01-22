@@ -28,8 +28,13 @@ for m in ["crypto", "stocks", "ETF", "forex", "mutual funds"]:
 MARKET_MOVERS_OPTIONS.sort()
 
 
-async def autocomplete_type(ctx):
+async def autocomplete_fgi_type(ctx):
 	options = ["crypto", "stocks"]
+	currentInput = " ".join(ctx.options.get("type", "").lower().split())
+	return [e for e in options if e.lower().startswith(currentInput)]
+
+async def autocomplete_hmap_type(ctx):
+	options = ["crypto", "stocks", "etf"]
 	currentInput = " ".join(ctx.options.get("type", "").lower().split())
 	return [e for e in options if e.lower().startswith(currentInput)]
 
@@ -57,7 +62,7 @@ class BaseCommand(Cog):
 		"alert set": ["Twelvedata", "CCXT"],
 		"c": ["TradingView", "TradingView Premium", "TradingLite"],
 		"layout": ["TradingView Relay"],
-		"hmap": ["TradingView Stock Heatmap", "TradingView Crypto Heatmap"],
+		"hmap": ["TradingView Stock Heatmap", "TradingView ETF Heatmap", "TradingView Crypto Heatmap"],
 		"flow": ["Alpha Flow"],
 		"p": ["Twelvedata", "CCXT", "CoinGecko"],
 		"convert": ["Twelvedata", "CCXT", "CoinGecko"],

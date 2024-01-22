@@ -39,11 +39,6 @@ spec:
               secretKeyRef:
                 name: alpha-credentials
                 key: TOKEN_H59TRYWEQLSI0U1UZLDFZRTXPXC2
-          - name: TOKEN_K4OIVMRPJBA3OLYBULWAYCNHGJK2
-            valueFrom:
-              secretKeyRef:
-                name: alpha-credentials
-                key: TOKEN_K4OIVMRPJBA3OLYBULWAYCNHGJK2
           - name: TOKEN_CIPIGOZSPUQQZHUVQ9SOIS6MAH53
             valueFrom:
               secretKeyRef:
