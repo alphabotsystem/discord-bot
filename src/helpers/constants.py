@@ -30,14 +30,16 @@ ICHIBOT_TESTING = [
 
 REFERRALS = {
 	"default": {
-		"binance": ["Save 10% on Binance fees", "https://accounts.binance.com/en-GB/register?ref=PJF2KLMW"],
-		"binanceusdm": ["Save 10% on Binance fees", "https://accounts.binance.com/en-GB/register?ref=PJF2KLMW"],
-		"binancecoinm": ["Save 10% on Binance fees", "https://accounts.binance.com/en-GB/register?ref=PJF2KLMW"],
+		"binance": ["Save 20% on Binance fees", "https://accounts.binance.com/register?ref=H2QPYA8D"],
+		"binanceusdm": ["Save 20% on Binance fees", "https://accounts.binance.com/register?ref=H2QPYA8D"],
+		"binancecoinm": ["Save 20% on Binance fees", "https://accounts.binance.com/register?ref=H2QPYA8D"],
 		"bitmex": ["Save 10% on BitMEX fees", "https://www.bitmex.com/app/register/cv1ZSO"],
 		"bybit": ["Sign up & trade on ByBit", "https://www.bybit.com/en-US/invite?ref=9OXPG3"]
 	},
 	1188452093024026674: {
-		"binance": ["وفر 10% من رسوم باينانس", "https://accounts.binance.com/register?ref=FF2BH3FA"]
+		"binance": ["وفر 10% من رسوم باينانس", "https://accounts.binance.com/register?ref=FF2BH3FA"],
+		"binanceusdm": ["وفر 10% من رسوم باينانس", "https://accounts.binance.com/register?ref=FF2BH3FA"],
+		"binancecoinm": ["وفر 10% من رسوم باينانس", "https://accounts.binance.com/register?ref=FF2BH3FA"],
 	}
 }
 
