@@ -6,7 +6,7 @@ metadata:
   labels:
     app: licensed-bot
 spec:
-  replicas: 14
+  replicas: 13
   selector:
     matchLabels:
       app: licensed-bot
