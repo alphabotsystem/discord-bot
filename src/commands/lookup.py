@@ -51,7 +51,7 @@ class LookupCommand(BaseCommand):
 				embed = Embed(title=f"{ticker.get('name')} listings", color=constants.colors["deep purple"])
 				for quote, exchanges in listings:
 					if len(exchanges) == 0: continue
-					embed.add_field(name=f"{quote} pair found on {len(exchanges)} exchanges", value=", ".join(exchanges), inline=False)
+					embed.add_field(name=f"Found {len(exchanges)} {quote} markets", value=", ".join(exchanges), inline=False)
 				try: await ctx.respond(embed=embed)
 				except NotFound: pass
 			else:
