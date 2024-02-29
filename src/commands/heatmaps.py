@@ -111,4 +111,4 @@ class HeatmapCommand(BaseCommand):
 			await self.unknown_error(ctx)
 
 
-DISABLE_DELETE_BUTTON = [1198295072681246883]
+DISABLE_DELETE_BUTTON = []

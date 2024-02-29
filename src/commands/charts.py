@@ -253,4 +253,4 @@ class ExchangesDropdown(Select):
 		self._callback()
 
 
-DISABLE_DELETE_BUTTON = [1198295072681246883]
+DISABLE_DELETE_BUTTON = []
