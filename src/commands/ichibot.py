@@ -37,7 +37,7 @@ class Ichibot(object):
 
 			while origin in Ichibot.sockets:
 				try:
-					messageContent = "```ruby"
+					messageContent = "```ansi"
 
 					while True:
 						try: [messenger, message] = await socket.recv_multipart(flags=NOBLOCK)
@@ -53,10 +53,10 @@ class Ichibot(object):
 								messageContent = messageContent[:1997] + "```"
 								try: await author.send(content=messageContent)
 								except Forbidden: pass
-								messageContent = "```ruby"
+								messageContent = "```ansi"
 							messageContent += "\n" + message
 
-					if messageContent != "```ruby":
+					if messageContent != "```ansi":
 						messageContent = messageContent[:1997] + "```"
 						try: await author.send(content=messageContent)
 						except Forbidden: pass
