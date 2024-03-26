@@ -69,7 +69,7 @@ class LayoutCommand(BaseCommand):
 		except CancelledError: pass
 		except:
 			print(format_exc())
-			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /layout {command} {tickerId} timeframe:{timeframe} venue:{venue}, url: {self.layouts[command][ctx.guild.id]}")
+			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /layout {layout['url']} {tickerId} timeframe:{timeframe} venue:{venue}")
 			await self.unknown_error(ctx)
 
 	async def respond(
