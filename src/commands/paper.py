@@ -497,7 +497,7 @@ class PaperCommand(BaseCommand):
 
 		if execPrice is None: execPrice = payload["candles"][-1][4]
 		if orderType.endswith("sell"): execAmount = min((baseBalance), execAmount)
-		else: execAmount = min((abs(quoteBalance) / execPrice), execAmount)
+		else: execAmount = min(abs(quoteBalance) / execPrice, execAmount)
 
 		if currentPlatform == "CCXT":
 			execPriceText = await get_formatted_price_ccxt(ticker.get("exchange").get("id"), ticker.get("symbol"), execPrice)
@@ -520,15 +520,20 @@ class PaperCommand(BaseCommand):
 		quoteValue = execAmount * execPrice
 
 		if execAmount == 0:
-			outputTitle = "Insuficient paper order size"
-			responseMessage = f"Cannot execute an order of 0.0 {ticker.get('base')}."
-			return outputTitle, responseMessage, paper, None
+			if quoteBalance != 0:
+				outputTitle = "Insufficient paper order size"
+				responseMessage = f"Cannot execute an order of 0.0 {ticker.get('base')}."
+				return outputTitle, responseMessage, paper, None
+			else:
+				outputTitle = "Insufficient paper wallet balance"
+				responseMessage = f"Your {ticker.get('quote')} balance is empty."
+				return outputTitle, responseMessage, paper, None
 		elif (orderType.endswith("sell") and baseValue > baseBalance) or (orderType.endswith("buy") and quoteValue * 0.9999999999 > quoteBalance):
-			outputTitle = "Insuficient paper wallet balance"
+			outputTitle = "Insufficient paper wallet balance"
 			responseMessage = "Order size of {} {} exeeds your paper wallet balance of {:,.8f} {}.".format(execAmountText, ticker.get("base"), quoteBalance if orderType.endswith("buy") else baseBalance, ticker.get("quote") if orderType.endswith("buy") else ticker.get("base"))
 			return outputTitle, responseMessage, paper, None
 		elif (orderType.endswith("buy") and quoteBalance == 0) or (orderType.endswith("sell") and baseBalance == 0):
-			outputTitle = "Insuficient paper wallet balance"
+			outputTitle = "Insufficient paper wallet balance"
 			responseMessage = f"Your {ticker.get('quote') if orderType.endswith('buy') else ticker.get('base')} balance is empty."
 			return outputTitle, responseMessage, paper, None
 
