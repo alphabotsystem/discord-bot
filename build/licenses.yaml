@@ -79,11 +79,6 @@ spec:
               secretKeyRef:
                 name: alpha-credentials
                 key: TOKEN_LMMXP4VROGBRP6ENPNTVHPKVGJQ1
-          - name: TOKEN_0LFH01IUELHSBXAPTKU4S7OG8UG2
-            valueFrom:
-              secretKeyRef:
-                name: alpha-credentials
-                key: TOKEN_0LFH01IUELHSBXAPTKU4S7OG8UG2
           - name: TOKEN_4PGTEYVTVNUXJZPSAGOV0TJAWIY2
             valueFrom:
               secretKeyRef:
@@ -104,6 +99,11 @@ spec:
               secretKeyRef:
                 name: alpha-credentials
                 key: TOKEN_NUJRDT6T3WTEQFTKMU2IAZY0RVL2
+          - name: TOKEN_VIVGTGTZC6HA0SARGSUGT9HNO8I2
+            valueFrom:
+              secretKeyRef:
+                name: alpha-credentials
+                key: TOKEN_VIVGTGTZC6HA0SARGSUGT9HNO8I2
           - name: GOOGLE_ASSISTANT_OAUTH
             valueFrom:
               secretKeyRef:
