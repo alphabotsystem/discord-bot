@@ -51,8 +51,9 @@ class LayoutCommand(BaseCommand):
 
 			layout = layout[0].to_dict()
 			theme = layout.get("theme")
+			isWide = layout.get("isWide", False)
 
-			arguments = [timeframe, venue] + ([] if theme is None else [theme])
+			arguments = [timeframe, venue] + ([] if theme is None else [theme]) + ([] if not isWide else ["wide"])
 			(responseMessage, task) = await process_chart_arguments(arguments, ["TradingView Relay"], tickerId=tickerId.upper(), defaults=request.guildProperties["charting"])
 
 			if responseMessage is not None:
