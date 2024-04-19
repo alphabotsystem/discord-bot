@@ -10,6 +10,7 @@ from discord.errors import Forbidden, NotFound
 
 from google.cloud.firestore import Increment
 
+from helpers.utils import get_incorrect_usage_description
 from helpers import constants
 from assets import static_storage
 from Processor import get_direct_ichibot_socket
@@ -90,7 +91,7 @@ class IchibotCommand(BaseCommand):
 
 			if request.is_registered():
 				if exchangeId is None:
-					embed = Embed(title=f"`{exchange[:229]}` is not a valid argument", description="Detailed guide with examples is available on [our website](https://gitlab.com/Ichimikichiki/ichibot-client-app/-/wikis/home).", color=constants.colors["gray"])
+					embed = Embed(title=f"`{exchange[:229]}` is not a valid argument", description=get_incorrect_usage_description(self.bot.user.id, "https://gitlab.com/Ichimikichiki/ichibot-client-app/-/wikis/home"), color=constants.colors["gray"])
 					embed.set_author(name="Invalid argument", icon_url=static_storage.ichibot)
 					try: await ctx.respond(embed=embed)
 					except NotFound: pass

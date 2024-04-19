@@ -17,6 +17,7 @@ from google.cloud.firestore import Increment
 from google.cloud.firestore_v1.base_query import FieldFilter
 from pycoingecko import CoinGeckoAPI
 
+from helpers.utils import get_incorrect_usage_description
 from helpers import constants
 from assets import static_storage
 from Processor import process_chart_arguments, process_heatmap_arguments, process_quote_arguments, process_task, autocomplete_hmap_timeframe, autocomplete_market, autocomplete_category, autocomplete_size, autocomplete_group, autocomplete_layout_timeframe
@@ -146,7 +147,7 @@ class ScheduleCommand(BaseCommand):
 				responseMessage, task = await process_chart_arguments(arguments[1:], platforms, tickerId=arguments[0].upper(), defaults=request.guildProperties["charting"])
 
 				if responseMessage is not None:
-					description = "[Advanced Charting add-on](https://www.alpha.bot/pro/advanced-charting) unlocks additional assets, indicators, timeframes and more." if responseMessage.endswith("add-on.") else "Detailed guide with examples is available on [our website](https://www.alpha.bot/features/charting)."
+					description = "[Advanced Charting add-on](https://www.alpha.bot/pro/advanced-charting) unlocks additional assets, indicators, timeframes and more." if responseMessage.endswith("add-on.") else get_incorrect_usage_description(self.bot.user.id, "https://www.alpha.bot/features/charting")
 					embed = Embed(title=responseMessage, description=description, color=constants.colors["gray"])
 					embed.set_author(name="Invalid argument", icon_url=static_storage.error_icon)
 					try: await ctx.interaction.edit_original_response(embed=embed)
@@ -309,8 +310,7 @@ class ScheduleCommand(BaseCommand):
 				)
 
 				if responseMessage is not None:
-					description = "Detailed guide with examples is available on [our website](https://www.alpha.bot/features/layouts)."
-					embed = Embed(title=responseMessage, description=description, color=constants.colors["gray"])
+					embed = Embed(title=responseMessage, description=get_incorrect_usage_description(self.bot.user.id, "https://www.alpha.bot/features/layouts"), color=constants.colors["gray"])
 					embed.set_author(name="Invalid argument", icon_url=static_storage.error_icon)
 					try: await ctx.interaction.edit_original_response(embed=embed)
 					except NotFound: pass
@@ -472,7 +472,7 @@ class ScheduleCommand(BaseCommand):
 				responseMessage, task = await process_heatmap_arguments(arguments, platforms)
 
 				if responseMessage is not None:
-					embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alpha.bot/features/heatmaps).", color=constants.colors["gray"])
+					embed = Embed(title=responseMessage, description=get_incorrect_usage_description(self.bot.user.id, "https://www.alpha.bot/features/heatmaps"), color=constants.colors["gray"])
 					embed.set_author(name="Invalid argument", icon_url=static_storage.error_icon)
 					try: await ctx.interaction.edit_original_response(embed=embed)
 					except NotFound: pass
@@ -625,7 +625,7 @@ class ScheduleCommand(BaseCommand):
 				responseMessage, task = await process_quote_arguments([venue], platforms, tickerId=tickerId.upper())
 
 				if responseMessage is not None:
-					embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alpha.bot/features/prices).", color=constants.colors["gray"])
+					embed = Embed(title=responseMessage, description=get_incorrect_usage_description(self.bot.user.id, "https://www.alpha.bot/features/prices"), color=constants.colors["gray"])
 					embed.set_author(name="Invalid argument", icon_url=static_storage.error_icon)
 					try: await ctx.interaction.edit_original_response(embed=embed)
 					except NotFound: pass
@@ -780,7 +780,7 @@ class ScheduleCommand(BaseCommand):
 				responseMessage, task = await process_quote_arguments([venue], platforms, tickerId=tickerId.upper())
 
 				if responseMessage is not None:
-					embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alpha.bot/features/volume).", color=constants.colors["gray"])
+					embed = Embed(title=responseMessage, description=get_incorrect_usage_description(self.bot.user.id, "https://www.alpha.bot/features/volume"), color=constants.colors["gray"])
 					embed.set_author(name="Invalid argument", icon_url=static_storage.error_icon)
 					try: await ctx.interaction.edit_original_response(embed=embed)
 					except NotFound: pass
@@ -927,7 +927,7 @@ class ScheduleCommand(BaseCommand):
 
 				category = " ".join(category.lower().split())
 				if category not in MARKET_MOVERS_OPTIONS:
-					embed = Embed(title="The specified category is invalid.", description="Detailed guide with examples is available on [our website](https://www.alpha.bot/features/lookup).", color=constants.colors["deep purple"])
+					embed = Embed(title="The specified category is invalid.", description=get_incorrect_usage_description(self.bot.user.id, "https://www.alpha.bot/features/lookup"), color=constants.colors["deep purple"])
 					try: await ctx.interaction.edit_original_response(embed=embed)
 					except NotFound: pass
 					return
@@ -1111,7 +1111,7 @@ class ScheduleCommand(BaseCommand):
 				responseMessage, task = await process_chart_arguments([assetType], platforms, tickerId="FGI")
 
 				if responseMessage is not None:
-					description = "[Advanced Charting add-on](https://www.alpha.bot/pro/advanced-charting) unlocks additional assets, indicators, timeframes and more." if responseMessage.endswith("add-on.") else "Detailed guide with examples is available on [our website](https://www.alpha.bot/features/lookup)."
+					description = "[Advanced Charting add-on](https://www.alpha.bot/pro/advanced-charting) unlocks additional assets, indicators, timeframes and more." if responseMessage.endswith("add-on.") else get_incorrect_usage_description(self.bot.user.id, "https://www.alpha.bot/features/lookup")
 					embed = Embed(title=responseMessage, description=description, color=constants.colors["gray"])
 					embed.set_author(name="Invalid argument", icon_url=static_storage.error_icon)
 					try: await ctx.interaction.edit_original_response(embed=embed)

@@ -11,6 +11,7 @@ from discord.errors import NotFound
 from google.cloud.firestore import Increment
 from google.cloud.firestore_v1.base_query import FieldFilter
 
+from helpers.utils import get_incorrect_usage_description
 from helpers import constants
 from assets import static_storage
 from Processor import autocomplete_layout_timeframe, process_chart_arguments, process_task
@@ -42,8 +43,7 @@ class LayoutCommand(BaseCommand):
 			)
 
 			if len(layout) == 0:
-				description = "Detailed guide with examples is available on [our website](https://www.alpha.bot/features/layouts)."
-				embed = Embed(title="Layout not found", description=description, color=constants.colors["gray"])
+				embed = Embed(title="Layout not found", description=get_incorrect_usage_description(self.bot.user.id, "https://www.alpha.bot/features/layouts"), color=constants.colors["gray"])
 				embed.set_author(name="Invalid argument", icon_url=static_storage.error_icon)
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
@@ -57,8 +57,7 @@ class LayoutCommand(BaseCommand):
 			(responseMessage, task) = await process_chart_arguments(arguments, ["TradingView Relay"], tickerId=tickerId.upper(), defaults=request.guildProperties["charting"])
 
 			if responseMessage is not None:
-				description = "Detailed guide with examples is available on [our website](https://www.alpha.bot/features/layouts)."
-				embed = Embed(title=responseMessage, description=description, color=constants.colors["gray"])
+				embed = Embed(title=responseMessage, description=get_incorrect_usage_description(self.bot.user.id, "https://www.alpha.bot/features/layouts"), color=constants.colors["gray"])
 				embed.set_author(name="Invalid argument", icon_url=static_storage.error_icon)
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass

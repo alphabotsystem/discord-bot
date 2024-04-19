@@ -9,9 +9,9 @@ from discord.errors import NotFound
 
 from google.cloud.firestore import Increment
 
+from helpers.utils import get_incorrect_usage_description, add_decimal_zeros
 from helpers import constants
 from assets import static_storage
-from helpers.utils import add_decimal_zeros
 from Processor import process_quote_arguments, process_task
 
 from commands.base import BaseCommand
@@ -117,7 +117,7 @@ class DetailsCommand(BaseCommand):
 			responseMessage, task = await process_quote_arguments([], platforms, tickerId=tickerId.upper())
 
 			if responseMessage is not None:
-				embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alpha.bot/features/asset-details).", color=constants.colors["gray"])
+				embed = Embed(title=responseMessage, description=get_incorrect_usage_description(self.bot.user.id, "https://www.alpha.bot/features/asset-details"), color=constants.colors["gray"])
 				embed.set_author(name="Invalid argument", icon_url=static_storage.error_icon)
 				try: await ctx.respond(embed=embed)
 				except NotFound: pass

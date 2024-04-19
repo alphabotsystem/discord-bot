@@ -12,6 +12,7 @@ from discord.errors import NotFound
 from google.cloud.firestore import Increment
 from pycoingecko import CoinGeckoAPI
 
+from helpers.utils import get_incorrect_usage_description
 from helpers import constants
 from assets import static_storage
 from Processor import process_chart_arguments, process_quote_arguments, process_task, get_listings
@@ -36,7 +37,7 @@ class LookupCommand(BaseCommand):
 			responseMessage, task = await process_quote_arguments([], platforms, tickerId=tickerId.upper())
 
 			if responseMessage is not None:
-				embed = Embed(title=responseMessage, description="Detailed guide with examples is available on [our website](https://www.alpha.bot/features).", color=constants.colors["gray"])
+				embed = Embed(title=responseMessage, description=get_incorrect_usage_description(self.bot.user.id, "https://www.alpha.bot/features"), color=constants.colors["gray"])
 				embed.set_author(name="Invalid argument", icon_url=static_storage.error_icon)
 				try: await ctx.respond(embed=embed)
 				except NotFound: pass
@@ -83,7 +84,7 @@ class LookupCommand(BaseCommand):
 
 			category = " ".join(category.lower().split()).replace("etf", "ETF")
 			if category not in MARKET_MOVERS_OPTIONS:
-				embed = Embed(title="The specified category is invalid.", description="Detailed guide with examples is available on [our website](https://www.alpha.bot/features/lookup).", color=constants.colors["deep purple"])
+				embed = Embed(title="The specified category is invalid.", description=get_incorrect_usage_description(self.bot.user.id, "https://www.alpha.bot/features/lookup"), color=constants.colors["deep purple"])
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 				return

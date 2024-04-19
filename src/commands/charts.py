@@ -10,6 +10,7 @@ from discord.ui import View, button, Button, Select
 from discord.errors import NotFound
 from google.cloud.firestore import Increment
 
+from helpers.utils import get_incorrect_usage_description
 from helpers import constants
 from assets import static_storage
 from Processor import process_chart_arguments, process_task, get_direct_ichibot_socket
@@ -109,7 +110,7 @@ class ChartCommand(BaseCommand):
 			tasks = []
 			for (responseMessage, task) in results:
 				if responseMessage is not None:
-					description = "[Advanced Charting add-on](https://www.alpha.bot/pro/advanced-charting) unlocks additional assets, indicators, timeframes and more." if responseMessage.endswith("add-on.") else "Detailed guide with examples is available on [our website](https://www.alpha.bot/features/charting)."
+					description = "[Advanced Charting add-on](https://www.alpha.bot/pro/advanced-charting) unlocks additional assets, indicators, timeframes and more." if responseMessage.endswith("add-on.") else get_incorrect_usage_description(self.bot.user.id, "https://www.alpha.bot/features/charting")
 					embed = Embed(title=responseMessage, description=description, color=constants.colors["gray"])
 					embed.set_author(name="Invalid argument", icon_url=static_storage.error_icon)
 					try: await ctx.interaction.edit_original_response(embed=embed)
