@@ -1,4 +1,5 @@
-py-cord[speed]==2.4.1
+py-cord[speed]>=2.4.1
+openai>=1.23.2
 google-cloud-error-reporting>=1.6.3
 google-cloud-firestore>=2.9.1
 google-assistant-grpc>=0.3.0

@@ -9,7 +9,6 @@ from aiohttp import ClientSession
 from traceback import format_exc
 
 from discord import Embed, File, ButtonStyle, SelectOption, Interaction, Role, Thread, Permissions
-from discord.embeds import EmptyEmbed
 from discord.commands import slash_command, SlashCommandGroup, Option
 from discord.ui import View, button, Button, Select
 from discord.errors import NotFound
@@ -643,12 +642,12 @@ class ScheduleCommand(BaseCommand):
 				else:
 					currentTask = task.get(payload.get("platform"))
 					if payload.get("platform") in ["Alternative.me", "CNN Business"]:
-						embed = Embed(title=f"{payload['quotePrice']} *({payload['change']})*", description=payload.get("quoteConvertedPrice", EmptyEmbed), color=constants.colors[payload["messageColor"]])
+						embed = Embed(title=f"{payload['quotePrice']} *({payload['change']})*", description=payload.get("quoteConvertedPrice"), color=constants.colors[payload["messageColor"]])
 						embed.set_author(name=payload["title"], icon_url=payload.get("thumbnailUrl"))
 						embed.set_footer(text=payload["sourceText"])
 						embeds.append(embed)
 					else:
-						embed = Embed(title="{}{}".format(payload["quotePrice"], f" *({payload['change']})*" if "change" in payload else ""), description=payload.get("quoteConvertedPrice", EmptyEmbed), color=constants.colors[payload["messageColor"]])
+						embed = Embed(title="{}{}".format(payload["quotePrice"], f" *({payload['change']})*" if "change" in payload else ""), description=payload.get("quoteConvertedPrice"), color=constants.colors[payload["messageColor"]])
 						embed.set_author(name=payload["title"], icon_url=payload.get("thumbnailUrl"))
 						embed.set_footer(text=payload["sourceText"])
 						embeds.append(embed)
@@ -797,7 +796,7 @@ class ScheduleCommand(BaseCommand):
 					embeds.append(embed)
 				else:
 					currentTask = task.get(payload.get("platform"))
-					embed = Embed(title=payload["quoteVolume"], description=payload.get("quoteConvertedVolume", EmptyEmbed), color=constants.colors["orange"])
+					embed = Embed(title=payload["quoteVolume"], description=payload.get("quoteConvertedVolume"), color=constants.colors["orange"])
 					embed.set_author(name=payload["title"], icon_url=payload.get("thumbnailUrl"))
 					embed.set_footer(text=payload["sourceText"])
 					embeds.append(embed)

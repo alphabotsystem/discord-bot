@@ -3,7 +3,6 @@ from asyncio import gather, CancelledError
 from traceback import format_exc
 
 from discord import Embed
-from discord.embeds import EmptyEmbed
 from discord.commands import slash_command, Option
 from discord.errors import NotFound
 from google.cloud.firestore import Increment
@@ -34,7 +33,7 @@ class VolumeCommand(BaseCommand):
 			except NotFound: pass
 		else:
 			currentTask = task.get(payload.get("platform"))
-			embed = Embed(title=payload["quoteVolume"], description=payload.get("quoteConvertedVolume", EmptyEmbed), color=constants.colors["orange"])
+			embed = Embed(title=payload["quoteVolume"], description=payload.get("quoteConvertedVolume"), color=constants.colors["orange"])
 			embed.set_author(name=payload["title"], icon_url=payload.get("thumbnailUrl"))
 			embed.set_footer(text=payload["sourceText"])
 			try: await ctx.interaction.edit_original_response(embed=embed)

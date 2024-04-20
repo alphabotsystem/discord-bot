@@ -3,7 +3,6 @@ from asyncio import CancelledError
 from traceback import format_exc
 
 from discord import Embed
-from discord.embeds import EmptyEmbed
 from discord.commands import slash_command, Option
 from discord.errors import NotFound
 
@@ -37,7 +36,7 @@ class DetailsCommand(BaseCommand):
 			currentTask = task.get(payload.get("platform"))
 			ticker = currentTask.get("ticker")
 
-			embed = Embed(title=payload["name"], description=payload.get("description", EmptyEmbed), url=payload.get("url", EmptyEmbed), color=constants.colors["lime"])
+			embed = Embed(title=payload["name"], description=payload.get("description"), url=payload.get("url"), color=constants.colors["lime"])
 			if payload.get("image") is not None:
 				embed.set_thumbnail(url=payload["image"])
 

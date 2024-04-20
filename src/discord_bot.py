@@ -8,7 +8,7 @@ from requests import post
 from asyncio import CancelledError, sleep, gather, wait, create_task
 from traceback import format_exc
 
-from discord import AutoShardedBot, Embed, Intents, Activity, Status, ActivityType, MessageType
+from discord import AutoShardedBot, Embed, Intents, CustomActivity, Status, ActivityType, MessageType
 from discord.ext import tasks
 from discord.errors import NotFound
 from google.cloud.firestore import AsyncClient as FirestoreAsyncClient
@@ -56,7 +56,7 @@ intents.guilds = True
 intents.integrations = True
 intents.webhooks = True
 
-bot = AutoShardedBot(intents=intents, chunk_guilds_at_startup=False, max_messages=None, status=Status.idle, activity=Activity(type=ActivityType.playing, name="a reboot, brb!"))
+bot = AutoShardedBot(intents=intents, chunk_guilds_at_startup=False, max_messages=None, status=Status.idle, activity=CustomActivity(name="www.alpha.bot"))
 
 
 # -------------------------
@@ -360,12 +360,9 @@ async def guild_secure_fetch(guildId):
 
 @bot.event
 async def on_message(message):
-	# Method should not run on licensed bots
-	if bot.user.id not in constants.PRIMARY_BOTS: return
-
 	try:
 		# Skip messages in servers, messages with empty content field, messages from self, or all messages when in startup mode
-		if message.guild is not None or message.clean_content == "" or message.type != MessageType.default or message.author == bot.user: return
+		if message.clean_content == "" or message.type != MessageType.default or message.author == bot.user: return
 
 		# Ignore if user is banned
 		if message.author.id in constants.blockedUsers: return
@@ -384,9 +381,12 @@ async def on_message(message):
 		)
 		_snapshot = "{}-{:02d}".format(message.created_at.year, message.created_at.month)
 
-		if commandRequest.content.startswith("x "):
+		# Ichibot should not run on licensed bots
+		if bot.user.id in constants.PRIMARY_BOTS and commandRequest.content.startswith("x ") and message.guild is not None:
 			await process_ichibot_command(message, commandRequest, commandRequest.content.split(" ", 1)[1])
 			await database.document("discord/statistics").set({_snapshot: {"x": Increment(1)}}, merge=True)
+		elif commandRequest.content.startswith("@alpha"):
+			pass
 
 	except CancelledError: pass
 	except:
@@ -556,7 +556,7 @@ async def on_ready():
 
 	try:
 		if bot.user.id == 401328409499664394:
-			await bot.change_presence(status=Status.online, activity=Activity(type=ActivityType.watching, name="www.alpha.bot"))
+			await bot.change_presence(status=Status.online, activity=CustomActivity(name="www.alpha.bot"))
 		else:
 			await bot.change_presence(status=Status.online, activity=None)
 	except:
