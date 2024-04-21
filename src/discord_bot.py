@@ -284,10 +284,6 @@ async def security_check():
 		for guild in bot.guilds:
 			if guild.id in constants.bannedGuilds:
 				await guild.leave()
-			if guild.member_count < 10:
-				if guildId in settings["nicknames"]:
-					settings["nicknames"].pop(guildId)
-				continue
 
 			guildId = str(guild.id)
 			if guild.me is not None:
@@ -296,10 +292,8 @@ async def security_check():
 						settings["nicknames"].pop(guildId)
 					elif settings["nicknames"][guildId].get("nickname") != guild.me.nick or settings["nicknames"][guildId]["server name"] != guild.name:
 						settings["nicknames"][guildId] = {"nickname": guild.me.nick, "server name": guild.name, "allowed": None}
-				elif guild.me.nick is not None:
+				elif guild.me.nick is not None and guild.me.nick not in settings["nicknameWhitelist"]:
 					settings["nicknames"][guildId] = {"nickname": guild.me.nick, "server name": guild.name, "allowed": None}
-			elif guildId in settings["nicknames"]:
-				settings["nicknames"].pop(guildId)
 
 		if environ["PRODUCTION"]:
 			await database.document("discord/settings").set(settings)
@@ -385,8 +379,6 @@ async def on_message(message):
 		if bot.user.id in constants.PRIMARY_BOTS and commandRequest.content.startswith("x ") and message.guild is not None:
 			await process_ichibot_command(message, commandRequest, commandRequest.content.split(" ", 1)[1])
 			await database.document("discord/statistics").set({_snapshot: {"x": Increment(1)}}, merge=True)
-		elif commandRequest.content.startswith("@alpha"):
-			pass
 
 	except CancelledError: pass
 	except:
