@@ -60,7 +60,7 @@ class ChartCommand(BaseCommand):
 				referrals = constants.REFERRALS.get(self.bot.user.id, constants.REFERRALS["default"])
 				if exchangeId in referrals:
 					actions = ReferralView(*referrals[exchangeId], user=ctx.author, command=ctx.command.mention)
-			elif self.bot.user.id not in DISABLE_DELETE_BUTTON:
+			else:
 				actions = ActionsView(user=ctx.author, command=ctx.command.mention)
 
 		requestCheckpoint = time()
@@ -252,6 +252,3 @@ class ExchangesDropdown(Select):
 		embed.set_author(name="Ichibot", icon_url=static_storage.ichibot)
 		await interaction.response.edit_message(embed=embed, view=None)
 		self._callback()
-
-
-DISABLE_DELETE_BUTTON = []

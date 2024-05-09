@@ -101,6 +101,11 @@ class LayoutCommand(BaseCommand):
 					currentTask = task.get(task.get("currentPlatform"))
 					files.append(File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, request.authorId, randint(1000, 9999))))
 
+					# RwU79szBNJUFmrpQbgj3ZtnLmwA2
+					if self.bot.user.id == 1229893549986811986:
+						embed = Embed(title=f"Chart for {currentTask.get('ticker').get('name')} (`{currentTask.get('ticker').get('base')}`)", color=constants.colors["deep purple"])
+						embeds.append(embed)
+
 			actions = None
 			if len(files) != 0:
 				actions = ActionsView(user=ctx.author, command=ctx.command.mention)
