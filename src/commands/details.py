@@ -113,7 +113,7 @@ class DetailsCommand(BaseCommand):
 			if request is None: return
 
 			platforms = request.get_platform_order_for("info")
-			responseMessage, task = await process_quote_arguments([], platforms, tickerId=tickerId.upper())
+			responseMessage, task = await process_quote_arguments([], platforms, tickerId=tickerId)
 
 			if responseMessage is not None:
 				embed = Embed(title=responseMessage, description=get_incorrect_usage_description(self.bot.user.id, "https://www.alpha.bot/features/asset-details"), color=constants.colors["gray"])

@@ -100,4 +100,4 @@ class FlowCommand(BaseCommand):
 		tickerId: Option(str, "Ticker id of an asset.", name="ticker"),
 		autodelete: Option(float, "Bot response self destruct timer in minutes.", name="autodelete", required=False, default=None)
 	):
-		await self.flow_proxy(ctx, tickerId.upper(), autodelete)
+		await self.flow_proxy(ctx, tickerId(), autodelete)

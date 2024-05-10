@@ -82,7 +82,7 @@ class PriceCommand(BaseCommand):
 			for part in parts:
 				partArguments = part.lower().split()
 				if len(partArguments) == 0: continue
-				tasks.append(process_quote_arguments(partArguments[1:], platforms, tickerId=partArguments[0].upper()))
+				tasks.append(process_quote_arguments(partArguments[1:], platforms, tickerId=partArguments[0]))
 			[results, _] = await gather(
 				gather(*tasks),
 				ctx.defer()
@@ -123,7 +123,7 @@ class PriceCommand(BaseCommand):
 
 			platforms = request.get_platform_order_for("p")
 			[(responseMessage, task), _] = await gather(
-				process_quote_arguments([venue], platforms, tickerId=tickerId.upper()),
+				process_quote_arguments([venue], platforms, tickerId=tickerId),
 				ctx.defer()
 			)
 

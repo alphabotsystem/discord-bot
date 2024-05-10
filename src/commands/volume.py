@@ -55,7 +55,7 @@ class VolumeCommand(BaseCommand):
 
 			platforms = request.get_platform_order_for("v")
 			[(responseMessage, task), _] = await gather(
-				process_quote_arguments([venue], platforms, tickerId=tickerId.upper()),
+				process_quote_arguments([venue], platforms, tickerId=tickerId),
 				ctx.defer()
 			)
 

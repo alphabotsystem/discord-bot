@@ -54,7 +54,7 @@ class LayoutCommand(BaseCommand):
 			isWide = layout.get("isWide", False)
 
 			arguments = [timeframe, venue] + ([] if theme is None else [theme]) + ([] if not isWide else ["wide"])
-			(responseMessage, task) = await process_chart_arguments(arguments, ["TradingView Relay"], tickerId=tickerId.upper(), defaults=request.guildProperties["charting"])
+			(responseMessage, task) = await process_chart_arguments(arguments, ["TradingView Relay"], tickerId=tickerId, defaults=request.guildProperties["charting"])
 
 			if responseMessage is not None:
 				embed = Embed(title=responseMessage, description=get_incorrect_usage_description(self.bot.user.id, "https://www.alpha.bot/features/layouts"), color=constants.colors["gray"])

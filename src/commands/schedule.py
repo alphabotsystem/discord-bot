@@ -143,7 +143,7 @@ class ScheduleCommand(BaseCommand):
 
 				platforms = request.get_platform_order_for("c")
 				arguments = arguments.lower().split()
-				responseMessage, task = await process_chart_arguments(arguments[1:], platforms, tickerId=arguments[0].upper(), defaults=request.guildProperties["charting"])
+				responseMessage, task = await process_chart_arguments(arguments[1:], platforms, tickerId=arguments[0], defaults=request.guildProperties["charting"])
 
 				if responseMessage is not None:
 					description = "[Advanced Charting add-on](https://www.alpha.bot/pro/advanced-charting) unlocks additional assets, indicators, timeframes and more." if responseMessage.endswith("add-on.") else get_incorrect_usage_description(self.bot.user.id, "https://www.alpha.bot/features/charting")
@@ -304,7 +304,7 @@ class ScheduleCommand(BaseCommand):
 
 				arguments = [venue, timeframe]
 				[(responseMessage, task), layout] = await gather(
-					process_chart_arguments(arguments, ["TradingView Relay"], tickerId=tickerId.upper(), defaults=request.guildProperties["charting"]),
+					process_chart_arguments(arguments, ["TradingView Relay"], tickerId=tickerId, defaults=request.guildProperties["charting"]),
 					self.database.collection(f"discord/properties/layouts").where(filter=FieldFilter("label", "==", name)).where(filter=FieldFilter("guildId", "==", str(request.guildId))).get()
 				)
 
@@ -621,7 +621,7 @@ class ScheduleCommand(BaseCommand):
 					timestamp += PERIOD_TO_TIME[period] * 60
 
 				platforms = request.get_platform_order_for("p")
-				responseMessage, task = await process_quote_arguments([venue], platforms, tickerId=tickerId.upper())
+				responseMessage, task = await process_quote_arguments([venue], platforms, tickerId=tickerId)
 
 				if responseMessage is not None:
 					embed = Embed(title=responseMessage, description=get_incorrect_usage_description(self.bot.user.id, "https://www.alpha.bot/features/prices"), color=constants.colors["gray"])
@@ -776,7 +776,7 @@ class ScheduleCommand(BaseCommand):
 					timestamp += PERIOD_TO_TIME[period] * 60
 
 				platforms = request.get_platform_order_for("v")
-				responseMessage, task = await process_quote_arguments([venue], platforms, tickerId=tickerId.upper())
+				responseMessage, task = await process_quote_arguments([venue], platforms, tickerId=tickerId)
 
 				if responseMessage is not None:
 					embed = Embed(title=responseMessage, description=get_incorrect_usage_description(self.bot.user.id, "https://www.alpha.bot/features/volume"), color=constants.colors["gray"])

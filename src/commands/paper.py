@@ -125,7 +125,7 @@ class PaperCommand(BaseCommand):
 
 			platforms = request.get_platform_order_for("paper")
 			[(responseMessage, task), _] = await gather(
-				process_quote_arguments([], platforms, tickerId=tickerId.upper()),
+				process_quote_arguments([], platforms, tickerId=tickerId),
 				ctx.defer()
 			)
 

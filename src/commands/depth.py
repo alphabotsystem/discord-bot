@@ -54,7 +54,7 @@ class DepthCommand(BaseCommand):
 
 			platforms = request.get_platform_order_for("d")
 			[(responseMessage, task), _] = await gather(
-				process_quote_arguments([venue], platforms, tickerId=tickerId.upper()),
+				process_quote_arguments([venue], platforms, tickerId=tickerId),
 				ctx.defer()
 			)
 

@@ -51,7 +51,7 @@ class AlertCommand(BaseCommand):
 					return
 
 				platforms = request.get_platform_order_for("alert")
-				responseMessage, task = await process_quote_arguments([venue], platforms, tickerId=tickerId.upper())
+				responseMessage, task = await process_quote_arguments([venue], platforms, tickerId=tickerId)
 
 				if responseMessage is not None:
 					embed = Embed(title=responseMessage, description=get_incorrect_usage_description(self.bot.user.id, "https://www.alpha.bot/features/price-alerts"), color=constants.colors["gray"])

@@ -101,7 +101,7 @@ class ChartCommand(BaseCommand):
 			for part in parts:
 				partArguments = part.lower().split()
 				if len(partArguments) == 0: continue
-				tasks.append(process_chart_arguments(partArguments[1:], platforms, tickerId=partArguments[0].upper(), defaults=request.guildProperties["charting"]))
+				tasks.append(process_chart_arguments(partArguments[1:], platforms, tickerId=partArguments[0], defaults=request.guildProperties["charting"]))
 			[results, _] = await gather(
 				gather(*tasks),
 				ctx.defer()

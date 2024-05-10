@@ -29,7 +29,7 @@ class ConvertCommand(BaseCommand):
 
 			platforms = request.get_platform_order_for("convert")
 			[(payload, responseMessage), _] = await gather(
-				process_conversion(request, fromTicker.upper(), toTicker.upper(), amount, platforms),
+				process_conversion(request, fromTicker, toTicker, amount, platforms),
 				ctx.defer()
 			)
 
