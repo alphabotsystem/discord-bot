@@ -46,10 +46,10 @@ class AskCommand(BaseCommand):
 			ephemeral = not request.guildProperties.get("settings", {}).get("assistant", {}).get("enabled", True)
 
 			if response is not None:
-				try: await ctx.respond(content=response, ephemeral=ephemeral)
+				try: await ctx.respond(content=response + "\n\n**Google Assistant functionality will be deprecated on June 1st.**", ephemeral=ephemeral)
 				except NotFound: pass
 			else:
-				try: await ctx.respond(content="Sorry, I can't help you with that.", ephemeral=ephemeral)
+				try: await ctx.respond(content="Sorry, I can't help you with that." + "\n\n**Google Assistant functionality will be deprecated on June 1st.**", ephemeral=ephemeral)
 				except NotFound: pass
 
 			await self.database.document("discord/statistics").set({request.snapshot: {"alpha": Increment(1)}}, merge=True)
