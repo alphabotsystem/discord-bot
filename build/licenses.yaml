@@ -129,10 +129,5 @@ spec:
               secretKeyRef:
                 name: alpha-credentials
                 key: COINGECKO_API_KEY
-          - name: OPENAI_API_KEY
-            valueFrom:
-              secretKeyRef:
-                name: alpha-credentials
-                key: OPENAI_API_KEY
         ports:
           - containerPort: 6910
