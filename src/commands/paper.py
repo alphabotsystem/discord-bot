@@ -528,7 +528,7 @@ class PaperCommand(BaseCommand):
 				outputTitle = "Insufficient paper wallet balance"
 				responseMessage = f"Your {ticker.get('quote')} balance is empty."
 				return outputTitle, responseMessage, paper, None
-		elif (orderType.endswith("sell") and baseValue > baseBalance) or (orderType.endswith("buy") and quoteValue * 0.9999999999 > quoteBalance):
+		elif (orderType.endswith("sell") and baseValue > baseBalance) or (orderType.endswith("buy") and quoteValue * 0.9999 > quoteBalance):
 			outputTitle = "Insufficient paper wallet balance"
 			responseMessage = "Order size of {} {} exeeds your paper wallet balance of {:,.8f} {}.".format(execAmountText, ticker.get("base"), quoteBalance if orderType.endswith("buy") else baseBalance, ticker.get("quote") if orderType.endswith("buy") else ticker.get("base"))
 			return outputTitle, responseMessage, paper, None
@@ -576,11 +576,11 @@ class PaperCommand(BaseCommand):
 			quoteBalance = paper["balance"][currentPlatform]
 
 		if orderType == "buy":
-			quoteBalance[quote] = quoteBalance[quote] - execPrice * execAmount
+			quoteBalance[quote] = max(0, quoteBalance[quote] - execPrice * execAmount)
 			if not isLimitOrder:
 				baseBalance[base] = baseBalance.get(base, 0) + execAmount
 		elif orderType == "sell":
-			baseBalance[base] = baseBalance[base] - execAmount
+			baseBalance[base] = max(0, baseBalance[base] - execAmount)
 			if not isLimitOrder:
 				quoteBalance[quote] = quoteBalance.get(quote, 0) + execAmount * execPrice
 
