@@ -631,7 +631,7 @@ class ScheduleCommand(BaseCommand):
 					return
 
 				currentTask = task.get(task.get("currentPlatform"))
-				payload, responseMessage = await process_task(task, "quote")
+				payload, responseMessage = await process_task(task, "quote", origin=request.origin)
 
 				embeds = []
 				if payload is None or "quotePrice" not in payload:
@@ -786,7 +786,7 @@ class ScheduleCommand(BaseCommand):
 					return
 
 				currentTask = task.get(task.get("currentPlatform"))
-				payload, responseMessage = await process_task(task, "quote")
+				payload, responseMessage = await process_task(task, "quote", origin=request.origin)
 
 				embeds = []
 				if payload is None or "quoteVolume" not in payload:

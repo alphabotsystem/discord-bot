@@ -92,7 +92,7 @@ class AlertCommand(BaseCommand):
 
 				currentPlatform = task.get("currentPlatform")
 				currentTask = task.get(currentPlatform)
-				payload, responseMessage = await process_task(task, "candle")
+				payload, responseMessage = await process_task(task, "candle", origin=request.origin)
 
 				if payload is None or len(payload.get("candles", [])) == 0:
 					errorMessage = f"Requested price alert for `{currentTask.get('ticker').get('name')}` is not available." if responseMessage is None else responseMessage

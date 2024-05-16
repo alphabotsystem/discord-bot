@@ -26,7 +26,7 @@ class DepthCommand(BaseCommand):
 		task
 	):
 		currentTask = task.get(task.get("currentPlatform"))
-		payload, responseMessage = await process_task(task, "depth")
+		payload, responseMessage = await process_task(task, "depth", origin=request.origin)
 
 		if payload is None:
 			errorMessage = f"Requested orderbook visualization for `{currentTask.get('ticker').get('name')}` is not available." if responseMessage is None else responseMessage

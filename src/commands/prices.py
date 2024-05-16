@@ -27,7 +27,7 @@ class PriceCommand(BaseCommand):
 		embeds = []
 		for task in tasks:
 			currentTask = task.get(task.get("currentPlatform"))
-			payload, responseMessage = await process_task(task, "quote")
+			payload, responseMessage = await process_task(task, "quote", origin=request.origin)
 
 			if payload is None or "quotePrice" not in payload:
 				errorMessage = f"Requested quote for `{currentTask.get('ticker').get('name')}` is not available." if responseMessage is None else responseMessage

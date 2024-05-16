@@ -23,7 +23,7 @@ class VolumeCommand(BaseCommand):
 		task
 	):
 		currentTask = task.get(task.get("currentPlatform"))
-		payload, responseMessage = await process_task(task, "quote")
+		payload, responseMessage = await process_task(task, "quote", origin=request.origin)
 
 		if payload is None or "quoteVolume" not in payload:
 			errorMessage = f"Requested volume for `{currentTask.get('ticker').get('name')}` is not available." if responseMessage is None else responseMessage

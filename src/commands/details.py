@@ -24,7 +24,7 @@ class DetailsCommand(BaseCommand):
 		task
 	):
 		currentTask = task.get(task.get("currentPlatform"))
-		payload, responseMessage = await process_task(task, "detail")
+		payload, responseMessage = await process_task(task, "detail", origin=request.origin)
 
 		if payload is None:
 			errorMessage = f"Requested details for `{currentTask.get('ticker').get('name')}` are not available." if responseMessage is None else responseMessage
