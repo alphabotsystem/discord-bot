@@ -956,7 +956,7 @@ class ScheduleCommand(BaseCommand):
 						response = sorted(response, key=lambda k: k["change"])
 
 					for token in response[:9]:
-						embed.add_field(name=f"{token['name']} (`{token['symbol']}`)", value="{:+,.2f}%".format(token["change"]), inline=True)
+						embed.add_field(name=f"{token['name']} (`{token['symbol'].replace('/', '')}`)", value="{:+,.2f}%".format(token["change"]), inline=True)
 
 				else:
 					async with ClientSession() as session:
@@ -968,7 +968,7 @@ class ScheduleCommand(BaseCommand):
 								response["values"]
 							)
 							for asset in list(assets)[:9]:
-								embed.add_field(name=f"{asset['name']} (`{asset['symbol']}`)", value="{:+,.2f}%".format(asset["percent_change"]), inline=True)
+								embed.add_field(name=f"{asset['name']} (`{asset['symbol'].replace('/', '')}`)", value="{:+,.2f}%".format(asset["percent_change"]), inline=True)
 
 				embeds = [embed]
 
