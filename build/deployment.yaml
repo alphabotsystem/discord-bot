@@ -37,11 +37,6 @@ spec:
               secretKeyRef:
                 name: alpha-credentials
                 key: DISCORD_PRODUCTION_TOKEN
-          - name: GOOGLE_ASSISTANT_OAUTH
-            valueFrom:
-              secretKeyRef:
-                name: alpha-credentials
-                key: GOOGLE_ASSISTANT_OAUTH
           - name: TWELVEDATA_KEY
             valueFrom:
               secretKeyRef:

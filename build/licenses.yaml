@@ -109,11 +109,6 @@ spec:
               secretKeyRef:
                 name: alpha-credentials
                 key: TOKEN_ZCDMXTXP9CYA25WKGPQG68XZB202
-          - name: GOOGLE_ASSISTANT_OAUTH
-            valueFrom:
-              secretKeyRef:
-                name: alpha-credentials
-                key: GOOGLE_ASSISTANT_OAUTH
           - name: TOPGG_KEY
             valueFrom:
               secretKeyRef:

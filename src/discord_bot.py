@@ -24,7 +24,6 @@ from DatabaseConnector import DatabaseConnector
 from CommandRequest import CommandRequest
 
 from commands.alerts import AlertCommand
-from commands.assistant import AskCommand
 from commands.charts import ChartCommand
 from commands.convert import ConvertCommand
 from commands.depth import DepthCommand
@@ -355,7 +354,7 @@ async def guild_secure_fetch(guildId):
 @bot.event
 async def on_message(message):
 	try:
-		# Skip messages in servers, messages with empty content field, messages from self, or all messages when in startup mode
+		# Skip messages in servers, messages with empty content field, messages from self
 		if message.clean_content == "" or message.type != MessageType.default or message.author == bot.user: return
 
 		# Ignore if user is banned
@@ -513,10 +512,8 @@ bot.add_cog(VolumeCommand(bot, create_request, database, logging))
 # Special commands
 # -------------------------
 
-if botId in [-1]:
+if botId == -1:
 	bot.add_cog(IchibotCommand(bot, create_request, database, logging))
-if botId not in [6]:
-	bot.add_cog(AskCommand(bot, create_request, database, logging))
 
 
 # -------------------------
