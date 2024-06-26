@@ -6,7 +6,7 @@ metadata:
   labels:
     app: licensed-bot
 spec:
-  replicas: 16
+  replicas: 17
   selector:
     matchLabels:
       app: licensed-bot
@@ -109,11 +109,11 @@ spec:
               secretKeyRef:
                 name: alpha-credentials
                 key: TOKEN_QWMT0OT4G0TFBW5N27F6VGKHWQ82
-          - name: TOPGG_KEY
+          - name: TOKEN_ESWAHZFI1PG1ZFMN2YSJGAFKPS02
             valueFrom:
               secretKeyRef:
                 name: alpha-credentials
-                key: TOPGG_KEY
+                key: TOKEN_ESWAHZFI1PG1ZFMN2YSJGAFKPS02
           - name: TWELVEDATA_KEY
             valueFrom:
               secretKeyRef:
