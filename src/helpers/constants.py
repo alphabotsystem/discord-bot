@@ -19,7 +19,6 @@ LICENSED_BOTS = {
 	1172008049679007856, # RwU79szBNJUFmrpQbgj3ZtnLmwA2
 	1229785282228912248, # WjLIPYyYuTZZLvHYzGXYJz2KiCd2
 	893977354353905676,  # A8VqZAu7bxTBTP27ISAJqjTCsff1
-	699870258894340126,  # ZcDMXTXP9cYa25Wkgpqg68XZB202
 	1179107622872420414, # qWMt0OT4G0Tfbw5n27F6vgKHWQ82
 	1150147022159089694, # eswahZFi1Pg1ZFMn2ysJGAfKps02
 	1191071119361449984, # eswahZFi1Pg1ZFMn2ysJGAfKps02
@@ -69,72 +68,6 @@ colors = {
 	"brown": 0x795548,
 	"gray": 0x9E9E9E
 }
-
-messageOverrides = {
-	"I can't help you with that.": {
-		"Your public IP address is:",
-		"Your shopping list",
-		"your shopping list",
-		"What do you want to add?",
-		"What's the reminder?",
-		"Okay, make a reminder. When do you want to be reminded?",
-		"Sorry, I can't set reminders yet.",
-		"When do you want to be reminded?",
-		"It looks like I need permission",
-		"I'll need your permission",
-		"Your Assistant needs permission to help you with that."
-	},
-	"At first I was just an idea, then MacoAlgo#9999 and the team put their heads together. And now here I am :blush:": {
-		"I was made by a team of people at Google",
-		"I was made by a team at Google",
-		"At first I was just an idea, then a bunch of people at Google put their heads together. And now here I am",
-		"The Google team is like my family, they mean a lot to me",
-		"Everyone at Google is sort of like my family"
-	},
-	"Earning and maintaining your trust is a priority at Alpha.bot. You can learn more about our principles and practices at https://www.alpha.bot/privacy-policy.": {
-		"Earning and maintaining your trust is a priority at Google. Google protects your data and ensures you are in control. You can learn more about Google's principles and practices at safety.google.com. To see and manage your account information, visit myaccount.google.com. That's myaccount.google.com."
-	}
-}
-funnyReplies = {
-	"No u": [
-		"fuck you alpha",
-		"alpha fuck you",
-		"fuck off alpha",
-		"alpha fuck off",
-		"fuck u alpha",
-		"alpha fuck u",
-		"alpha you slut",
-		"you slut alpha",
-		"alpha gay",
-		"gay alpha",
-	],
-	"Soon:tm:": [
-		"wen moon",
-		"when moon"
-	],
-	"U a retard https://www.youtube.com/watch?v=e-6eWEhjMa4": [
-		"who a retard",
-	],
-	"Happy to help": [
-		"thank you Alpha"
-	]
-}
-badPunTrigger = [
-	"Lucky Trivia",
-	"We can play some games",
-	"We can play a game",
-	"We can play trivia",
-	"Ask me to play a game",
-	"You can play a game",
-	"I've got this"
-	"I've been waiting for this moment",
-	"Bored? Not while I'm around",
-	"Do you want to play?",
-	"Boredom doesn't stand a chance against interesting facts",
-	"Interesting facts are the perfect boredom remedy",
-	"I can fix that with a fun fact",
-	"Let's have some fun",
-]
 
 # Users
 blockedUsers = {
