@@ -21,7 +21,7 @@ from commands.ichibot import Ichibot
 
 
 class LayoutCommand(BaseCommand):
-	@slash_command(name="layout", description="Pull charts from TradingView, TradingLite and more.", guild_only=True)
+	@slash_command(name="layout", description="Pull TradingView Layouts with custom indicators, drawings and strategies", guild_only=True)
 	async def layout(
 		self,
 		ctx,

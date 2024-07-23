@@ -189,7 +189,7 @@ class ScheduleCommand(BaseCommand):
 					return
 
 				if inThread:
-					webhooks = await ctx.parent.webhooks()
+					webhooks = await ctx.channel.parent.webhooks()
 				else:
 					webhooks = await ctx.channel.webhooks()
 				webhook = next((w for w in webhooks if w.user.id == self.bot.user.id), None)
@@ -348,7 +348,7 @@ class ScheduleCommand(BaseCommand):
 					return
 
 				if inThread:
-					webhooks = await ctx.parent.webhooks()
+					webhooks = await ctx.channel.parent.webhooks()
 				else:
 					webhooks = await ctx.channel.webhooks()
 				webhook = next((w for w in webhooks if w.user.id == self.bot.user.id), None)
@@ -505,7 +505,7 @@ class ScheduleCommand(BaseCommand):
 					return
 
 				if inThread:
-					webhooks = await ctx.parent.webhooks()
+					webhooks = await ctx.channel.parent.webhooks()
 				else:
 					webhooks = await ctx.channel.webhooks()
 				webhook = next((w for w in webhooks if w.user.id == self.bot.user.id), None)
@@ -658,7 +658,7 @@ class ScheduleCommand(BaseCommand):
 					return
 
 				if inThread:
-					webhooks = await ctx.parent.webhooks()
+					webhooks = await ctx.channel.parent.webhooks()
 				else:
 					webhooks = await ctx.channel.webhooks()
 				webhook = next((w for w in webhooks if w.user.id == self.bot.user.id), None)
@@ -805,7 +805,7 @@ class ScheduleCommand(BaseCommand):
 					return
 
 				if inThread:
-					webhooks = await ctx.parent.webhooks()
+					webhooks = await ctx.channel.parent.webhooks()
 				else:
 					webhooks = await ctx.channel.webhooks()
 				webhook = next((w for w in webhooks if w.user.id == self.bot.user.id), None)
@@ -975,7 +975,7 @@ class ScheduleCommand(BaseCommand):
 					return
 
 				if inThread:
-					webhooks = await ctx.parent.webhooks()
+					webhooks = await ctx.channel.parent.webhooks()
 				else:
 					webhooks = await ctx.channel.webhooks()
 				webhook = next((w for w in webhooks if w.user.id == self.bot.user.id), None)
@@ -1141,7 +1141,7 @@ class ScheduleCommand(BaseCommand):
 					return
 
 				if inThread:
-					webhooks = await ctx.parent.webhooks()
+					webhooks = await ctx.channel.parent.webhooks()
 				else:
 					webhooks = await ctx.channel.webhooks()
 				webhook = next((w for w in webhooks if w.user.id == self.bot.user.id), None)
