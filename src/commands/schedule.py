@@ -195,7 +195,10 @@ class ScheduleCommand(BaseCommand):
 				webhook = next((w for w in webhooks if w.user.id == self.bot.user.id), None)
 				if webhook is None:
 					avatar = await self.bot.user.avatar.replace(size=256, format="webp").read()
-					webhook = await ctx.channel.create_webhook(name=self.bot.user.name, avatar=avatar)
+					if inThread:
+						webhook = await ctx.channel.parent.create_webhook(name=self.bot.user.name, avatar=avatar)
+					else:
+						webhook = await ctx.channel.create_webhook(name=self.bot.user.name, avatar=avatar)
 
 				await self.database.document(f"details/scheduledPosts/{request.guildId}/{str(uuid4())}").set({
 					"arguments": arguments,
@@ -354,7 +357,10 @@ class ScheduleCommand(BaseCommand):
 				webhook = next((w for w in webhooks if w.user.id == self.bot.user.id), None)
 				if webhook is None:
 					avatar = await self.bot.user.avatar.replace(size=256, format="webp").read()
-					webhook = await ctx.channel.create_webhook(name=self.bot.user.name, avatar=avatar)
+					if inThread:
+						webhook = await ctx.channel.parent.create_webhook(name=self.bot.user.name, avatar=avatar)
+					else:
+						webhook = await ctx.channel.create_webhook(name=self.bot.user.name, avatar=avatar)
 
 				await self.database.document(f"details/scheduledPosts/{request.guildId}/{str(uuid4())}").set({
 					"arguments": [url, tickerId, venue, timeframe],
@@ -511,7 +517,10 @@ class ScheduleCommand(BaseCommand):
 				webhook = next((w for w in webhooks if w.user.id == self.bot.user.id), None)
 				if webhook is None:
 					avatar = await self.bot.user.avatar.replace(size=256, format="webp").read()
-					webhook = await ctx.channel.create_webhook(name=self.bot.user.name, avatar=avatar)
+					if inThread:
+						webhook = await ctx.channel.parent.create_webhook(name=self.bot.user.name, avatar=avatar)
+					else:
+						webhook = await ctx.channel.create_webhook(name=self.bot.user.name, avatar=avatar)
 
 				await self.database.document(f"details/scheduledPosts/{request.guildId}/{str(uuid4())}").set({
 					"arguments": arguments,
@@ -664,7 +673,10 @@ class ScheduleCommand(BaseCommand):
 				webhook = next((w for w in webhooks if w.user.id == self.bot.user.id), None)
 				if webhook is None:
 					avatar = await self.bot.user.avatar.replace(size=256, format="webp").read()
-					webhook = await ctx.channel.create_webhook(name=self.bot.user.name, avatar=avatar)
+					if inThread:
+						webhook = await ctx.channel.parent.create_webhook(name=self.bot.user.name, avatar=avatar)
+					else:
+						webhook = await ctx.channel.create_webhook(name=self.bot.user.name, avatar=avatar)
 
 				await self.database.document(f"details/scheduledPosts/{request.guildId}/{str(uuid4())}").set({
 					"arguments": [tickerId, venue],
@@ -811,7 +823,10 @@ class ScheduleCommand(BaseCommand):
 				webhook = next((w for w in webhooks if w.user.id == self.bot.user.id), None)
 				if webhook is None:
 					avatar = await self.bot.user.avatar.replace(size=256, format="webp").read()
-					webhook = await ctx.channel.create_webhook(name=self.bot.user.name, avatar=avatar)
+					if inThread:
+						webhook = await ctx.channel.parent.create_webhook(name=self.bot.user.name, avatar=avatar)
+					else:
+						webhook = await ctx.channel.create_webhook(name=self.bot.user.name, avatar=avatar)
 
 				await self.database.document(f"details/scheduledPosts/{request.guildId}/{str(uuid4())}").set({
 					"arguments": [tickerId, venue],
@@ -981,7 +996,10 @@ class ScheduleCommand(BaseCommand):
 				webhook = next((w for w in webhooks if w.user.id == self.bot.user.id), None)
 				if webhook is None:
 					avatar = await self.bot.user.avatar.replace(size=256, format="webp").read()
-					webhook = await ctx.channel.create_webhook(name=self.bot.user.name, avatar=avatar)
+					if inThread:
+						webhook = await ctx.channel.parent.create_webhook(name=self.bot.user.name, avatar=avatar)
+					else:
+						webhook = await ctx.channel.create_webhook(name=self.bot.user.name, avatar=avatar)
 
 				await self.database.document(f"details/scheduledPosts/{request.guildId}/{str(uuid4())}").set({
 					"arguments": [category, str(limit)],
@@ -1147,7 +1165,10 @@ class ScheduleCommand(BaseCommand):
 				webhook = next((w for w in webhooks if w.user.id == self.bot.user.id), None)
 				if webhook is None:
 					avatar = await self.bot.user.avatar.replace(size=256, format="webp").read()
-					webhook = await ctx.channel.create_webhook(name=self.bot.user.name, avatar=avatar)
+					if inThread:
+						webhook = await ctx.channel.parent.create_webhook(name=self.bot.user.name, avatar=avatar)
+					else:
+						webhook = await ctx.channel.create_webhook(name=self.bot.user.name, avatar=avatar)
 
 				await self.database.document(f"details/scheduledPosts/{request.guildId}/{str(uuid4())}").set({
 					"arguments": ["fgi", assetType],
