@@ -87,13 +87,7 @@ class ScheduleCommand(BaseCommand):
 
 			totalPostCount = await self.database.collection(f"details/scheduledPosts/{request.guildId}").count().get()
 
-			if isinstance(ctx.channel, Thread):
-				embed = Embed(title="You cannot schedule a post in a thread.", color=constants.colors["gray"])
-				embed.set_author(name="Invalid channel", icon_url=static_storage.error_icon)
-				try: await ctx.interaction.edit_original_response(embed=embed)
-				except NotFound: pass
-
-			elif not ctx.interaction.app_permissions.manage_webhooks:
+			if not ctx.interaction.app_permissions.manage_webhooks:
 				embed = Embed(title=f"{self.bot.user.name} doesn't have the permission to send messages via Webhooks.", description=f"Grant `view channel` and `manage webhooks` permissions to {self.bot.user.name} in this channel to be able to schedule a post.", color=constants.colors["red"])
 				embed.set_author(name="Missing permissions", icon_url=static_storage.error_icon)
 				try: await ctx.interaction.edit_original_response(embed=embed)
@@ -203,7 +197,7 @@ class ScheduleCommand(BaseCommand):
 					"arguments": arguments,
 					"authorId": str(request.authorId),
 					"botId": str(self.bot.user.id),
-					"channelId": str(request.channelId),
+					"channelId": f"{request.parent}/{request.channelId}" if isinstance(ctx.channel, Thread) else str(request.channelId),
 					"command": "chart",
 					"exclude": None if exclude is None else exclude.lower(),
 					"message": message,
@@ -254,13 +248,7 @@ class ScheduleCommand(BaseCommand):
 
 			totalPostCount = await self.database.collection(f"details/scheduledPosts/{request.guildId}").count().get()
 
-			if isinstance(ctx.channel, Thread):
-				embed = Embed(title="You cannot schedule a post in a thread.", color=constants.colors["gray"])
-				embed.set_author(name="Invalid channel", icon_url=static_storage.error_icon)
-				try: await ctx.interaction.edit_original_response(embed=embed)
-				except NotFound: pass
-
-			elif not ctx.interaction.app_permissions.manage_webhooks:
+			if not ctx.interaction.app_permissions.manage_webhooks:
 				embed = Embed(title=f"{self.bot.user.name} doesn't have the permission to send messages via Webhooks.", description=f"Grant `view channel` and `manage webhooks` permissions to {self.bot.user.name} in this channel to be able to schedule a post.", color=constants.colors["red"])
 				embed.set_author(name="Missing permissions", icon_url=static_storage.error_icon)
 				try: await ctx.interaction.edit_original_response(embed=embed)
@@ -364,7 +352,7 @@ class ScheduleCommand(BaseCommand):
 					"arguments": [url, tickerId, venue, timeframe],
 					"authorId": str(request.authorId),
 					"botId": str(self.bot.user.id),
-					"channelId": str(request.channelId),
+					"channelId": f"{request.parent}/{request.channelId}" if isinstance(ctx.channel, Thread) else str(request.channelId),
 					"command": "layout",
 					"exclude": None if exclude is None else exclude.lower(),
 					"message": message,
@@ -418,13 +406,7 @@ class ScheduleCommand(BaseCommand):
 
 			totalPostCount = await self.database.collection(f"details/scheduledPosts/{request.guildId}").count().get()
 
-			if isinstance(ctx.channel, Thread):
-				embed = Embed(title="You cannot schedule a post in a thread.", color=constants.colors["gray"])
-				embed.set_author(name="Invalid channel", icon_url=static_storage.error_icon)
-				try: await ctx.interaction.edit_original_response(embed=embed)
-				except NotFound: pass
-
-			elif not ctx.interaction.app_permissions.manage_webhooks:
+			if not ctx.interaction.app_permissions.manage_webhooks:
 				embed = Embed(title=f"{self.bot.user.name} doesn't have the permission to send messages via Webhooks.", description=f"Grant `view channel` and `manage webhooks` permissions to {self.bot.user.name} in this channel to be able to schedule a post.", color=constants.colors["red"])
 				embed.set_author(name="Missing permissions", icon_url=static_storage.error_icon)
 				try: await ctx.interaction.edit_original_response(embed=embed)
@@ -523,7 +505,7 @@ class ScheduleCommand(BaseCommand):
 					"arguments": arguments,
 					"authorId": str(request.authorId),
 					"botId": str(self.bot.user.id),
-					"channelId": str(request.channelId),
+					"channelId": f"{request.parent}/{request.channelId}" if isinstance(ctx.channel, Thread) else str(request.channelId),
 					"command": "heatmap",
 					"exclude": None if exclude is None else exclude.lower(),
 					"message": message,
@@ -572,13 +554,7 @@ class ScheduleCommand(BaseCommand):
 
 			totalPostCount = await self.database.collection(f"details/scheduledPosts/{request.guildId}").count().get()
 
-			if isinstance(ctx.channel, Thread):
-				embed = Embed(title="You cannot schedule a post in a thread.", color=constants.colors["gray"])
-				embed.set_author(name="Invalid channel", icon_url=static_storage.error_icon)
-				try: await ctx.interaction.edit_original_response(embed=embed)
-				except NotFound: pass
-
-			elif not ctx.interaction.app_permissions.manage_webhooks:
+			if not ctx.interaction.app_permissions.manage_webhooks:
 				embed = Embed(title=f"{self.bot.user.name} doesn't have the permission to send messages via Webhooks.", description=f"Grant `view channel` and `manage webhooks` permissions to {self.bot.user.name} in this channel to be able to schedule a post.", color=constants.colors["red"])
 				embed.set_author(name="Missing permissions", icon_url=static_storage.error_icon)
 				try: await ctx.interaction.edit_original_response(embed=embed)
@@ -678,7 +654,7 @@ class ScheduleCommand(BaseCommand):
 					"arguments": [tickerId, venue],
 					"authorId": str(request.authorId),
 					"botId": str(self.bot.user.id),
-					"channelId": str(request.channelId),
+					"channelId": f"{request.parent}/{request.channelId}" if isinstance(ctx.channel, Thread) else str(request.channelId),
 					"command": "price",
 					"exclude": None if exclude is None else exclude.lower(),
 					"message": message,
@@ -727,13 +703,7 @@ class ScheduleCommand(BaseCommand):
 
 			totalPostCount = await self.database.collection(f"details/scheduledPosts/{request.guildId}").count().get()
 
-			if isinstance(ctx.channel, Thread):
-				embed = Embed(title="You cannot schedule a post in a thread.", color=constants.colors["gray"])
-				embed.set_author(name="Invalid channel", icon_url=static_storage.error_icon)
-				try: await ctx.interaction.edit_original_response(embed=embed)
-				except NotFound: pass
-
-			elif not ctx.interaction.app_permissions.manage_webhooks:
+			if not ctx.interaction.app_permissions.manage_webhooks:
 				embed = Embed(title=f"{self.bot.user.name} doesn't have the permission to send messages via Webhooks.", description=f"Grant `view channel` and `manage webhooks` permissions to {self.bot.user.name} in this channel to be able to schedule a post.", color=constants.colors["red"])
 				embed.set_author(name="Missing permissions", icon_url=static_storage.error_icon)
 				try: await ctx.interaction.edit_original_response(embed=embed)
@@ -827,7 +797,7 @@ class ScheduleCommand(BaseCommand):
 					"arguments": [tickerId, venue],
 					"authorId": str(request.authorId),
 					"botId": str(self.bot.user.id),
-					"channelId": str(request.channelId),
+					"channelId": f"{request.parent}/{request.channelId}" if isinstance(ctx.channel, Thread) else str(request.channelId),
 					"command": "volume",
 					"exclude": None if exclude is None else exclude.lower(),
 					"message": message,
@@ -876,13 +846,7 @@ class ScheduleCommand(BaseCommand):
 
 			totalPostCount = await self.database.collection(f"details/scheduledPosts/{request.guildId}").count().get()
 
-			if isinstance(ctx.channel, Thread):
-				embed = Embed(title="You cannot schedule a post in a thread.", color=constants.colors["gray"])
-				embed.set_author(name="Invalid channel", icon_url=static_storage.error_icon)
-				try: await ctx.interaction.edit_original_response(embed=embed)
-				except NotFound: pass
-
-			elif not ctx.interaction.app_permissions.manage_webhooks:
+			if not ctx.interaction.app_permissions.manage_webhooks:
 				embed = Embed(title=f"{self.bot.user.name} doesn't have the permission to send messages via Webhooks.", description=f"Grant `view channel` and `manage webhooks` permissions to {self.bot.user.name} in this channel to be able to schedule a post.", color=constants.colors["red"])
 				embed.set_author(name="Missing permissions", icon_url=static_storage.error_icon)
 				try: await ctx.interaction.edit_original_response(embed=embed)
@@ -999,7 +963,7 @@ class ScheduleCommand(BaseCommand):
 					"arguments": [category, str(limit)],
 					"authorId": str(request.authorId),
 					"botId": str(self.bot.user.id),
-					"channelId": str(request.channelId),
+					"channelId": f"{request.parent}/{request.channelId}" if isinstance(ctx.channel, Thread) else str(request.channelId),
 					"command": "lookup market-movers",
 					"exclude": None if exclude is None else exclude.lower(),
 					"message": message,
@@ -1047,13 +1011,7 @@ class ScheduleCommand(BaseCommand):
 
 			totalPostCount = await self.database.collection(f"details/scheduledPosts/{request.guildId}").count().get()
 
-			if isinstance(ctx.channel, Thread):
-				embed = Embed(title="You cannot schedule a post in a thread.", color=constants.colors["gray"])
-				embed.set_author(name="Invalid channel", icon_url=static_storage.error_icon)
-				try: await ctx.interaction.edit_original_response(embed=embed)
-				except NotFound: pass
-
-			elif not ctx.interaction.app_permissions.manage_webhooks:
+			if not ctx.interaction.app_permissions.manage_webhooks:
 				embed = Embed(title=f"{self.bot.user.name} doesn't have the permission to send messages via Webhooks.", description=f"Grant `view channel` and `manage webhooks` permissions to {self.bot.user.name} in this channel to be able to schedule a post.", color=constants.colors["red"])
 				embed.set_author(name="Missing permissions", icon_url=static_storage.error_icon)
 				try: await ctx.interaction.edit_original_response(embed=embed)
@@ -1167,7 +1125,7 @@ class ScheduleCommand(BaseCommand):
 					"arguments": ["fgi", assetType],
 					"authorId": str(request.authorId),
 					"botId": str(self.bot.user.id),
-					"channelId": str(request.channelId),
+					"channelId": f"{request.parent}/{request.channelId}" if isinstance(ctx.channel, Thread) else str(request.channelId),
 					"command": "chart",
 					"exclude": None if exclude is None else exclude.lower(),
 					"message": message,
