@@ -85,6 +85,7 @@ class ScheduleCommand(BaseCommand):
 			try: await ctx.defer(ephemeral=True)
 			except: return
 
+			inThread = isinstance(ctx.channel, Thread)
 			totalPostCount = await self.database.collection(f"details/scheduledPosts/{request.guildId}").count().get()
 
 			if not ctx.interaction.app_permissions.manage_webhooks:
@@ -187,7 +188,10 @@ class ScheduleCommand(BaseCommand):
 					except NotFound: pass
 					return
 
-				webhooks = await ctx.channel.webhooks()
+				if inThread:
+					webhooks = await ctx.parent.webhooks()
+				else:
+					webhooks = await ctx.channel.webhooks()
 				webhook = next((w for w in webhooks if w.user.id == self.bot.user.id), None)
 				if webhook is None:
 					avatar = await self.bot.user.avatar.replace(size=256, format="webp").read()
@@ -197,7 +201,7 @@ class ScheduleCommand(BaseCommand):
 					"arguments": arguments,
 					"authorId": str(request.authorId),
 					"botId": str(self.bot.user.id),
-					"channelId": f"{request.parent}/{request.channelId}" if isinstance(ctx.channel, Thread) else str(request.channelId),
+					"channelId": f"{request.parent}/{request.channelId}" if inThread else str(request.channelId),
 					"command": "chart",
 					"exclude": None if exclude is None else exclude.lower(),
 					"message": message,
@@ -246,6 +250,7 @@ class ScheduleCommand(BaseCommand):
 			try: await ctx.defer(ephemeral=True)
 			except: return
 
+			inThread = isinstance(ctx.channel, Thread)
 			totalPostCount = await self.database.collection(f"details/scheduledPosts/{request.guildId}").count().get()
 
 			if not ctx.interaction.app_permissions.manage_webhooks:
@@ -342,7 +347,10 @@ class ScheduleCommand(BaseCommand):
 					except NotFound: pass
 					return
 
-				webhooks = await ctx.channel.webhooks()
+				if inThread:
+					webhooks = await ctx.parent.webhooks()
+				else:
+					webhooks = await ctx.channel.webhooks()
 				webhook = next((w for w in webhooks if w.user.id == self.bot.user.id), None)
 				if webhook is None:
 					avatar = await self.bot.user.avatar.replace(size=256, format="webp").read()
@@ -352,7 +360,7 @@ class ScheduleCommand(BaseCommand):
 					"arguments": [url, tickerId, venue, timeframe],
 					"authorId": str(request.authorId),
 					"botId": str(self.bot.user.id),
-					"channelId": f"{request.parent}/{request.channelId}" if isinstance(ctx.channel, Thread) else str(request.channelId),
+					"channelId": f"{request.parent}/{request.channelId}" if inThread else str(request.channelId),
 					"command": "layout",
 					"exclude": None if exclude is None else exclude.lower(),
 					"message": message,
@@ -404,6 +412,7 @@ class ScheduleCommand(BaseCommand):
 			try: await ctx.defer(ephemeral=True)
 			except: return
 
+			inThread = isinstance(ctx.channel, Thread)
 			totalPostCount = await self.database.collection(f"details/scheduledPosts/{request.guildId}").count().get()
 
 			if not ctx.interaction.app_permissions.manage_webhooks:
@@ -495,7 +504,10 @@ class ScheduleCommand(BaseCommand):
 					except NotFound: pass
 					return
 
-				webhooks = await ctx.channel.webhooks()
+				if inThread:
+					webhooks = await ctx.parent.webhooks()
+				else:
+					webhooks = await ctx.channel.webhooks()
 				webhook = next((w for w in webhooks if w.user.id == self.bot.user.id), None)
 				if webhook is None:
 					avatar = await self.bot.user.avatar.replace(size=256, format="webp").read()
@@ -505,7 +517,7 @@ class ScheduleCommand(BaseCommand):
 					"arguments": arguments,
 					"authorId": str(request.authorId),
 					"botId": str(self.bot.user.id),
-					"channelId": f"{request.parent}/{request.channelId}" if isinstance(ctx.channel, Thread) else str(request.channelId),
+					"channelId": f"{request.parent}/{request.channelId}" if inThread else str(request.channelId),
 					"command": "heatmap",
 					"exclude": None if exclude is None else exclude.lower(),
 					"message": message,
@@ -552,6 +564,7 @@ class ScheduleCommand(BaseCommand):
 			try: await ctx.defer(ephemeral=True)
 			except: return
 
+			inThread = isinstance(ctx.channel, Thread)
 			totalPostCount = await self.database.collection(f"details/scheduledPosts/{request.guildId}").count().get()
 
 			if not ctx.interaction.app_permissions.manage_webhooks:
@@ -644,7 +657,10 @@ class ScheduleCommand(BaseCommand):
 					except NotFound: pass
 					return
 
-				webhooks = await ctx.channel.webhooks()
+				if inThread:
+					webhooks = await ctx.parent.webhooks()
+				else:
+					webhooks = await ctx.channel.webhooks()
 				webhook = next((w for w in webhooks if w.user.id == self.bot.user.id), None)
 				if webhook is None:
 					avatar = await self.bot.user.avatar.replace(size=256, format="webp").read()
@@ -654,7 +670,7 @@ class ScheduleCommand(BaseCommand):
 					"arguments": [tickerId, venue],
 					"authorId": str(request.authorId),
 					"botId": str(self.bot.user.id),
-					"channelId": f"{request.parent}/{request.channelId}" if isinstance(ctx.channel, Thread) else str(request.channelId),
+					"channelId": f"{request.parent}/{request.channelId}" if inThread else str(request.channelId),
 					"command": "price",
 					"exclude": None if exclude is None else exclude.lower(),
 					"message": message,
@@ -701,6 +717,7 @@ class ScheduleCommand(BaseCommand):
 			try: await ctx.defer(ephemeral=True)
 			except: return
 
+			inThread = isinstance(ctx.channel, Thread)
 			totalPostCount = await self.database.collection(f"details/scheduledPosts/{request.guildId}").count().get()
 
 			if not ctx.interaction.app_permissions.manage_webhooks:
@@ -787,7 +804,10 @@ class ScheduleCommand(BaseCommand):
 					except NotFound: pass
 					return
 
-				webhooks = await ctx.channel.webhooks()
+				if inThread:
+					webhooks = await ctx.parent.webhooks()
+				else:
+					webhooks = await ctx.channel.webhooks()
 				webhook = next((w for w in webhooks if w.user.id == self.bot.user.id), None)
 				if webhook is None:
 					avatar = await self.bot.user.avatar.replace(size=256, format="webp").read()
@@ -797,7 +817,7 @@ class ScheduleCommand(BaseCommand):
 					"arguments": [tickerId, venue],
 					"authorId": str(request.authorId),
 					"botId": str(self.bot.user.id),
-					"channelId": f"{request.parent}/{request.channelId}" if isinstance(ctx.channel, Thread) else str(request.channelId),
+					"channelId": f"{request.parent}/{request.channelId}" if inThread else str(request.channelId),
 					"command": "volume",
 					"exclude": None if exclude is None else exclude.lower(),
 					"message": message,
@@ -844,6 +864,7 @@ class ScheduleCommand(BaseCommand):
 			try: await ctx.defer(ephemeral=True)
 			except: return
 
+			inThread = isinstance(ctx.channel, Thread)
 			totalPostCount = await self.database.collection(f"details/scheduledPosts/{request.guildId}").count().get()
 
 			if not ctx.interaction.app_permissions.manage_webhooks:
@@ -953,7 +974,10 @@ class ScheduleCommand(BaseCommand):
 					except NotFound: pass
 					return
 
-				webhooks = await ctx.channel.webhooks()
+				if inThread:
+					webhooks = await ctx.parent.webhooks()
+				else:
+					webhooks = await ctx.channel.webhooks()
 				webhook = next((w for w in webhooks if w.user.id == self.bot.user.id), None)
 				if webhook is None:
 					avatar = await self.bot.user.avatar.replace(size=256, format="webp").read()
@@ -963,7 +987,7 @@ class ScheduleCommand(BaseCommand):
 					"arguments": [category, str(limit)],
 					"authorId": str(request.authorId),
 					"botId": str(self.bot.user.id),
-					"channelId": f"{request.parent}/{request.channelId}" if isinstance(ctx.channel, Thread) else str(request.channelId),
+					"channelId": f"{request.parent}/{request.channelId}" if inThread else str(request.channelId),
 					"command": "lookup market-movers",
 					"exclude": None if exclude is None else exclude.lower(),
 					"message": message,
@@ -1009,6 +1033,7 @@ class ScheduleCommand(BaseCommand):
 			try: await ctx.defer(ephemeral=True)
 			except: return
 
+			inThread = isinstance(ctx.channel, Thread)
 			totalPostCount = await self.database.collection(f"details/scheduledPosts/{request.guildId}").count().get()
 
 			if not ctx.interaction.app_permissions.manage_webhooks:
@@ -1115,7 +1140,10 @@ class ScheduleCommand(BaseCommand):
 					except NotFound: pass
 					return
 
-				webhooks = await ctx.channel.webhooks()
+				if inThread:
+					webhooks = await ctx.parent.webhooks()
+				else:
+					webhooks = await ctx.channel.webhooks()
 				webhook = next((w for w in webhooks if w.user.id == self.bot.user.id), None)
 				if webhook is None:
 					avatar = await self.bot.user.avatar.replace(size=256, format="webp").read()
@@ -1125,7 +1153,7 @@ class ScheduleCommand(BaseCommand):
 					"arguments": ["fgi", assetType],
 					"authorId": str(request.authorId),
 					"botId": str(self.bot.user.id),
-					"channelId": f"{request.parent}/{request.channelId}" if isinstance(ctx.channel, Thread) else str(request.channelId),
+					"channelId": f"{request.parent}/{request.channelId}" if inThread else str(request.channelId),
 					"command": "chart",
 					"exclude": None if exclude is None else exclude.lower(),
 					"message": message,
