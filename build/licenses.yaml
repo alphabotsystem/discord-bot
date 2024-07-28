@@ -109,6 +109,11 @@ spec:
               secretKeyRef:
                 name: alpha-credentials
                 key: TOKEN_JRTWIPWO0MG9URYYUPKQBSFVNTH2
+          - name: TOKEN_I7MLS6TRVXBU0ZPEXI8RAO4YPTP2
+            valueFrom:
+              secretKeyRef:
+                name: alpha-credentials
+                key: TOKEN_I7MLS6TRVXBU0ZPEXI8RAO4YPTP2
           - name: TWELVEDATA_KEY
             valueFrom:
               secretKeyRef:
