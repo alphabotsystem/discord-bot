@@ -36,6 +36,11 @@ jobs:
         workload_identity_provider: 'projects/742548057431/locations/global/workloadIdentityPools/github-identity-pool/providers/github-identity-provider'
         service_account: 'github-actions-sa@nlc-bot-36685.iam.gserviceaccount.com'
 
+    - name: 'Set up Cloud SDK'
+      uses: 'google-github-actions/setup-gcloud@v2'
+      with:
+        version: '>= 363.0.0'
+
     - name: Docker configuration
       run: |-
         echo ${{steps.auth.outputs.access_token}} | docker login -u oauth2accesstoken --password-stdin https://$GAR_LOCATION-docker.pkg.dev
