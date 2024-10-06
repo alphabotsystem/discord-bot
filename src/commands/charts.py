@@ -1,6 +1,6 @@
 from os import environ
 from time import time
-from random import randint
+from random import randint, choice
 from asyncio import gather, CancelledError, sleep
 from traceback import format_exc
 
@@ -51,12 +51,11 @@ class ChartCommand(BaseCommand):
 
 		actions = None
 		if len(files) != 0:
-			ticker = currentTask.get("ticker", {})
-			if len(tasks) == 1 and (self.bot.user.id in constants.REFERRALS or not request.is_paid_user()):
-				exchangeId = ticker.get("exchange", {}).get("id")
+			isCryptoRequest = any([task.get("ticker", {}).get("metadata", {}).get("type") == "Crypto" for task in tasks])
+			if isCryptoRequest and (self.bot.user.id in constants.REFERRALS or not request.is_paid_user()):
 				referrals = constants.REFERRALS.get(self.bot.user.id, constants.REFERRALS["default"])
-				if exchangeId in referrals:
-					actions = ReferralView(*referrals[exchangeId], user=ctx.author, command=ctx.command.mention)
+				exchangeId = choice(referrals.keys())
+				actions = ReferralView(*referrals[exchangeId], user=ctx.author, command=ctx.command.mention)
 			else:
 				actions = ActionsView(user=ctx.author, command=ctx.command.mention)
 
