@@ -52,6 +52,7 @@ class ChartCommand(BaseCommand):
 		actions = None
 		if len(files) != 0:
 			isCryptoRequest = any([task.get("ticker", {}).get("metadata", {}).get("type") == "Crypto" for task in tasks])
+			print(isCryptoRequest, [task.get("ticker", {}).get("metadata", {}).get("type") == "Crypto" for task in tasks])
 			if isCryptoRequest and (self.bot.user.id in constants.REFERRALS or not request.is_paid_user()):
 				referrals = constants.REFERRALS.get(self.bot.user.id, constants.REFERRALS["default"])
 				exchangeId = choice(referrals.keys())
