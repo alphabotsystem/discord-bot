@@ -28,7 +28,7 @@ BETA_SERVERS = [
 ]
 
 REFERRALS = {
-	"default": {
+	401328409499664394: {
 		"binance": ["Save 20% on Binance fees", "https://accounts.binance.com/register?ref=H2QPYA8D"],
 		"binanceusdm": ["Save 20% on Binance fees", "https://accounts.binance.com/register?ref=H2QPYA8D"],
 		"binancecoinm": ["Save 20% on Binance fees", "https://accounts.binance.com/register?ref=H2QPYA8D"],

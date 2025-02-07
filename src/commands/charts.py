@@ -52,8 +52,8 @@ class ChartCommand(BaseCommand):
 		actions = None
 		if len(files) != 0:
 			isCryptoRequest = any([task.get(task.get("currentPlatform")).get("ticker", {}).get("metadata", {}).get("type") == "Crypto" for task in tasks])
-			if isCryptoRequest and (self.bot.user.id in constants.REFERRALS or not request.is_paid_user()):
-				referrals = constants.REFERRALS.get(self.bot.user.id, constants.REFERRALS["default"])
+			if isCryptoRequest and self.bot.user.id in constants.REFERRALS and not request.is_paid_user():
+				referrals = constants.REFERRALS[self.bot.user.id]
 				exchangeId = choice(list(referrals.keys()))
 				actions = ReferralView(*referrals[exchangeId], user=ctx.author, command=ctx.command.mention)
 			else:
