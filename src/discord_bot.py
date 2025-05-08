@@ -600,10 +600,8 @@ elif botId == 9:
 elif botId == 10:
 	token = environ["TOKEN_QWMT0OT4G0TFBW5N27F6VGKHWQ82"]
 elif botId == 11:
-	token = environ["TOKEN_NUJRDT6T3WTEQFTKMU2IAZY0RVL2"]
-elif botId == 12:
 	token = environ["TOKEN_RUIPUKYXUASUOOGGCF0QYT4I1RN2"]
-elif botId == 13:
+elif botId == 12:
 	token = environ["TOKEN_VRRQPYARLXETGK7LQKW5RXLDSZC2"]
 
 bot.loop.run_until_complete(bot.start(token))
