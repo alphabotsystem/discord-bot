@@ -596,16 +596,14 @@ elif botId == 7:
 elif botId == 8:
 	token = environ["TOKEN_WJLIPYYYUTZZLVHYZGXYJZ2KICD2"]
 elif botId == 9:
-	token = environ["TOKEN_A8VQZAU7BXTBTP27ISAJQJTCSFF1"]
-elif botId == 10:
 	token = environ["TOKEN_QWMT0OT4G0TFBW5N27F6VGKHWQ82"]
-elif botId == 11:
+elif botId == 10:
 	token = environ["TOKEN_RUIPUKYXUASUOOGGCF0QYT4I1RN2"]
-elif botId == 12:
+elif botId == 11:
 	token = environ["TOKEN_VRRQPYARLXETGK7LQKW5RXLDSZC2"]
-elif botId == 13:
+elif botId == 12:
 	token = environ["TOKEN_8ZSFENTKEPNKDIAILE54MWNQNP62"]
-elif botId == 14:
+elif botId == 13:
 	token = environ["TOKEN_I25PSVTKCGMSQBXZGEOBXYVKJ5E3"]
 
 bot.loop.run_until_complete(bot.start(token))
