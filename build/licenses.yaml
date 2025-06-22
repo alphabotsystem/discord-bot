@@ -89,11 +89,6 @@ spec:
               secretKeyRef:
                 name: alpha-credentials
                 key: TOKEN_8ZSFENTKEPNKDIAILE54MWNQNP62
-          - name: TOKEN_CCGR3RC1NYFAYEZOVMJG81DXT8K1
-            valueFrom:
-              secretKeyRef:
-                name: alpha-credentials
-                key: TOKEN_CCGR3RC1NYFAYEZOVMJG81DXT8K1
           - name: TOKEN_G27EPOPLSPWUAQALNJF7RPQPSHI2
             valueFrom:
               secretKeyRef:
