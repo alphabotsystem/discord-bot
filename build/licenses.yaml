@@ -34,11 +34,6 @@ spec:
               secretKeyRef:
                 name: alpha-credentials
                 key: TOKEN_N8V1MEBUJFSVP4IQMUXYYIEDFYI1
-          - name: TOKEN_NI7GCMTB8LGCLNV7H2YEJ2VUFHI1
-            valueFrom:
-              secretKeyRef:
-                name: alpha-credentials
-                key: TOKEN_NI7GCMTB8LGCLNV7H2YEJ2VUFHI1
           - name: TOKEN_LLZ0V7CAZXVSVC0M1MVQCKOXCJV2
             valueFrom:
               secretKeyRef:

@@ -579,8 +579,6 @@ elif botId == -1:
 	token = environ["DISCORD_PRODUCTION_TOKEN"]
 elif botId == 0:
 	token = environ["TOKEN_N8V1MEBUJFSVP4IQMUXYYIEDFYI1"]
-elif botId == 1:
-	token = environ["TOKEN_NI7GCMTB8LGCLNV7H2YEJ2VUFHI1"]
 elif botId == 2:
 	token = environ["TOKEN_LLZ0V7CAZXVSVC0M1MVQCKOXCJV2"]
 elif botId == 3:
