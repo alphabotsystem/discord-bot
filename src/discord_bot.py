@@ -579,27 +579,27 @@ elif botId == -1:
 	token = environ["DISCORD_PRODUCTION_TOKEN"]
 elif botId == 0:
 	token = environ["TOKEN_N8V1MEBUJFSVP4IQMUXYYIEDFYI1"]
-elif botId == 2:
+elif botId == 1:
 	token = environ["TOKEN_LLZ0V7CAZXVSVC0M1MVQCKOXCJV2"]
-elif botId == 3:
+elif botId == 2:
 	token = environ["TOKEN_SHDNTSTH4TPFNG0CO1LBVDANLVO2"]
-elif botId == 4:
+elif botId == 3:
 	token = environ["TOKEN_LYSQMRSJONMYQI8KSGXCMLO54IE2"]
-elif botId == 5:
+elif botId == 4:
 	token = environ["TOKEN_26FIYWEEZNHCMSIGFI81BMBBFER2"]
-elif botId == 6:
+elif botId == 5:
 	token = environ["TOKEN_RWU79SZBNJUFMRPQBGJ3ZTNLMWA2"]
-elif botId == 7:
+elif botId == 6:
 	token = environ["TOKEN_QWMT0OT4G0TFBW5N27F6VGKHWQ82"]
-elif botId == 8:
+elif botId == 7:
 	token = environ["TOKEN_RUIPUKYXUASUOOGGCF0QYT4I1RN2"]
-elif botId == 9:
+elif botId == 8:
 	token = environ["TOKEN_8ZSFENTKEPNKDIAILE54MWNQNP62"]
-elif botId == 10:
+elif botId == 9:
 	token = environ["TOKEN_G27EPOPLSPWUAQALNJF7RPQPSHI2"]
-elif botId == 11:
+elif botId == 10:
 	token = environ["TOKEN_SU93NO2EQIZAEQEWP3LBSKIKAA43"]
-elif botId == 12:
+elif botId == 11:
 	token = environ["TOKEN_TDKVDVIDIHMGPDJNCWXEFFSFFGB2"]
 
 bot.loop.run_until_complete(bot.start(token))
