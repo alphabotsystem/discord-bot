@@ -10,5 +10,7 @@ def timestamp_to_date(timestamp):
 def get_incorrect_usage_description(origin, link=None):
 	if origin == 1229893549986811986:
 		return "Find help in the pinned post in this channel."
+	elif origin == 1382230219192143973:
+		return "For help please refer to our team."
 	else:
 		return f"Detailed guide with examples is available on [our website]({link})."
