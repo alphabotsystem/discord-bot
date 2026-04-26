@@ -12,8 +12,6 @@ LICENSED_BOTS = {
 	1172008049679007856, # RwU79szBNJUFmrpQbgj3ZtnLmwA2
 	1179107622872420414, # qWMt0OT4G0Tfbw5n27F6vgKHWQ82
 	1364753631689048116, # 8ZsFentkEpNKdIaiLe54MwNqnp62
-	1399723145447080077, # su93NO2eqIZaeqEWP3LBSkiKAA43
-	1397377454577811557, # TDkvdviDihMGpdjNcWxEFFsfFGb2
 	1272974406528008335, # aPIS3KDveZZRDSA6OieDO3EzDq33
 }
 
@@ -25,11 +23,6 @@ REFERRALS = {
 		"bitmex": ["Save 10% on BitMEX fees", "https://www.bitmex.com/app/register/cv1ZSO"],
 		"bybit": ["Sign up & trade on ByBit", "https://www.bybit.com/en-US/invite?ref=9OXPG3"],
 		"gate": ["Save 20% on Gate.io fees", "https://www.gate.io/referral/invite/VLEXXQOOAQ_0_103"],
-	},
-	1188452093024026674: {
-		"binance": ["وفر 10% من رسوم باينانس", "https://accounts.binance.com/register?ref=FF2BH3FA"],
-		"binanceusdm": ["وفر 10% من رسوم باينانس", "https://accounts.binance.com/register?ref=FF2BH3FA"],
-		"binancecoinm": ["وفر 10% من رسوم باينانس", "https://accounts.binance.com/register?ref=FF2BH3FA"],
 	}
 }
 
