@@ -111,14 +111,14 @@ class BaseCommand(Cog):
 				"count": task.get("requestCount", 1)
 			}))
 
-	async def cleanup(self, ctx, request, removeView=False):
+	async def cleanup(self, ctx, request, removeView=False, persistView=None):
 		if request.autodelete is not None:
 			await sleep(request.autodelete * 60)
 			try: await ctx.interaction.edit_original_response(embeds=[], attachments=[], view=None, content=f"The response has been removed. You can make a new request using {ctx.command.mention}")
 			except: pass
 		elif removeView:
 			await sleep(600)
-			try: await ctx.interaction.edit_original_response(view=None)
+			try: await ctx.interaction.edit_original_response(view=persistView)
 			except: pass
 
 	async def unknown_error(self, ctx):
@@ -202,6 +202,19 @@ class ActionsView(View):
 			else:
 				await interaction.message.edit(embeds=[], attachments=[], view=None, content=f"The response has been removed. You can make a new request using {self.command}")
 		except: return
+
+
+class MediaActionsView(ActionsView):
+	def __init__(self, user=None, command=None, include_v2=True):
+		super().__init__(user=user, command=command)
+		if include_v2:
+			self.add_item(Button(label="Try alpha.bot v2", url=constants.TRY_V2_URL, style=ButtonStyle.link))
+
+
+class TryV2View(View):
+	def __init__(self):
+		super().__init__(timeout=None)
+		self.add_item(Button(label="Try alpha.bot v2", url=constants.TRY_V2_URL, style=ButtonStyle.link))
 
 class AuthView(View):
 	def __init__(self, redirect="account/success"):

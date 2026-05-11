@@ -16,7 +16,7 @@ from assets import static_storage
 from Processor import process_chart_arguments, process_task
 from DatabaseConnector import DatabaseConnector
 
-from commands.base import BaseCommand, ActionsView
+from commands.base import BaseCommand, MediaActionsView, TryV2View
 
 
 class ChartCommand(BaseCommand):
@@ -49,15 +49,16 @@ class ChartCommand(BaseCommand):
 					currentTask = task.get(task.get("currentPlatform"))
 					files.append(File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, request.authorId, randint(1000, 9999))))
 
+		isLicensed = self.bot.user.id not in constants.PRIMARY_BOTS
 		actions = None
 		if len(files) != 0:
 			isCryptoRequest = any([task.get(task.get("currentPlatform")).get("ticker", {}).get("metadata", {}).get("type") == "Crypto" for task in tasks])
 			if isCryptoRequest and self.bot.user.id in constants.REFERRALS and not request.is_paid_user():
 				referrals = constants.REFERRALS[self.bot.user.id]
 				exchangeId = choice(list(referrals.keys()))
-				actions = ReferralView(*referrals[exchangeId], user=ctx.author, command=ctx.command.mention)
+				actions = ReferralView(*referrals[exchangeId], user=ctx.author, command=ctx.command.mention, include_v2=not isLicensed)
 			else:
-				actions = ActionsView(user=ctx.author, command=ctx.command.mention)
+				actions = MediaActionsView(user=ctx.author, command=ctx.command.mention, include_v2=not isLicensed)
 
 		requestCheckpoint = time()
 		request.set_delay("request", (requestCheckpoint - start) / (len(files) + len(embeds)))
@@ -67,7 +68,7 @@ class ChartCommand(BaseCommand):
 
 		await self.database.document("discord/statistics").set({request.snapshot: {"c": Increment(len(tasks))}}, merge=True)
 		await self.log_request("charts", request, tasks, telemetry=request.telemetry)
-		await self.cleanup(ctx, request, removeView=True)
+		await self.cleanup(ctx, request, removeView=True, persistView=TryV2View() if len(files) != 0 and not isLicensed else None)
 
 	@slash_command(name="c", description="Pull charts from TradingView.")
 	async def c(
@@ -128,7 +129,7 @@ class ChartCommand(BaseCommand):
 			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /c {arguments} autodelete:{autodelete}")
 			await self.unknown_error(ctx)
 
-class ReferralView(ActionsView):
-	def __init__(self, label, url, user=None, command=None):
-		super().__init__(user=user, command=command)
+class ReferralView(MediaActionsView):
+	def __init__(self, label, url, user=None, command=None, include_v2=True):
+		super().__init__(user=user, command=command, include_v2=include_v2)
 		self.add_item(Button(label=label, url=url, style=ButtonStyle.link))

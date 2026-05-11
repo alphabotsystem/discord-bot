@@ -13,6 +13,8 @@ LICENSED_BOTS = {
 	1272974406528008335, # aPIS3KDveZZRDSA6OieDO3EzDq33
 }
 
+TRY_V2_URL = "https://discord.com/oauth2/authorize?client_id=1388941386748919869&permissions=5066962434841664&integration_type=0&scope=bot"
+
 REFERRALS = {
 	401328409499664394: {
 		"binance": ["Save 20% on Binance fees", "https://accounts.binance.com/register?ref=H2QPYA8D"],

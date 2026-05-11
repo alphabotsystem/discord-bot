@@ -14,7 +14,7 @@ from helpers import constants
 from assets import static_storage
 from Processor import process_heatmap_arguments, process_task, autocomplete_hmap_timeframe, autocomplete_market, autocomplete_category, autocomplete_size, autocomplete_group
 
-from commands.base import BaseCommand, ActionsView, autocomplete_hmap_type
+from commands.base import BaseCommand, MediaActionsView, TryV2View, autocomplete_hmap_type
 
 
 async def autocomplete_theme(ctx):
@@ -47,10 +47,13 @@ class HeatmapCommand(BaseCommand):
 				else:
 					files.append(File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, request.authorId, randint(1000, 9999))))
 
+		isLicensed = self.bot.user.id not in constants.PRIMARY_BOTS
 		actions = None
 		if len(files) != 0:
 			if self.bot.user.id not in DISABLE_DELETE_BUTTON:
-				actions = ActionsView(user=ctx.author, command=ctx.command.mention)
+				actions = MediaActionsView(user=ctx.author, command=ctx.command.mention, include_v2=not isLicensed)
+			elif not isLicensed:
+				actions = TryV2View()
 
 		requestCheckpoint = time()
 		request.set_delay("request", (requestCheckpoint - start) / (len(files) + len(embeds)))
