@@ -63,7 +63,7 @@ class HeatmapCommand(BaseCommand):
 
 		await self.database.document("discord/statistics").set({request.snapshot: {"hmap": Increment(len(tasks))}}, merge=True)
 		await self.log_request("hmap", request, tasks, telemetry=request.telemetry)
-		await self.cleanup(ctx, request)
+		await self.cleanup(ctx, request, removeView=True, persistView=TryV2View() if len(files) != 0 and not isLicensed else None)
 
 	@slash_command(name="hmap", description="Pull market heatmaps from TradingView.")
 	async def hmap(

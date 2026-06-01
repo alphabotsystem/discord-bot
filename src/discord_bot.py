@@ -8,7 +8,7 @@ from requests import post
 from asyncio import CancelledError, sleep, gather, wait, create_task
 from traceback import format_exc
 
-from discord import AutoShardedBot, Embed, Intents, CustomActivity, Status, ActivityType, MessageType
+from discord import AutoShardedBot, Embed, Intents, CustomActivity, Status
 from discord.ext import tasks
 from discord.errors import NotFound
 from google.cloud.firestore import AsyncClient as FirestoreAsyncClient
@@ -23,17 +23,12 @@ from helpers import constants
 from DatabaseConnector import DatabaseConnector
 from CommandRequest import CommandRequest
 
-from commands.alerts import AlertCommand
 from commands.charts import ChartCommand
 from commands.convert import ConvertCommand
-from commands.depth import DepthCommand
 from commands.details import DetailsCommand
-from commands.flow import FlowCommand
 from commands.heatmaps import HeatmapCommand
-from commands.ichibot import IchibotCommand, Ichibot
 from commands.layout import LayoutCommand
 from commands.lookup import LookupCommand
-from commands.paper import PaperCommand
 from commands.prices import PriceCommand
 from commands.schedule import ScheduleCommand
 from commands.volume import VolumeCommand
@@ -348,86 +343,6 @@ async def guild_secure_fetch(guildId):
 
 
 # -------------------------
-# Message handling
-# -------------------------
-
-@bot.event
-async def on_message(message):
-	try:
-		# Skip messages in servers, messages with empty content field, messages from self
-		if message.clean_content == "" or message.type != MessageType.default or message.author == bot.user: return
-
-		# Ignore if user is banned
-		if message.author.id in constants.blockedUsers: return
-
-		[accountId, user] = await gather(
-			accountProperties.match(message.author.id),
-			accountProperties.get(str(message.author.id), {})
-		)
-
-		commandRequest = CommandRequest(
-			raw=message.clean_content,
-			content=message.clean_content.lower(),
-			accountId=accountId,
-			authorId=message.author.id,
-			accountProperties=user,
-		)
-		_snapshot = "{}-{:02d}".format(message.created_at.year, message.created_at.month)
-
-		# Ichibot should not run on licensed bots
-		if bot.user.id in constants.PRIMARY_BOTS and commandRequest.content.startswith("x ") and message.guild is not None:
-			await process_ichibot_command(message, commandRequest, commandRequest.content.split(" ", 1)[1])
-			await database.document("discord/statistics").set({_snapshot: {"x": Increment(1)}}, merge=True)
-
-	except CancelledError: pass
-	except:
-		print(format_exc())
-		if environ["PRODUCTION"]: logging.report_exception()
-
-
-# -------------------------
-# Ichibot
-# -------------------------
-
-async def process_ichibot_command(message, commandRequest, requestSlice):
-	sentMessages = []
-	try:
-		if requestSlice == "login":
-			embed = Embed(title=":dart: API key preferences are available in your Alpha.bot account settings.", description="[Sign into you Alpha.bot account](https://www.alpha.bot/login) and visit [Ichibot preferences](https://www.alpha.bot/account/trading) to update your API keys.", color=constants.colors["deep purple"])
-			embed.set_author(name="Ichibot", icon_url=static_storage.ichibot)
-			await message.channel.send(embed=embed)
-
-		elif commandRequest.is_registered():
-			origin = f"{commandRequest.accountId}_{commandRequest.authorId}_ichibot"
-
-			if origin in Ichibot.sockets:
-				socket = Ichibot.sockets.get(origin)
-				await socket.send_multipart([commandRequest.accountId.encode(), b"", commandRequest.raw.split(" ", 1)[1].encode()])
-
-				if requestSlice in ["q", "quit", "exit"]:
-					Ichibot.sockets.pop(origin)
-					embed = Embed(title="Ichibot connection has been closed.", color=constants.colors["deep purple"])
-					embed.set_author(name="Ichibot", icon_url=static_storage.ichibot)
-					await message.channel.send(embed=embed)
-			else:
-				embed = Embed(title="Ichibot connection is not open.", description="You can initiate a connection with </ichibot login:930915616188166225>.", color=constants.colors["pink"])
-				embed.set_author(name="Ichibot", icon_url=static_storage.ichibot)
-				missingExchangeMessage = await message.channel.send(embed=embed)
-
-		else:
-			embed = Embed(title=":dart: You must have an Alpha.bot account connected to your Discord to execute live trades.", description="[Sign up for a free account on our website](https://www.alpha.bot/signup). If you already signed up, [sign in](https://www.alpha.bot/login), connect your account with your Discord profile, and add an API key.", color=constants.colors["deep purple"])
-			embed.set_author(name="Ichibot", icon_url=static_storage.ichibot)
-			await message.channel.send(embed=embed)
-
-	except CancelledError: pass
-	except:
-		print(format_exc())
-		if environ["PRODUCTION"]: logging.report_exception(user=f"{message.author.id}: {message.clean_content}")
-		await unknown_error(message, commandRequest.authorId)
-	return (sentMessages, len(sentMessages))
-
-
-# -------------------------
 # Slash command request
 # -------------------------
 
@@ -494,27 +409,15 @@ async def create_request(ctx, autodelete=-1):
 # Slash commands
 # -------------------------
 
-bot.add_cog(AlertCommand(bot, create_request, database, logging))
 bot.add_cog(ChartCommand(bot, create_request, database, logging))
 bot.add_cog(ConvertCommand(bot, create_request, database, logging))
-bot.add_cog(DepthCommand(bot, create_request, database, logging))
 bot.add_cog(DetailsCommand(bot, create_request, database, logging))
-# bot.add_cog(FlowCommand(bot, create_request, database, logging))
 bot.add_cog(HeatmapCommand(bot, create_request, database, logging))
 bot.add_cog(LayoutCommand(bot, create_request, database, logging))
 bot.add_cog(LookupCommand(bot, create_request, database, logging))
-bot.add_cog(PaperCommand(bot, create_request, database, logging))
 bot.add_cog(PriceCommand(bot, create_request, database, logging))
 bot.add_cog(ScheduleCommand(bot, create_request, database, logging))
 bot.add_cog(VolumeCommand(bot, create_request, database, logging))
-
-# -------------------------
-# Special commands
-# -------------------------
-
-if botId == -1:
-	bot.add_cog(IchibotCommand(bot, create_request, database, logging))
-
 
 # -------------------------
 # Error handling
@@ -534,7 +437,6 @@ async def unknown_error(ctx, authorId):
 settings = {}
 accountProperties = DatabaseConnector(mode="account")
 guildProperties = DatabaseConnector(mode="guild")
-Ichibot.logging = logging
 
 discordSettingsLink = snapshots.document("discord/settings").on_snapshot(update_settings)
 discordMessagesLink = snapshots.collection("discord/properties/messages").on_snapshot(process_messages)

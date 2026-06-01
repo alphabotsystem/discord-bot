@@ -16,8 +16,7 @@ from helpers import constants
 from assets import static_storage
 from Processor import autocomplete_layout_timeframe, process_chart_arguments, process_task
 
-from commands.base import BaseCommand, ActionsView, autocomplete_layouts
-from commands.ichibot import Ichibot
+from commands.base import BaseCommand, MediaActionsView, TryV2View, autocomplete_layouts
 
 
 class LayoutCommand(BaseCommand):
@@ -106,9 +105,10 @@ class LayoutCommand(BaseCommand):
 						embed = Embed(title=f"Chart for {currentTask.get('ticker').get('name')} (`{currentTask.get('ticker').get('base')}`)", color=constants.colors["deep purple"])
 						embeds.append(embed)
 
+			isLicensed = self.bot.user.id not in constants.PRIMARY_BOTS
 			actions = None
 			if len(files) != 0:
-				actions = ActionsView(user=ctx.author, command=ctx.command.mention)
+				actions = MediaActionsView(user=ctx.author, command=ctx.command.mention, include_v2=not isLicensed)
 
 			requestCheckpoint = time()
 			request.set_delay("request", (requestCheckpoint - start) / (len(files) + len(embeds)))
@@ -118,7 +118,7 @@ class LayoutCommand(BaseCommand):
 
 			await self.database.document("discord/statistics").set({request.snapshot: {"c": Increment(1)}}, merge=True)
 			await self.log_request("layouts", request, [task], telemetry=request.telemetry)
-			await self.cleanup(ctx, request, removeView=True)
+			await self.cleanup(ctx, request, removeView=True, persistView=TryV2View() if len(files) != 0 and not isLicensed else None)
 
 		else:
 			embed = Embed(title=":gem: TradingView Layouts are available for $10.00 per month.", description="If you'd like to start your 30-day free trial, visit [our website](https://www.alpha.bot/pro/tradingview-layouts).", color=constants.colors["deep purple"])

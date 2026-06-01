@@ -59,20 +59,14 @@ class BaseCommand(Cog):
 	}
 
 	sources = {
-		"alert set": ["Twelvedata", "CCXT"],
 		"c": ["TradingView", "TradingView Premium"],
 		"layout": ["TradingView Relay"],
 		"hmap": ["TradingView Stock Heatmap", "TradingView ETF Heatmap", "TradingView Crypto Heatmap"],
-		"flow": ["Alpha Flow"],
 		"p": ["Twelvedata", "CCXT", "CoinGecko", "On-Chain"],
 		"convert": ["Twelvedata", "CCXT", "CoinGecko", "On-Chain"],
 		"volume": ["Twelvedata", "CoinGecko", "CCXT", "On-Chain"],
-		"depth": ["CCXT"],
 		"info": ["Twelvedata", "CoinGecko"],
-		"lookup listings": ["Twelvedata", "CCXT", "CoinGecko", "TradingView", "TradingView Premium"],
-		"paper buy": ["Twelvedata", "CCXT"],
-		"paper sell": ["Twelvedata", "CCXT"],
-		"ichibot": ["Ichibot"]
+		"lookup listings": ["Twelvedata", "CCXT", "CoinGecko", "TradingView", "TradingView Premium"]
 	}
 
 	def __init__(self, bot, create_request, database, logging):
@@ -156,9 +150,8 @@ class BaseCommand(Cog):
 		tickerId = ctx.options.get("ticker", "")
 		venue = " ".join(ctx.options.get("venue", "").lower().split())
 
-		if command == "ichibot": tickerId = "btc"
-		elif tickerId == "" or tickerId is None: return []
-		else: tickerId = " ".join(tickerId.lower().split()).split("|")[0].strip()
+		if tickerId == "" or tickerId is None: return []
+		tickerId = " ".join(tickerId.lower().split()).split("|")[0].strip()
 
 		platforms = BaseCommand.sources.get(command)
 		venues = await autocomplete_venues(tickerId, ",".join(platforms))
