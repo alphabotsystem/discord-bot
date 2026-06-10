@@ -15,9 +15,9 @@ from pycoingecko import CoinGeckoAPI
 from helpers.utils import get_incorrect_usage_description
 from helpers import constants
 from assets import static_storage
-from Processor import process_chart_arguments, process_quote_arguments, process_task, get_listings
+from Processor import process_quote_arguments, get_listings
 
-from commands.base import BaseCommand, ActionsView, autocomplete_fgi_type, autocomplete_movers_categories, MARKET_MOVERS_OPTIONS
+from commands.base import BaseCommand, ActionsView, autocomplete_fgi_type, autocomplete_movers_categories, MARKET_MOVERS_OPTIONS, files_from_posts
 
 
 class LookupCommand(BaseCommand):
@@ -152,51 +152,36 @@ class LookupCommand(BaseCommand):
 			request = await self.create_request(ctx)
 			if request is None: return
 
+			# v2's fgi grammar requires a market; default to crypto when unspecified.
+			market = "crypto"
 			if assetType != "":
-				if assetType.lower() == "crypto":
-					assetType = "am"
-				elif assetType.lower() == "stocks":
-					assetType = "cnn"
+				if assetType.lower() in ("crypto", "stocks"):
+					market = assetType.lower()
 				else:
 					embed = Embed(title="Asset type is invalid. Only stocks and crypto markets are supported.", color=constants.colors["gray"])
 					embed.set_author(name="Invalid market", icon_url=static_storage.error_icon)
-					try: await ctx.interaction.edit_original_response(embed=embed)
+					try: await ctx.respond(embed=embed)
 					except NotFound: pass
 					return
 
-			platforms = request.get_platform_order_for("c")
-			[(_, task), _] = await gather(
-				process_chart_arguments([assetType], platforms, tickerId="FGI"),
-				ctx.defer()
-			)
-
-			currentTask = task.get(task.get("currentPlatform"))
-			timeframes = task.pop("timeframes")
-			for p, t in timeframes.items(): task[p]["currentTimeframe"] = t[0]
-
-			payload, responseMessage = await process_task(task, "chart", origin=request.origin)
+			await ctx.defer()
+			response = await self.render_via_v2("fgi " + market, request)
 
 			files, embeds = [], []
-			if responseMessage == "requires pro":
-				embed = Embed(title=f"The requested chart for `{currentTask.get('ticker').get('name')}` is only available on TradingView Premium.", description="All TradingView Premium charts are bundled with the [Advanced Charting add-on](https://www.alpha.bot/pro/advanced-charting).", color=constants.colors["gray"])
-				embed.set_author(name="TradingView Premium", icon_url=static_storage.error_icon)
-				embeds.append(embed)
-			elif payload is None:
-				errorMessage = f"Requested chart for `{currentTask.get('ticker').get('name')}` is not available." if responseMessage is None else responseMessage
-				embed = Embed(title=errorMessage, color=constants.colors["gray"])
+			if not response.get("ok"):
+				message = response.get("error") or "Requested chart is not available."
+				embed = Embed(title=message, color=constants.colors["gray"])
 				embed.set_author(name="Chart not available", icon_url=static_storage.error_icon)
 				embeds.append(embed)
 			else:
-				task["currentPlatform"] = payload.get("platform")
-				currentTask = task.get(task.get("currentPlatform"))
-				files.append(File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, request.authorId, randint(1000, 9999))))
+				files = files_from_posts(response.get("posts", []), request.authorId)
 
 			actions = ActionsView(user=ctx.author, command=ctx.command.mention)
 			try: await ctx.interaction.edit_original_response(embeds=embeds, files=files, view=actions)
 			except NotFound: pass
 
 			await self.database.document("discord/statistics").set({request.snapshot: {"c": Increment(1)}}, merge=True)
-			await self.log_request("charts", request, [task])
+			await self.log_request_v2("charts", request, response.get("meta", {}))
 			await self.cleanup(ctx, request, removeView=True)
 
 		except CancelledError: pass

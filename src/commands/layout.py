@@ -14,9 +14,9 @@ from google.cloud.firestore_v1.base_query import FieldFilter
 from helpers.utils import get_incorrect_usage_description
 from helpers import constants
 from assets import static_storage
-from Processor import autocomplete_layout_timeframe, process_chart_arguments, process_task
+from Processor import autocomplete_layout_timeframe
 
-from commands.base import BaseCommand, MediaActionsView, TryV2View, autocomplete_layouts
+from commands.base import BaseCommand, MediaActionsView, TryV2View, autocomplete_layouts, files_from_posts, content_from_posts
 
 
 class LayoutCommand(BaseCommand):
@@ -49,21 +49,23 @@ class LayoutCommand(BaseCommand):
 				return
 
 			layout = layout[0].to_dict()
-			theme = layout.get("theme")
-			isWide = layout.get("isWide", False)
 
-			arguments = [timeframe, venue] + ([] if theme is None else [theme]) + ([] if not isWide else ["wide"])
-			(responseMessage, task) = await process_chart_arguments(arguments, ["TradingView Relay"], tickerId=tickerId, defaults=request.guildProperties["charting"])
-
-			if responseMessage is not None:
-				embed = Embed(title=responseMessage, description=get_incorrect_usage_description(self.bot.user.id, "https://www.alpha.bot/features/layouts"), color=constants.colors["gray"])
-				embed.set_author(name="Invalid argument", icon_url=static_storage.error_icon)
+			if not request.tradingview_layouts_available():
+				embed = Embed(title=":gem: TradingView Layouts are available for $10.00 per month.", description="If you'd like to start your 30-day free trial, visit [our website](https://www.alpha.bot/pro/tradingview-layouts).", color=constants.colors["deep purple"])
 				try: await ctx.interaction.edit_original_response(embed=embed)
 				except NotFound: pass
 				return
 
+			# Layout name leads as the v2 subject (greedy-matched against the imported
+			# guild layout), then ticker, then modifiers carried by the saved layout.
+			parts = ["layout", name, tickerId] + [p for p in [timeframe, venue] if p]
+			if layout.get("isWide", False): parts.append("wide")
+			if layout.get("theme"): parts.append(layout["theme"])
+
+			response = await self.render_via_v2(" ".join(parts), request, layout={"label": name, "url": layout["url"]})
+
 			request.set_delay("parser", time() - prelightCheckpoint)
-			await self.respond(ctx, layout["url"], request, task)
+			await self.respond(ctx, request, response)
 
 		except CancelledError: pass
 		except:
@@ -74,54 +76,45 @@ class LayoutCommand(BaseCommand):
 	async def respond(
 		self,
 		ctx,
-		url,
 		request,
-		task
+		response
 	):
-		if request.tradingview_layouts_available():
-			start = time()
-			files, embeds = [], []
+		start = time()
 
-			task["TradingView Relay"]["url"] = url
-
-			currentTask = task.get(task.get("currentPlatform"))
-			timeframes = task.pop("timeframes")
-			for i in range(task.get("requestCount")):
-				for p, t in timeframes.items(): task[p]["currentTimeframe"] = t[i]
-				payload, responseMessage = await process_task(task, "chart", origin=request.origin, timeout=60)
-
-				if payload is None:
-					errorMessage = f"Requested chart for `{currentTask.get('ticker').get('name')}` is not available." if responseMessage is None else responseMessage
-					embed = Embed(title=errorMessage, color=constants.colors["gray"])
-					embed.set_author(name="Chart not available", icon_url=static_storage.error_icon)
-					embeds.append(embed)
-				else:
-					task["currentPlatform"] = payload.get("platform")
-					currentTask = task.get(task.get("currentPlatform"))
-					files.append(File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, request.authorId, randint(1000, 9999))))
-
-					# RwU79szBNJUFmrpQbgj3ZtnLmwA2
-					if self.bot.user.id == 1229893549986811986:
-						embed = Embed(title=f"Chart for {currentTask.get('ticker').get('name')} (`{currentTask.get('ticker').get('base')}`)", color=constants.colors["deep purple"])
-						embeds.append(embed)
-
-			isLicensed = self.bot.user.id not in constants.PRIMARY_BOTS
-			actions = None
-			if len(files) != 0:
-				actions = MediaActionsView(user=ctx.author, command=ctx.command.mention, include_v2=not isLicensed)
-
-			requestCheckpoint = time()
-			request.set_delay("request", (requestCheckpoint - start) / (len(files) + len(embeds)))
-			try: await ctx.interaction.edit_original_response(embeds=embeds, files=files, view=actions)
-			except NotFound: pass
-			request.set_delay("response", time() - requestCheckpoint)
-
-			await self.database.document("discord/statistics").set({request.snapshot: {"c": Increment(1)}}, merge=True)
-			await self.log_request("layouts", request, [task], telemetry=request.telemetry)
-			await self.cleanup(ctx, request, removeView=True, persistView=TryV2View() if len(files) != 0 and not isLicensed else None)
-
-		else:
-			embed = Embed(title=":gem: TradingView Layouts are available for $10.00 per month.", description="If you'd like to start your 30-day free trial, visit [our website](https://www.alpha.bot/pro/tradingview-layouts).", color=constants.colors["deep purple"])
+		if not response.get("ok"):
+			message = response.get("error") or "Requested chart is not available."
+			description = get_incorrect_usage_description(self.bot.user.id, "https://www.alpha.bot/features/layouts")
+			embed = Embed(title=message, description=description, color=constants.colors["gray"])
+			embed.set_author(name="Invalid argument", icon_url=static_storage.error_icon)
 			try: await ctx.interaction.edit_original_response(embed=embed)
 			except NotFound: pass
+			return
+
+		posts = response.get("posts", [])
+		meta = response.get("meta", {})
+		files = files_from_posts(posts, request.authorId)
+		content = content_from_posts(posts)
+
+		embeds = []
+		symbols = meta.get("resolvedSymbols", [])
+		# RwU79szBNJUFmrpQbgj3ZtnLmwA2
+		if self.bot.user.id == 1229893549986811986 and len(files) != 0 and symbols:
+			symbol = symbols[0]
+			embed = Embed(title=f"Chart for {symbol} (`{symbol.split(':')[-1]}`)", color=constants.colors["deep purple"])
+			embeds.append(embed)
+
+		isLicensed = self.bot.user.id not in constants.PRIMARY_BOTS
+		actions = None
+		if len(files) != 0:
+			actions = MediaActionsView(user=ctx.author, command=ctx.command.mention, include_v2=not isLicensed)
+
+		requestCheckpoint = time()
+		request.set_delay("request", (requestCheckpoint - start) / max(1, len(files) + len(embeds)))
+		try: await ctx.interaction.edit_original_response(content=content, embeds=embeds, files=files, view=actions)
+		except NotFound: pass
+		request.set_delay("response", time() - requestCheckpoint)
+
+		await self.database.document("discord/statistics").set({request.snapshot: {"c": Increment(1)}}, merge=True)
+		await self.log_request_v2("layouts", request, meta, telemetry=request.telemetry)
+		await self.cleanup(ctx, request, removeView=True, persistView=TryV2View() if len(files) != 0 and not isLicensed else None)
 

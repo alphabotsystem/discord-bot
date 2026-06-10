@@ -1,11 +1,15 @@
 from os import environ
 from time import time
+from random import randint
+from base64 import b64decode
+from io import BytesIO
 from asyncio import sleep
 from re import sub
 from orjson import dumps
 from traceback import format_exc
 
-from discord import Embed, ButtonStyle, Interaction, PartialEmoji
+import aiohttp
+from discord import Embed, File, ButtonStyle, Interaction, PartialEmoji
 from discord.ext.commands import Cog
 from discord.ui import View, button, Button
 from google.cloud.firestore import AsyncClient as FirestoreAsyncClient
@@ -20,6 +24,32 @@ database = FirestoreAsyncClient()
 publisher = pubsub_v1.PublisherClient()
 REQUESTS_TOPIC_NAME = "projects/nlc-bot-36685/topics/discord-requests"
 TELEMETRY_TOPIC_NAME = "projects/nlc-bot-36685/topics/discord-telemetry"
+
+# v2 charting compatibility endpoint (webhooks service). The visual commands
+# (/c, /hmap, /layout, /lookup fgi) forward raw text here instead of parsing
+# locally; v2 resolves + renders and returns the PNGs. Secret must match the
+# webhooks service's WEBHOOK_SHARED_SECRET.
+V2_COMMAND_ENDPOINT = environ.get("V2_COMMAND_ENDPOINT", "https://webhooks.alpha.bot/v1/command")
+V2_COMMAND_SECRET = environ.get("V2_COMMAND_SECRET", "")
+# v1's PRIMARY bots report origin "default"; the v2 image-server brands by a real
+# discord_bots row id, so that sentinel maps to the default bot's application id.
+V2_DEFAULT_ORIGIN = "1388941386748919869"
+
+
+def files_from_posts(posts, authorId):
+	"""Decodes the base64 PNGs in a /v1/command response into discord.File objects."""
+	files = []
+	for post in posts:
+		for attachment in post.get("attachments", []):
+			buffer = BytesIO(b64decode(attachment["dataBase64"]))
+			files.append(File(buffer, filename="{:.0f}-{}-{}.png".format(time() * 1000, authorId, randint(1000, 9999))))
+	return files
+
+
+def content_from_posts(posts):
+	"""Joins any non-empty post text bodies (per-request warnings / fuzzy notes) into one message string, or None."""
+	lines = [text for post in posts if (text := (post.get("text") or "").strip())]
+	return "\n".join(lines) if lines else None
 
 
 MARKET_MOVERS_OPTIONS = []
@@ -103,6 +133,59 @@ class BaseCommand(Cog):
 				"request": telemetry["request"],
 				"response": telemetry["response"],
 				"count": task.get("requestCount", 1)
+			}))
+
+	async def render_via_v2(self, text, request, layout=None):
+		"""POSTs raw command text to the v2 compatibility endpoint and returns the parsed JSON dict.
+
+		`layout`, when supplied, is a {"label", "url"} dict forwarded as headers so v2 can import
+		the Firestore-resolved layout into Postgres. Raises on HTTP 5xx so the caller's except reports it."""
+		payload = {
+			"text": text,
+			"guildId": None if request.guildId == -1 else str(request.guildId),
+			"userId": str(request.authorId),
+			"channelId": str(request.channelId),
+			"botId": V2_DEFAULT_ORIGIN if request.origin == "default" else str(request.origin),
+		}
+		headers = {"Authorization": f"Bearer {V2_COMMAND_SECRET}", "Content-Type": "application/json"}
+		if layout is not None:
+			headers["X-Webhook-Layout-Label"] = layout["label"]
+			headers["X-Webhook-Layout-Url"] = layout["url"]
+		timeout = aiohttp.ClientTimeout(total=60)
+		async with aiohttp.ClientSession(timeout=timeout) as session:
+			async with session.post(V2_COMMAND_ENDPOINT, json=payload, headers=headers) as response:
+				if response.status >= 500:
+					raise RuntimeError(f"v2 command endpoint returned {response.status}")
+				return await response.json()
+
+	async def log_request_v2(self, command, request, meta, telemetry=None):
+		if not environ["PRODUCTION"]: return
+		timestamp = int(time())
+		symbols = meta.get("resolvedSymbols", [])
+		count = meta.get("requestCount", 1)
+		base = symbols[0].split(":")[-1] if symbols else ""
+		toolCalls = meta.get("toolCalls", [])
+		platform = toolCalls[0] if toolCalls else command
+		publisher.publish(REQUESTS_TOPIC_NAME, dumps({
+			"timestamp": timestamp,
+			"command": command,
+			"user": str(request.authorId),
+			"guild": str(request.guildId),
+			"channel": str(request.channelId),
+			"base": base,
+			"platform": platform,
+			"count": count
+		}))
+		if telemetry is not None:
+			publisher.publish(TELEMETRY_TOPIC_NAME, dumps({
+				"timestamp": timestamp,
+				"command": command,
+				"database": telemetry["database"],
+				"prelight": telemetry["prelight"],
+				"parser": telemetry["parser"],
+				"request": telemetry["request"],
+				"response": telemetry["response"],
+				"count": count
 			}))
 
 	async def cleanup(self, ctx, request, removeView=False, persistView=None):

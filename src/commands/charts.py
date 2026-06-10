@@ -13,10 +13,18 @@ from google.cloud.firestore import Increment
 from helpers.utils import get_incorrect_usage_description
 from helpers import constants
 from assets import static_storage
-from Processor import process_chart_arguments, process_task
 from DatabaseConnector import DatabaseConnector
 
-from commands.base import BaseCommand, MediaActionsView, TryV2View
+from commands.base import BaseCommand, MediaActionsView, TryV2View, files_from_posts, content_from_posts
+
+# Exchange-prefix heuristic for crypto referral buttons: the v2 parser returns
+# exchange:ticker full names but no instrument-type field, so crypto is inferred
+# from the venue prefix.
+CRYPTO_EXCHANGE_PREFIXES = {
+	"BINANCE", "COINBASE", "CRYPTO", "COINGECKO", "GECKOTERMINAL", "BYBIT", "OKX",
+	"KUCOIN", "KRAKEN", "BITSTAMP", "BITFINEX", "BITMEX", "HUOBI", "GATEIO", "MEXC",
+	"UNISWAP", "PANCAKESWAP", "POLONIEX", "BITTREX",
+}
 
 
 class ChartCommand(BaseCommand):
@@ -24,35 +32,29 @@ class ChartCommand(BaseCommand):
 		self,
 		ctx,
 		request,
-		tasks
+		response
 	):
 		start = time()
-		files, embeds = [], []
-		for task in tasks:
-			currentTask = task.get(task.get("currentPlatform"))
-			timeframes = task.pop("timeframes")
-			for i in range(task.get("requestCount")):
-				for p, t in timeframes.items(): task[p]["currentTimeframe"] = t[i]
-				payload, responseMessage = await process_task(task, "chart", origin=request.origin)
 
-				if responseMessage == "requires pro":
-					embed = Embed(title=f"The requested chart for `{currentTask.get('ticker').get('name')}` is only available on TradingView Premium.", description="All TradingView Premium charts are bundled with the [Advanced Charting add-on](https://www.alpha.bot/pro/advanced-charting).", color=constants.colors["gray"])
-					embed.set_author(name="TradingView Premium", icon_url=static_storage.error_icon)
-					embeds.append(embed)
-				elif payload is None:
-					errorMessage = f"Requested chart for `{currentTask.get('ticker').get('name')}` is not available." if responseMessage is None else responseMessage
-					embed = Embed(title=errorMessage, color=constants.colors["gray"])
-					embed.set_author(name="Chart not available", icon_url=static_storage.error_icon)
-					embeds.append(embed)
-				else:
-					task["currentPlatform"] = payload.get("platform")
-					currentTask = task.get(task.get("currentPlatform"))
-					files.append(File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, request.authorId, randint(1000, 9999))))
+		if not response.get("ok"):
+			message = response.get("error") or "Requested chart is not available."
+			description = get_incorrect_usage_description(self.bot.user.id, "https://www.alpha.bot/features/charting")
+			embed = Embed(title=message, description=description, color=constants.colors["gray"])
+			embed.set_author(name="Invalid argument", icon_url=static_storage.error_icon)
+			try: await ctx.interaction.edit_original_response(embed=embed)
+			except NotFound: pass
+			return
+
+		posts = response.get("posts", [])
+		meta = response.get("meta", {})
+		files = files_from_posts(posts, request.authorId)
+		content = content_from_posts(posts)
 
 		isLicensed = self.bot.user.id not in constants.PRIMARY_BOTS
 		actions = None
 		if len(files) != 0:
-			isCryptoRequest = any([task.get(task.get("currentPlatform")).get("ticker", {}).get("metadata", {}).get("type") == "Crypto" for task in tasks])
+			symbols = meta.get("resolvedSymbols", [])
+			isCryptoRequest = any(s.split(":")[0].upper() in CRYPTO_EXCHANGE_PREFIXES for s in symbols)
 			if isCryptoRequest and self.bot.user.id in constants.REFERRALS and not request.is_paid_user():
 				referrals = constants.REFERRALS[self.bot.user.id]
 				exchangeId = choice(list(referrals.keys()))
@@ -61,13 +63,13 @@ class ChartCommand(BaseCommand):
 				actions = MediaActionsView(user=ctx.author, command=ctx.command.mention, include_v2=not isLicensed)
 
 		requestCheckpoint = time()
-		request.set_delay("request", (requestCheckpoint - start) / (len(files) + len(embeds)))
-		try: await ctx.interaction.edit_original_response(embeds=embeds, files=files, view=actions)
+		request.set_delay("request", (requestCheckpoint - start) / max(1, len(files)))
+		try: await ctx.interaction.edit_original_response(content=content, embeds=[], files=files, view=actions)
 		except NotFound: pass
 		request.set_delay("response", time() - requestCheckpoint)
 
-		await self.database.document("discord/statistics").set({request.snapshot: {"c": Increment(len(tasks))}}, merge=True)
-		await self.log_request("charts", request, tasks, telemetry=request.telemetry)
+		await self.database.document("discord/statistics").set({request.snapshot: {"c": Increment(meta.get("requestCount", 1))}}, merge=True)
+		await self.log_request_v2("charts", request, meta, telemetry=request.telemetry)
 		await self.cleanup(ctx, request, removeView=True, persistView=TryV2View() if len(files) != 0 and not isLicensed else None)
 
 	@slash_command(name="c", description="Pull charts from TradingView.")
@@ -81,12 +83,8 @@ class ChartCommand(BaseCommand):
 			request = await self.create_request(ctx, autodelete=autodelete)
 			if request is None: return
 
-			platforms = request.get_platform_order_for("c")
-			parts = arguments.split(",")
-
-			if len(parts) > 5:
-				embed = Embed(title="Only up to five requests are allowed per command.", color=constants.colors["gray"])
-				embed.set_author(name="Too many requests", icon_url=static_storage.error_icon)
+			if autodelete is not None and (autodelete < 1 or autodelete > 10):
+				embed = Embed(title="Response autodelete duration must be between one and ten minutes.", color=constants.colors["gray"])
 				try: await ctx.respond(embed=embed)
 				except NotFound: pass
 				return
@@ -94,34 +92,11 @@ class ChartCommand(BaseCommand):
 			prelightCheckpoint = time()
 			request.set_delay("prelight", prelightCheckpoint - request.start)
 
-			tasks = []
-			for part in parts:
-				partArguments = part.lower().split()
-				if len(partArguments) == 0: continue
-				tasks.append(process_chart_arguments(partArguments[1:], platforms, tickerId=partArguments[0], defaults=request.guildProperties["charting"]))
-			[results, _] = await gather(
-				gather(*tasks),
-				ctx.defer()
-			)
-
-			tasks = []
-			for (responseMessage, task) in results:
-				if responseMessage is not None:
-					description = "[Advanced Charting add-on](https://www.alpha.bot/pro/advanced-charting) unlocks additional assets, indicators, timeframes and more." if responseMessage.endswith("add-on.") else get_incorrect_usage_description(self.bot.user.id, "https://www.alpha.bot/features/charting")
-					embed = Embed(title=responseMessage, description=description, color=constants.colors["gray"])
-					embed.set_author(name="Invalid argument", icon_url=static_storage.error_icon)
-					try: await ctx.interaction.edit_original_response(embed=embed)
-					except NotFound: pass
-					return
-				elif autodelete is not None and (autodelete < 1 or autodelete > 10):
-					embed = Embed(title="Response autodelete duration must be between one and ten minutes.", color=constants.colors["gray"])
-					try: await ctx.interaction.edit_original_response(embed=embed)
-					except NotFound: pass
-					return
-				tasks.append(task)
+			await ctx.defer()
+			response = await self.render_via_v2("chart " + arguments, request)
 
 			request.set_delay("parser", time() - prelightCheckpoint)
-			await self.respond(ctx, request, tasks)
+			await self.respond(ctx, request, response)
 
 		except CancelledError: pass
 		except:
