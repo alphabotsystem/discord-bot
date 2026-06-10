@@ -23,7 +23,7 @@ from Processor import process_chart_arguments, process_heatmap_arguments, proces
 from commands.heatmaps import autocomplete_theme
 from DatabaseConnector import DatabaseConnector
 
-from commands.base import BaseCommand, RedirectView, Confirm, autocomplete_fgi_type, autocomplete_hmap_type, autocomplete_movers_categories, autocomplete_layouts, MARKET_MOVERS_OPTIONS
+from commands.base import BaseCommand, RedirectView, Confirm, autocomplete_fgi_type, autocomplete_hmap_type, autocomplete_movers_categories, autocomplete_layouts, MARKET_MOVERS_OPTIONS, files_from_posts
 
 
 cal = Calendar()
@@ -154,28 +154,20 @@ class ScheduleCommand(BaseCommand):
 					except NotFound: pass
 					return
 
-				currentTask = task.get(task.get("currentPlatform"))
-				timeframes = task.pop("timeframes")
-				for p, t in timeframes.items(): task[p]["currentTimeframe"] = t[0]
-				payload, responseMessage = await process_task(task, "chart", origin=request.origin)
+				response = await self.render_via_v2("chart " + " ".join(arguments), request)
 
 				files, embeds = [], []
-				if responseMessage == "requires pro":
-					embed = Embed(title=f"The requested chart for `{currentTask.get('ticker').get('name')}` is only available on TradingView Premium.", description="All TradingView Premium charts are bundled with the [Advanced Charting add-on](https://www.alpha.bot/pro/advanced-charting).", color=constants.colors["gray"])
-					embed.set_author(name="Invalid argument", icon_url=static_storage.error_icon)
-					embeds.append(embed)
-				elif payload is None:
-					errorMessage = f"Requested chart for `{currentTask.get('ticker').get('name')}` is not available." if responseMessage is None else responseMessage
-					embed = Embed(title=errorMessage, color=constants.colors["gray"])
+				if not response.get("ok"):
+					embed = Embed(title=response.get("error") or "Requested chart is not available.", color=constants.colors["gray"])
 					embed.set_author(name="Schedule confirmation", icon_url=self.bot.user.avatar.url)
 					embeds.append(embed)
 				else:
-					files.append(File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, request.authorId, randint(1000, 9999))))
+					files = files_from_posts(response.get("posts", []), request.authorId)
 					embed = Embed(title="Are you sure you want to schedule this post?", color=constants.colors["pink"])
 					embed.set_author(name="Schedule confirmation", icon_url=self.bot.user.avatar.url)
 					embeds.append(embed)
 
-				confirmation = None if payload is None or payload.get("data") is None else Confirm(user=ctx.author)
+				confirmation = None if len(files) == 0 else Confirm(user=ctx.author)
 				try: await ctx.interaction.edit_original_response(embeds=embeds, files=files, view=confirmation)
 				except NotFound: pass
 
@@ -318,26 +310,22 @@ class ScheduleCommand(BaseCommand):
 					return
 
 				url = layout[0].to_dict()["url"]
-				task["TradingView Relay"]["url"] = url
 
-				currentTask = task.get(task.get("currentPlatform"))
-				timeframes = task.pop("timeframes")
-				for p, t in timeframes.items(): task[p]["currentTimeframe"] = t[0]
-				payload, responseMessage = await process_task(task, "chart", origin=request.origin, timeout=60)
+				parts = ["layout", name, tickerId] + [p for p in [timeframe, venue] if p]
+				response = await self.render_via_v2(" ".join(parts), request, layout={"label": name, "url": url})
 
 				files, embeds = [], []
-				if payload is None:
-					errorMessage = f"Requested chart for `{currentTask.get('ticker').get('name')}` is not available." if responseMessage is None else responseMessage
-					embed = Embed(title=errorMessage, color=constants.colors["gray"])
+				if not response.get("ok"):
+					embed = Embed(title=response.get("error") or "Requested chart is not available.", color=constants.colors["gray"])
 					embed.set_author(name="Schedule confirmation", icon_url=self.bot.user.avatar.url)
 					embeds.append(embed)
 				else:
-					files.append(File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, request.authorId, randint(1000, 9999))))
+					files = files_from_posts(response.get("posts", []), request.authorId)
 					embed = Embed(title="Are you sure you want to schedule this post?", color=constants.colors["pink"])
 					embed.set_author(name="Schedule confirmation", icon_url=self.bot.user.avatar.url)
 					embeds.append(embed)
 
-				confirmation = None if payload is None or payload.get("data") is None else Confirm(user=ctx.author)
+				confirmation = None if len(files) == 0 else Confirm(user=ctx.author)
 				try: await ctx.interaction.edit_original_response(embeds=embeds, files=files, view=confirmation)
 				except NotFound: pass
 
@@ -480,24 +468,21 @@ class ScheduleCommand(BaseCommand):
 					except NotFound: pass
 					return
 
-				currentTask = task.get(task.get("currentPlatform"))
-				timeframes = task.pop("timeframes")
-				for p, t in timeframes.items(): task[p]["currentTimeframe"] = t[0]
-				payload, responseMessage = await process_task(task, "heatmap", origin=request.origin)
+				parts = ["hmap"] + [p for p in [assetType, market, timeframe, category, size, group, theme] if p]
+				response = await self.render_via_v2(" ".join(parts), request)
 
 				files, embeds = [], []
-				if payload is None:
-					errorMessage = "Requested heatmap is not available." if responseMessage is None else responseMessage
-					embed = Embed(title=errorMessage, color=constants.colors["gray"])
+				if not response.get("ok"):
+					embed = Embed(title=response.get("error") or "Requested heatmap is not available.", color=constants.colors["gray"])
 					embed.set_author(name="Heatmap not available", icon_url=static_storage.error_icon)
 					embeds.append(embed)
 				else:
-					files.append(File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, request.authorId, randint(1000, 9999))))
+					files = files_from_posts(response.get("posts", []), request.authorId)
 					embed = Embed(title="Are you sure you want to schedule this post?", color=constants.colors["pink"])
 					embed.set_author(name="Schedule confirmation", icon_url=self.bot.user.avatar.url)
 					embeds.append(embed)
 
-				confirmation = None if payload is None or payload.get("data") is None else Confirm(user=ctx.author)
+				confirmation = None if len(files) == 0 else Confirm(user=ctx.author)
 				try: await ctx.interaction.edit_original_response(embeds=embeds, files=files, view=confirmation)
 				except NotFound: pass
 
@@ -1124,28 +1109,21 @@ class ScheduleCommand(BaseCommand):
 					except NotFound: pass
 					return
 
-				currentTask = task.get(task.get("currentPlatform"))
-				timeframes = task.pop("timeframes")
-				for p, t in timeframes.items(): task[p]["currentTimeframe"] = t[0]
-				payload, responseMessage = await process_task(task, "chart", origin=request.origin)
+				fgiMarket = "stocks" if assetType == "cnn" else "crypto"
+				response = await self.render_via_v2("fgi " + fgiMarket, request)
 
 				files, embeds = [], []
-				if responseMessage == "requires pro":
-					embed = Embed(title=f"The requested chart for `{currentTask.get('ticker').get('name')}` is only available on TradingView Premium.", description="All TradingView Premium charts are bundled with the [Advanced Charting add-on](https://www.alpha.bot/pro/advanced-charting).", color=constants.colors["gray"])
-					embed.set_author(name="Invalid argument", icon_url=static_storage.error_icon)
-					embeds.append(embed)
-				elif payload is None:
-					errorMessage = f"Requested chart for `{currentTask.get('ticker').get('name')}` is not available." if responseMessage is None else responseMessage
-					embed = Embed(title=errorMessage, color=constants.colors["gray"])
+				if not response.get("ok"):
+					embed = Embed(title=response.get("error") or "Requested chart is not available.", color=constants.colors["gray"])
 					embed.set_author(name="Schedule confirmation", icon_url=self.bot.user.avatar.url)
 					embeds.append(embed)
 				else:
-					files.append(File(payload.get("data"), filename="{:.0f}-{}-{}.png".format(time() * 1000, request.authorId, randint(1000, 9999))))
+					files = files_from_posts(response.get("posts", []), request.authorId)
 					embed = Embed(title="Are you sure you want to schedule this post?", color=constants.colors["pink"])
 					embed.set_author(name="Schedule confirmation", icon_url=self.bot.user.avatar.url)
 					embeds.append(embed)
 
-				confirmation = None if payload is None or payload.get("data") is None else Confirm(user=ctx.author)
+				confirmation = None if len(files) == 0 else Confirm(user=ctx.author)
 				try: await ctx.interaction.edit_original_response(embeds=embeds, files=files, view=confirmation)
 				except NotFound: pass
 
