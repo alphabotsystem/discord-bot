@@ -311,7 +311,10 @@ class ScheduleCommand(BaseCommand):
 
 				url = layout[0].to_dict()["url"]
 
-				parts = ["layout", name, tickerId] + [p for p in [timeframe, venue] if p]
+				# Autocomplete submits its display string ("ETH | Ethereum | Crypto") as the
+				# option value; only the leading ticker id goes into the v2 text — its grammar
+				# has no pipe concept. process_chart_arguments above still gets the full string.
+				parts = ["layout", name, tickerId.split("|")[0].strip()] + [p for p in [timeframe, venue] if p]
 				response = await self.render_via_v2(" ".join(parts), request, layout={"label": name, "url": url})
 
 				files, embeds = [], []

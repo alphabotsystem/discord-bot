@@ -58,7 +58,10 @@ class LayoutCommand(BaseCommand):
 
 			# Layout name leads as the v2 subject (greedy-matched against the imported
 			# guild layout), then ticker, then modifiers carried by the saved layout.
-			parts = ["layout", name, tickerId] + [p for p in [timeframe, venue] if p]
+			# Autocomplete submits its display string ("ETH | Ethereum | Crypto") as the
+			# option value; only the leading ticker id survives — v2's grammar has no
+			# pipe concept (the legacy parser used to do this split server-side).
+			parts = ["layout", name, tickerId.split("|")[0].strip()] + [p for p in [timeframe, venue] if p]
 			if layout.get("isWide", False): parts.append("wide")
 			if layout.get("theme"): parts.append(layout["theme"])
 
