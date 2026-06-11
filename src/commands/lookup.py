@@ -15,59 +15,12 @@ from pycoingecko import CoinGeckoAPI
 from helpers.utils import get_incorrect_usage_description
 from helpers import constants
 from assets import static_storage
-from Processor import process_quote_arguments, get_listings
 
 from commands.base import BaseCommand, ActionsView, autocomplete_fgi_type, autocomplete_movers_categories, MARKET_MOVERS_OPTIONS, files_from_posts
 
 
 class LookupCommand(BaseCommand):
 	lookupGroup = SlashCommandGroup("lookup", "Look up or screen the market for various properties.")
-
-	@lookupGroup.command(name="listings", description="Look up exchange listings for a particular asset.")
-	async def listings(
-		self,
-		ctx,
-		tickerId: Option(str, "Ticker id of an asset.", name="ticker", autocomplete=BaseCommand.autocomplete_ticker)
-	):
-		try:
-			request = await self.create_request(ctx)
-			if request is None: return
-
-			platforms = request.get_platform_order_for("lookup")
-			responseMessage, task = await process_quote_arguments([], platforms, tickerId=tickerId)
-
-			if responseMessage is not None:
-				embed = Embed(title=responseMessage, description=get_incorrect_usage_description(self.bot.user.id, "https://www.alpha.bot/features"), color=constants.colors["gray"])
-				embed.set_author(name="Invalid argument", icon_url=static_storage.error_icon)
-				try: await ctx.respond(embed=embed)
-				except NotFound: pass
-				return
-
-			currentPlatform = task.get("currentPlatform")
-			currentTask = task.get(currentPlatform)
-			ticker = currentTask.get("ticker")
-			listings, total = await get_listings(ticker, currentPlatform)
-
-			if total != 0:
-				embed = Embed(title=f"{ticker.get('name')} listings", color=constants.colors["deep purple"])
-				for quote, exchanges in listings[:25]:
-					if len(exchanges) == 0: continue
-					embed.add_field(name=f"{quote} markets found on {len(exchanges)} exchanges", value=", ".join(exchanges), inline=False)
-				try: await ctx.respond(embed=embed)
-				except NotFound: pass
-			else:
-				embed = Embed(title=f"`{ticker.get('name')}` is not listed on any crypto exchange.", color=constants.colors["gray"])
-				embed.set_author(name="No listings", icon_url=static_storage.error_icon)
-				try: await ctx.respond(embed=embed)
-				except NotFound: pass
-
-			await self.database.document("discord/statistics").set({request.snapshot: {"mk": Increment(1)}}, merge=True)
-
-		except CancelledError: pass
-		except:
-			print(format_exc())
-			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /lookup listings {tickerId}")
-			await self.unknown_error(ctx)
 
 	@lookupGroup.command(name="market-movers", description="Look up top gainers or losers in the market.")
 	async def top(

@@ -92,8 +92,7 @@ class BaseCommand(Cog):
 		"layout": ["TradingView Relay"],
 		"hmap": ["TradingView Stock Heatmap", "TradingView ETF Heatmap", "TradingView Crypto Heatmap"],
 		"p": ["Twelvedata", "CCXT", "CoinGecko", "On-Chain"],
-		"info": ["Twelvedata", "CoinGecko"],
-		"lookup listings": ["Twelvedata", "CCXT", "CoinGecko", "TradingView", "TradingView Premium"]
+		"info": ["Twelvedata", "CoinGecko"]
 	}
 
 	def __init__(self, bot, create_request, database, logging):
