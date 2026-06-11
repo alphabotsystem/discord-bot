@@ -84,7 +84,6 @@ class BaseCommand(Cog):
 		"chart": "c",
 		"price": "p",
 		"schedule price": "p",
-		"schedule volume": "volume",
 		"schedule layout": "layout"
 	}
 
@@ -93,8 +92,6 @@ class BaseCommand(Cog):
 		"layout": ["TradingView Relay"],
 		"hmap": ["TradingView Stock Heatmap", "TradingView ETF Heatmap", "TradingView Crypto Heatmap"],
 		"p": ["Twelvedata", "CCXT", "CoinGecko", "On-Chain"],
-		"convert": ["Twelvedata", "CCXT", "CoinGecko", "On-Chain"],
-		"volume": ["Twelvedata", "CoinGecko", "CCXT", "On-Chain"],
 		"info": ["Twelvedata", "CoinGecko"],
 		"lookup listings": ["Twelvedata", "CCXT", "CoinGecko", "TradingView", "TradingView Premium"]
 	}

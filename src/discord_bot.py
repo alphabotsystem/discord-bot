@@ -24,14 +24,12 @@ from DatabaseConnector import DatabaseConnector
 from CommandRequest import CommandRequest
 
 from commands.charts import ChartCommand
-from commands.convert import ConvertCommand
 from commands.details import DetailsCommand
 from commands.heatmaps import HeatmapCommand
 from commands.layout import LayoutCommand
 from commands.lookup import LookupCommand
 from commands.prices import PriceCommand
 from commands.schedule import ScheduleCommand
-from commands.volume import VolumeCommand
 
 
 database = FirestoreAsyncClient()
@@ -410,14 +408,12 @@ async def create_request(ctx, autodelete=-1):
 # -------------------------
 
 bot.add_cog(ChartCommand(bot, create_request, database, logging))
-bot.add_cog(ConvertCommand(bot, create_request, database, logging))
 bot.add_cog(DetailsCommand(bot, create_request, database, logging))
 bot.add_cog(HeatmapCommand(bot, create_request, database, logging))
 bot.add_cog(LayoutCommand(bot, create_request, database, logging))
 bot.add_cog(LookupCommand(bot, create_request, database, logging))
 bot.add_cog(PriceCommand(bot, create_request, database, logging))
 bot.add_cog(ScheduleCommand(bot, create_request, database, logging))
-bot.add_cog(VolumeCommand(bot, create_request, database, logging))
 
 # -------------------------
 # Error handling
