@@ -5,7 +5,6 @@ from base64 import b64decode
 from io import BytesIO
 from asyncio import sleep
 from re import sub
-from orjson import dumps
 from traceback import format_exc
 
 import aiohttp
@@ -14,16 +13,12 @@ from discord.ext.commands import Cog
 from discord.ui import View, button, Button
 from google.cloud.firestore import AsyncClient as FirestoreAsyncClient
 from google.cloud.firestore_v1.base_query import FieldFilter
-from google.cloud import pubsub_v1
 
 from helpers import constants
 from assets import static_storage
 from Processor import autocomplete_ticker, autocomplete_venues
 
 database = FirestoreAsyncClient()
-publisher = pubsub_v1.PublisherClient()
-REQUESTS_TOPIC_NAME = "projects/nlc-bot-36685/topics/discord-requests"
-TELEMETRY_TOPIC_NAME = "projects/nlc-bot-36685/topics/discord-telemetry"
 
 # v2 charting compatibility endpoint (webhooks service). The visual commands
 # (/c, /hmap, /layout, /lookup fgi) forward raw text here instead of parsing
@@ -105,36 +100,6 @@ class BaseCommand(Cog):
 		self.database = database
 		self.logging = logging
 
-	async def log_request(self, command, request, tasks, telemetry=None):
-		if not environ["PRODUCTION"]: return
-		timestamp = int(time())
-		for task in tasks:
-			currentTask = task.get(task.get("currentPlatform"))
-			base = currentTask.get("ticker", {}).get("base")
-			if command == "layouts": command += " " + task["TradingView Relay"]["url"]
-			if base is None: base = currentTask.get("ticker", {}).get("id", "")
-			publisher.publish(REQUESTS_TOPIC_NAME, dumps({
-				"timestamp": timestamp,
-				"command": command,
-				"user": str(request.authorId),
-				"guild": str(request.guildId),
-				"channel": str(request.channelId),
-				"base": base,
-				"platform": task.get("currentPlatform"),
-				"count": task.get("requestCount", 1)
-			}))
-		if telemetry is not None:
-			publisher.publish(TELEMETRY_TOPIC_NAME, dumps({
-				"timestamp": timestamp,
-				"command": command,
-				"database": telemetry["database"],
-				"prelight": telemetry["prelight"],
-				"parser": telemetry["parser"],
-				"request": telemetry["request"],
-				"response": telemetry["response"],
-				"count": task.get("requestCount", 1)
-			}))
-
 	async def render_via_v2(self, text, request, layout=None):
 		"""POSTs raw command text to the v2 compatibility endpoint and returns the parsed JSON dict.
 
@@ -172,36 +137,6 @@ class BaseCommand(Cog):
 				if response.status >= 500:
 					raise RuntimeError(f"v2 price endpoint returned {response.status}")
 				return await response.json()
-
-	async def log_request_v2(self, command, request, meta, telemetry=None):
-		if not environ["PRODUCTION"]: return
-		timestamp = int(time())
-		symbols = meta.get("resolvedSymbols", [])
-		count = meta.get("requestCount", 1)
-		base = symbols[0].split(":")[-1] if symbols else ""
-		toolCalls = meta.get("toolCalls", [])
-		platform = toolCalls[0] if toolCalls else command
-		publisher.publish(REQUESTS_TOPIC_NAME, dumps({
-			"timestamp": timestamp,
-			"command": command,
-			"user": str(request.authorId),
-			"guild": str(request.guildId),
-			"channel": str(request.channelId),
-			"base": base,
-			"platform": platform,
-			"count": count
-		}))
-		if telemetry is not None:
-			publisher.publish(TELEMETRY_TOPIC_NAME, dumps({
-				"timestamp": timestamp,
-				"command": command,
-				"database": telemetry["database"],
-				"prelight": telemetry["prelight"],
-				"parser": telemetry["parser"],
-				"request": telemetry["request"],
-				"response": telemetry["response"],
-				"count": count
-			}))
 
 	async def cleanup(self, ctx, request, removeView=False, persistView=None):
 		if request.autodelete is not None:

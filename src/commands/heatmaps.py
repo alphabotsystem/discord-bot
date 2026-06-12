@@ -30,8 +30,6 @@ class HeatmapCommand(BaseCommand):
 		request,
 		response
 	):
-		start = time()
-
 		if not response.get("ok"):
 			message = response.get("error") or "Requested heatmap is not available."
 			description = get_incorrect_usage_description(self.bot.user.id, "https://www.alpha.bot/features/heatmaps")
@@ -54,14 +52,10 @@ class HeatmapCommand(BaseCommand):
 			elif not isLicensed:
 				actions = TryV2View()
 
-		requestCheckpoint = time()
-		request.set_delay("request", (requestCheckpoint - start) / max(1, len(files)))
 		try: await ctx.interaction.edit_original_response(content=content, embeds=[], files=files, view=actions)
 		except NotFound: pass
-		request.set_delay("response", time() - requestCheckpoint)
 
 		await self.database.document("discord/statistics").set({request.snapshot: {"hmap": Increment(meta.get("requestCount", 1))}}, merge=True)
-		await self.log_request_v2("hmap", request, meta, telemetry=request.telemetry)
 		await self.cleanup(ctx, request, removeView=True, persistView=TryV2View() if len(files) != 0 and not isLicensed else None)
 
 	@slash_command(name="hmap", description="Pull market heatmaps from TradingView.")
@@ -87,16 +81,11 @@ class HeatmapCommand(BaseCommand):
 				except NotFound: pass
 				return
 
-			prelightCheckpoint = time()
-			request.set_delay("prelight", prelightCheckpoint - request.start)
-
 			# The class (assetType) leads as the v2 heatmap subject; everything else
 			# trails as modifiers for the walker to resolve per-market.
 			parts = ["hmap"] + [p for p in [assetType, market, timeframe, category, size, group, theme] if p]
 			await ctx.defer()
 			response = await self.render_via_v2(" ".join(parts), request)
-
-			request.set_delay("parser", time() - prelightCheckpoint)
 			await self.respond(ctx, request, response)
 
 		except CancelledError: pass

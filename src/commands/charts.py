@@ -34,8 +34,6 @@ class ChartCommand(BaseCommand):
 		request,
 		response
 	):
-		start = time()
-
 		if not response.get("ok"):
 			message = response.get("error") or "Requested chart is not available."
 			description = get_incorrect_usage_description(self.bot.user.id, "https://www.alpha.bot/features/charting")
@@ -62,14 +60,10 @@ class ChartCommand(BaseCommand):
 			else:
 				actions = MediaActionsView(user=ctx.author, command=ctx.command.mention, include_v2=not isLicensed)
 
-		requestCheckpoint = time()
-		request.set_delay("request", (requestCheckpoint - start) / max(1, len(files)))
 		try: await ctx.interaction.edit_original_response(content=content, embeds=[], files=files, view=actions)
 		except NotFound: pass
-		request.set_delay("response", time() - requestCheckpoint)
 
 		await self.database.document("discord/statistics").set({request.snapshot: {"c": Increment(meta.get("requestCount", 1))}}, merge=True)
-		await self.log_request_v2("charts", request, meta, telemetry=request.telemetry)
 		await self.cleanup(ctx, request, removeView=True, persistView=TryV2View() if len(files) != 0 and not isLicensed else None)
 
 	@slash_command(name="c", description="Pull charts from TradingView.")
@@ -89,13 +83,9 @@ class ChartCommand(BaseCommand):
 				except NotFound: pass
 				return
 
-			prelightCheckpoint = time()
-			request.set_delay("prelight", prelightCheckpoint - request.start)
-
 			await ctx.defer()
 			response = await self.render_via_v2("chart " + query, request)
 
-			request.set_delay("parser", time() - prelightCheckpoint)
 			await self.respond(ctx, request, response)
 
 		except CancelledError: pass

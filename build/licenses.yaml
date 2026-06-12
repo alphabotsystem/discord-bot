@@ -6,7 +6,7 @@ metadata:
   labels:
     app: licensed-bot
 spec:
-  replicas: 5
+  replicas: 1
   selector:
     matchLabels:
       app: licensed-bot
@@ -29,31 +29,11 @@ spec:
         env:
           - name: PRODUCTION
             value: "1"
-          - name: TOKEN_N8V1MEBUJFSVP4IQMUXYYIEDFYI1
-            valueFrom:
-              secretKeyRef:
-                name: alpha-credentials
-                key: TOKEN_N8V1MEBUJFSVP4IQMUXYYIEDFYI1
-          - name: TOKEN_SHDNTSTH4TPFNG0CO1LBVDANLVO2
-            valueFrom:
-              secretKeyRef:
-                name: alpha-credentials
-                key: TOKEN_SHDNTSTH4TPFNG0CO1LBVDANLVO2
-          - name: TOKEN_26FIYWEEZNHCMSIGFI81BMBBFER2
-            valueFrom:
-              secretKeyRef:
-                name: alpha-credentials
-                key: TOKEN_26FIYWEEZNHCMSIGFI81BMBBFER2
           - name: TOKEN_RWU79SZBNJUFMRPQBGJ3ZTNLMWA2
             valueFrom:
               secretKeyRef:
                 name: alpha-credentials
                 key: TOKEN_RWU79SZBNJUFMRPQBGJ3ZTNLMWA2
-          - name: TOKEN_8ZSFENTKEPNKDIAILE54MWNQNP62
-            valueFrom:
-              secretKeyRef:
-                name: alpha-credentials
-                key: TOKEN_8ZSFENTKEPNKDIAILE54MWNQNP62
           - name: TWELVEDATA_KEY
             valueFrom:
               secretKeyRef:

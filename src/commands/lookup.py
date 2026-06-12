@@ -58,7 +58,6 @@ class LookupCommand(BaseCommand):
 			except NotFound: pass
 
 			await self.database.document("discord/statistics").set({request.snapshot: {"c": Increment(1)}}, merge=True)
-			await self.log_request_v2("charts", request, response.get("meta", {}))
 			await self.cleanup(ctx, request, removeView=True)
 
 		except CancelledError: pass

@@ -58,9 +58,6 @@ class PriceCommand(BaseCommand):
 				except NotFound: pass
 				return
 
-			prelightCheckpoint = time()
-			request.set_delay("prelight", prelightCheckpoint - request.start)
-
 			tasks = []
 			for part in parts:
 				tokens = part.lower().split()
@@ -80,23 +77,12 @@ class PriceCommand(BaseCommand):
 				gather(*tasks),
 				ctx.defer()
 			)
-			request.set_delay("parser", time() - prelightCheckpoint)
 
-			start = time()
 			embeds = [self.price_embed(result) for result in results]
-			requestCheckpoint = time()
-			request.set_delay("request", requestCheckpoint - start)
 			try: await ctx.interaction.edit_original_response(embeds=embeds)
 			except NotFound: pass
-			request.set_delay("response", time() - requestCheckpoint)
 
 			await self.database.document("discord/statistics").set({request.snapshot: {"p": Increment(len(embeds))}}, merge=True)
-			meta = {
-				"resolvedSymbols": [r.get("symbol") for r in results if r.get("ok") and r.get("symbol")],
-				"requestCount": len(embeds),
-				"toolCalls": ["quote"],
-			}
-			await self.log_request_v2("prices", request, meta, telemetry=request.telemetry)
 
 		except CancelledError: pass
 		except:

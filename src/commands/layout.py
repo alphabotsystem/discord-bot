@@ -33,9 +33,6 @@ class LayoutCommand(BaseCommand):
 			request = await self.create_request(ctx)
 			if request is None: return
 
-			prelightCheckpoint = time()
-			request.set_delay("prelight", prelightCheckpoint - request.start)
-
 			[layout, _] = await gather(
 				self.database.collection(f"discord/properties/layouts").where(filter=FieldFilter("label", "==", name)).where(filter=FieldFilter("guildId", "==", str(request.guildId))).get(),
 				ctx.defer()
@@ -67,7 +64,6 @@ class LayoutCommand(BaseCommand):
 
 			response = await self.render_via_v2(" ".join(parts), request, layout={"label": name, "url": layout["url"]})
 
-			request.set_delay("parser", time() - prelightCheckpoint)
 			await self.respond(ctx, request, response)
 
 		except CancelledError: pass
@@ -82,8 +78,6 @@ class LayoutCommand(BaseCommand):
 		request,
 		response
 	):
-		start = time()
-
 		if not response.get("ok"):
 			message = response.get("error") or "Requested chart is not available."
 			description = get_incorrect_usage_description(self.bot.user.id, "https://www.alpha.bot/features/layouts")
@@ -111,13 +105,9 @@ class LayoutCommand(BaseCommand):
 		if len(files) != 0:
 			actions = MediaActionsView(user=ctx.author, command=ctx.command.mention, include_v2=not isLicensed)
 
-		requestCheckpoint = time()
-		request.set_delay("request", (requestCheckpoint - start) / max(1, len(files) + len(embeds)))
 		try: await ctx.interaction.edit_original_response(content=content, embeds=embeds, files=files, view=actions)
 		except NotFound: pass
-		request.set_delay("response", time() - requestCheckpoint)
 
 		await self.database.document("discord/statistics").set({request.snapshot: {"c": Increment(1)}}, merge=True)
-		await self.log_request_v2("layouts", request, meta, telemetry=request.telemetry)
 		await self.cleanup(ctx, request, removeView=True, persistView=TryV2View() if len(files) != 0 and not isLicensed else None)
 

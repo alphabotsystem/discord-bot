@@ -345,7 +345,6 @@ async def guild_secure_fetch(guildId):
 # -------------------------
 
 async def create_request(ctx, autodelete=-1):
-	start = time()
 	authorId = ctx.author.id
 	guildId = ctx.guild.id if ctx.guild is not None else -1
 	channelId = ctx.channel.id if ctx.channel is not None else -1
@@ -361,7 +360,6 @@ async def create_request(ctx, autodelete=-1):
 		accountProperties.get(str(authorId), {}),
 		guildProperties.get(guildId, {})
 	)
-	databaseCheckpoint = time()
 
 	request = CommandRequest(
 		accountId=accountId,
@@ -373,7 +371,6 @@ async def create_request(ctx, autodelete=-1):
 		autodelete=autodelete,
 		origin="default" if bot.user.id in constants.PRIMARY_BOTS else bot.user.id
 	)
-	request.set_delay("database", databaseCheckpoint - start)
 
 	if request.guildId != -1 and bot.user.id == 401328409499664394:
 		branding = settings["nicknames"].get(str(request.guildId), {"allowed": True, "nickname": None})
@@ -476,16 +473,6 @@ if not environ["PRODUCTION"]:
 elif botId == -1:
 	token = environ["DISCORD_PRODUCTION_TOKEN"]
 elif botId == 0:
-	token = environ["TOKEN_N8V1MEBUJFSVP4IQMUXYYIEDFYI1"]
-elif botId == 1:
-	token = environ["TOKEN_SHDNTSTH4TPFNG0CO1LBVDANLVO2"]
-elif botId == 2:
-	token = environ["TOKEN_26FIYWEEZNHCMSIGFI81BMBBFER2"]
-elif botId == 3:
 	token = environ["TOKEN_RWU79SZBNJUFMRPQBGJ3ZTNLMWA2"]
-elif botId == 4:
-	token = environ["TOKEN_8ZSFENTKEPNKDIAILE54MWNQNP62"]
-elif botId == 5:
-	token = environ["TOKEN_APIS3KDVEZZRDSA6OIEDO3EZDQ33"]
 
 bot.loop.run_until_complete(bot.start(token))
