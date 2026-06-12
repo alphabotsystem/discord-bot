@@ -36,7 +36,7 @@ class PriceCommand(BaseCommand):
 
 		embed = Embed(title=title, description=result.get("priceConverted"), color=color)
 		embed.set_author(name=result.get("title"), icon_url=result.get("thumbnailUrl"))
-		embed.set_footer(text=result.get("source"))
+		embed.set_footer(text=result.get("exchange") or result.get("source"))
 		return embed
 
 	@slash_command(name="price", description="Fetch stock and crypto prices, forex rates, and other instrument data.")
