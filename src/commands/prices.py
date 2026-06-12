@@ -11,67 +11,50 @@ from google.cloud.firestore import Increment
 from helpers.utils import get_incorrect_usage_description
 from helpers import constants
 from assets import static_storage
-from Processor import process_quote_arguments, process_task
 
 from commands.base import BaseCommand
 
 
 class PriceCommand(BaseCommand):
-	async def respond(
+	def price_embed(self, result):
+		"""Builds the Discord embed for a single price snapshot returned by the v2 price endpoint.
+
+		`result` is the parsed JSON from `fetch_price_via_v2`: `{"ok": True, "price", "change", ...}`
+		on success or `{"ok": False, "error"}` for a user-facing miss."""
+		if not result.get("ok"):
+			embed = Embed(title=result.get("error") or "Requested quote is not available.", color=constants.colors["gray"])
+			embed.set_author(name="Data not available", icon_url=static_storage.error_icon)
+			return embed
+
+		change = result.get("change")
+		title = "{}{}".format(result.get("price", ""), f" *({change})*" if change else "")
+		changeRaw = result.get("changeRaw")
+		if changeRaw is None:
+			color = constants.colors["deep purple"]
+		else:
+			color = constants.colors["green"] if changeRaw >= 0 else constants.colors["red"]
+
+		embed = Embed(title=title, description=result.get("priceConverted"), color=color)
+		embed.set_author(name=result.get("title"), icon_url=result.get("thumbnailUrl"))
+		embed.set_footer(text=result.get("source"))
+		return embed
+
+	@slash_command(name="price", description="Fetch stock and crypto prices, forex rates, and other instrument data.")
+	async def price(
 		self,
 		ctx,
-		request,
-		tasks
-	):
-		start = time()
-		embeds = []
-		for task in tasks:
-			currentTask = task.get(task.get("currentPlatform"))
-			payload, responseMessage = await process_task(task, "quote", origin=request.origin)
-
-			if payload is None or "quotePrice" not in payload:
-				errorMessage = f"Requested quote for `{currentTask.get('ticker').get('name')}` is not available." if responseMessage is None else responseMessage
-				embed = Embed(title=errorMessage, color=constants.colors["gray"])
-				embed.set_author(name="Data not available", icon_url=static_storage.error_icon)
-			else:
-				currentTask = task.get(payload.get("platform"))
-				if payload.get("platform") in ["Alternative.me", "CNN Business"]:
-					embed = Embed(title=f"{payload['quotePrice']} *({payload['change']})*", description=payload.get("quoteConvertedPrice"), color=constants.colors[payload["messageColor"]])
-					embed.set_author(name=payload["title"], icon_url=payload.get("thumbnailUrl"))
-					embed.set_footer(text=payload["sourceText"])
-				else:
-					embed = Embed(title="{}{}".format(payload["quotePrice"], f" *({payload['change']})*" if "change" in payload else ""), description=payload.get("quoteConvertedPrice"), color=constants.colors[payload["messageColor"]])
-					embed.set_author(name=payload["title"], icon_url=payload.get("thumbnailUrl"))
-					embed.set_footer(text=payload["sourceText"])
-
-			embeds.append(embed)
-
-		requestCheckpoint = time()
-		request.set_delay("request", requestCheckpoint - start)
-		try: await ctx.interaction.edit_original_response(embeds=embeds)
-		except NotFound: pass
-		request.set_delay("response", time() - requestCheckpoint)
-
-		await self.database.document("discord/statistics").set({request.snapshot: {"p": Increment(len(tasks))}}, merge=True)
-		await self.log_request("prices", request, tasks, telemetry=request.telemetry)
-
-	@slash_command(name="p", description="Fetch stock and crypto prices, forex rates, and other instrument data. Command for power users.")
-	async def p(
-		self,
-		ctx,
-		arguments: Option(str, "Request arguments starting with ticker id.", name="arguments")
+		query: Option(str, "Ticker id of an asset, optionally followed by a venue. Up to 5, comma-separated.", name="query")
 	):
 		try:
 			request = await self.create_request(ctx)
 			if request is None: return
 
-			platforms = request.get_platform_order_for("p")
-			parts = arguments.split(",")
+			parts = query.split(",")
 
 			if len(parts) > 5:
 				embed = Embed(title="Only up to 5 requests are allowed per command.", color=constants.colors["gray"])
 				embed.set_author(name="Too many requests", icon_url=static_storage.error_icon)
-				try: await ctx.interaction.edit_original_response(embed=embed)
+				try: await ctx.respond(embed=embed)
 				except NotFound: pass
 				return
 
@@ -80,66 +63,43 @@ class PriceCommand(BaseCommand):
 
 			tasks = []
 			for part in parts:
-				partArguments = part.lower().split()
-				if len(partArguments) == 0: continue
-				tasks.append(process_quote_arguments(partArguments[1:], platforms, tickerId=partArguments[0]))
+				tokens = part.lower().split()
+				if len(tokens) == 0: continue
+				ticker = tokens[0]
+				venue = " ".join(tokens[1:]) or None
+				tasks.append(self.fetch_price_via_v2(ticker, venue))
+
+			if len(tasks) == 0:
+				embed = Embed(title="No ticker provided.", description=get_incorrect_usage_description(self.bot.user.id, "https://www.alpha.bot/features/prices"), color=constants.colors["gray"])
+				embed.set_author(name="Invalid argument", icon_url=static_storage.error_icon)
+				try: await ctx.respond(embed=embed)
+				except NotFound: pass
+				return
+
 			[results, _] = await gather(
 				gather(*tasks),
 				ctx.defer()
 			)
-
-			tasks = []
-			for (responseMessage, task) in results:
-				if responseMessage is not None:
-					embed = Embed(title=responseMessage, description=get_incorrect_usage_description(self.bot.user.id, "https://www.alpha.bot/features/prices"), color=constants.colors["gray"])
-					embed.set_author(name="Invalid argument", icon_url=static_storage.error_icon)
-					try: await ctx.interaction.edit_original_response(embed=embed)
-					except NotFound: pass
-					return
-				tasks.append(task)
-
 			request.set_delay("parser", time() - prelightCheckpoint)
-			await self.respond(ctx, request, tasks)
+
+			start = time()
+			embeds = [self.price_embed(result) for result in results]
+			requestCheckpoint = time()
+			request.set_delay("request", requestCheckpoint - start)
+			try: await ctx.interaction.edit_original_response(embeds=embeds)
+			except NotFound: pass
+			request.set_delay("response", time() - requestCheckpoint)
+
+			await self.database.document("discord/statistics").set({request.snapshot: {"p": Increment(len(embeds))}}, merge=True)
+			meta = {
+				"resolvedSymbols": [r.get("symbol") for r in results if r.get("ok") and r.get("symbol")],
+				"requestCount": len(embeds),
+				"toolCalls": ["quote"],
+			}
+			await self.log_request_v2("prices", request, meta, telemetry=request.telemetry)
 
 		except CancelledError: pass
 		except:
 			print(format_exc())
-			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /p {arguments}")
-			await self.unknown_error(ctx)
-
-	@slash_command(name="price", description="Fetch stock, crypto and forex quotes.")
-	async def price(
-		self,
-		ctx,
-		tickerId: Option(str, "Ticker id of an asset.", name="ticker", autocomplete=BaseCommand.autocomplete_ticker),
-		venue: Option(str, "Venue to pull the price from.", name="venue", autocomplete=BaseCommand.autocomplete_venues, required=False, default="")
-	):
-		try:
-			request = await self.create_request(ctx)
-			if request is None: return
-
-			prelightCheckpoint = time()
-			request.set_delay("prelight", prelightCheckpoint - request.start)
-
-			platforms = request.get_platform_order_for("p")
-			[(responseMessage, task), _] = await gather(
-				process_quote_arguments([venue], platforms, tickerId=tickerId),
-				ctx.defer()
-			)
-
-			if responseMessage is not None:
-				embed = Embed(title=responseMessage, description=get_incorrect_usage_description(self.bot.user.id, "https://www.alpha.bot/features/prices"), color=constants.colors["gray"])
-				embed.set_author(name="Invalid argument", icon_url=static_storage.error_icon)
-				try: await ctx.interaction.edit_original_response(embed=embed)
-				except NotFound: pass
-				return
-
-			request.set_delay("parser", time() - prelightCheckpoint)
-
-			await self.respond(ctx, request, [task])
-
-		except CancelledError: pass
-		except:
-			print(format_exc())
-			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /price {tickerId} venue:{venue}")
+			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /price {query}")
 			await self.unknown_error(ctx)

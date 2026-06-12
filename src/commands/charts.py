@@ -76,7 +76,7 @@ class ChartCommand(BaseCommand):
 	async def c(
 		self,
 		ctx,
-		arguments: Option(str, "Request arguments starting with ticker id.", name="arguments"),
+		query: Option(str, "Request arguments starting with ticker id.", name="query"),
 		autodelete: Option(float, "Bot response self destruct timer in minutes.", name="autodelete", required=False, default=None)
 	):
 		try:
@@ -93,7 +93,7 @@ class ChartCommand(BaseCommand):
 			request.set_delay("prelight", prelightCheckpoint - request.start)
 
 			await ctx.defer()
-			response = await self.render_via_v2("chart " + arguments, request)
+			response = await self.render_via_v2("chart " + query, request)
 
 			request.set_delay("parser", time() - prelightCheckpoint)
 			await self.respond(ctx, request, response)
@@ -101,7 +101,7 @@ class ChartCommand(BaseCommand):
 		except CancelledError: pass
 		except:
 			print(format_exc())
-			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /c {arguments} autodelete:{autodelete}")
+			if environ["PRODUCTION"]: self.logging.report_exception(user=f"{ctx.author.id} {ctx.guild.id if ctx.guild is not None else -1}: /c {query} autodelete:{autodelete}")
 			await self.unknown_error(ctx)
 
 class ReferralView(MediaActionsView):

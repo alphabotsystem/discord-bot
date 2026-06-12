@@ -30,6 +30,10 @@ TELEMETRY_TOPIC_NAME = "projects/nlc-bot-36685/topics/discord-telemetry"
 # locally; v2 resolves + renders and returns the PNGs. Secret must match the
 # webhooks service's WEBHOOK_SHARED_SECRET.
 V2_COMMAND_ENDPOINT = environ.get("V2_COMMAND_ENDPOINT", "https://webhooks.alpha.bot/v1/command")
+# v2 price compatibility endpoint (webhooks service). /price forwards the ticker
+# query here; v2 resolves it through its own parser and quote-server and returns
+# a structured price snapshot. Shares the WEBHOOK_SHARED_SECRET with /v1/command.
+V2_PRICE_ENDPOINT = environ.get("V2_PRICE_ENDPOINT", "https://webhooks.alpha.bot/v1/price")
 V2_COMMAND_SECRET = environ.get("V2_COMMAND_SECRET", "")
 # v1's PRIMARY bots report origin "default"; the v2 image-server brands by a real
 # discord_bots row id, so that sentinel maps to the default bot's application id.
@@ -152,6 +156,21 @@ class BaseCommand(Cog):
 			async with session.post(V2_COMMAND_ENDPOINT, json=payload, headers=headers) as response:
 				if response.status >= 500:
 					raise RuntimeError(f"v2 command endpoint returned {response.status}")
+				return await response.json()
+
+	async def fetch_price_via_v2(self, query, venue=None):
+		"""POSTs a ticker query to the v2 price compatibility endpoint and returns the parsed JSON dict.
+
+		v2 resolves the query through its own parser (top candidate) and quote-server, so v1 needs no
+		Elasticsearch lookup. Returns `{"ok": True, "price", "change", "title", ...}` on success or
+		`{"ok": False, "error"}` for a user-facing miss. Raises on HTTP 5xx so the caller's except reports it."""
+		payload = {"query": query, "venue": venue or None}
+		headers = {"Authorization": f"Bearer {V2_COMMAND_SECRET}", "Content-Type": "application/json"}
+		timeout = aiohttp.ClientTimeout(total=30)
+		async with aiohttp.ClientSession(timeout=timeout) as session:
+			async with session.post(V2_PRICE_ENDPOINT, json=payload, headers=headers) as response:
+				if response.status >= 500:
+					raise RuntimeError(f"v2 price endpoint returned {response.status}")
 				return await response.json()
 
 	async def log_request_v2(self, command, request, meta, telemetry=None):
