@@ -1,5 +1,4 @@
 from os import environ
-from time import time
 from random import randint
 from asyncio import gather, CancelledError
 from traceback import format_exc
